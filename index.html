@@ -1,16 +1,37 @@
-<!DOCTYPE html>
-<html lang="vi">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>NCTTX StaffPoint</title>
-</head>
+<button onclick="testAPI()">
+    Test API
+</button>
 
-<body>
+<pre id="result"></pre>
 
-    <h1>NCTTX StaffPoint</h1>
+<script>
+async function testAPI() {
 
-    <p>Vercel đã kết nối thành công.</p>
+    const result = document.getElementById("result");
 
-</body>
-</html>
+    try {
+
+        const response = await fetch("/api", {
+            method: "POST",
+
+            headers: {
+                "Content-Type": "application/json"
+            },
+
+            body: JSON.stringify({
+                action: "health"
+            })
+        });
+
+        const data = await response.json();
+
+        result.textContent =
+            JSON.stringify(data, null, 2);
+
+    } catch (error) {
+
+        result.textContent = error.message;
+
+    }
+}
+</script>
