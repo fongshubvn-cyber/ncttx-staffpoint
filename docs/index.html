@@ -2789,10 +2789,12 @@ function tepKNHTML(r){
   if (!ds.length) return "";
   return '<div class="anh-xem" style="margin-top:8px">' + ds.map(function (a, i){
     return a.kieu === "video"
-      ? '<div class="anh-o"><video src="' + a.data + '" style="width:100%;height:100%;object-fit:cover" ' +
+      ? '<div class="anh-o"><video src="' + nguonAnh(a) + '" data-anh-id="' + maAnh(a) +
+        '" style="width:100%;height:100%;object-fit:cover" ' +
         'controls playsinline preload="metadata"></video>' +
         '<span class="dl" style="left:4px;right:auto">🎬</span></div>'
-      : '<div class="anh-o"><img src="' + a.data + '" alt="' + esc(a.ten || "ảnh") +
+      : '<div class="anh-o"><img src="' + nguonAnh(a) + '" data-anh-id="' + maAnh(a) +
+        '" alt="' + esc(a.ten || "ảnh") +
         '" data-xem-kn="' + r.id + ":" + i + '"></div>';
   }).join("") + "</div>";
 }
@@ -2802,13 +2804,57 @@ function tepKNHTML(r){
  * Ảnh cũ nằm ngay trong kho (a.data). Ảnh mới đẩy lên Drive, kho chỉ giữ a.url.
  * Đọc cả hai để bản cũ và bản mới cùng xem được, không phải đi chuyển dữ liệu.
  */
+/* Ảnh đã tải về, giữ trong bộ nhớ trang để mở đi mở lại không phải gọi lại. */
+const ANH_DA_TAI = {};
+
+function maAnh(a){
+  if (!a) return "";
+  if (a.id) return a.id;
+  const m = String(a.url || "").match(/[-\w]{25,}/);
+  return m ? m[0] : "";
+}
+
+/**
+ * Nguồn của một ảnh.
+ *
+ * Ảnh cũ nằm ngay trong kho (a.data) — trả thẳng. Ảnh mới nằm trong Drive và
+ * ĐỂ RIÊNG TƯ, nên không trỏ thẳng vào drive.google.com được: người xem không
+ * đăng nhập Google thì chỉ nhận về một ô vỡ.
+ *
+ * Nên đường dẫn thật lấy về bằng một cuộc gọi có token, rồi đổi thành blob nội
+ * bộ. Hàm này trả về ô trống trước, ảnh hiện ra sau — vài trăm mili giây.
+ */
 function nguonAnh(a){
   if (!a) return "";
   if (a.data) return a.data;
-  if (!a.url) return "";
-  // Đường dẫn Drive dạng /file/d/<id>/view không nhúng thẳng vào <img> được.
-  const m = String(a.url).match(/[-\w]{25,}/);
-  return m ? "https://drive.google.com/thumbnail?id=" + m[0] + "&sz=w1280" : a.url;
+  const id = maAnh(a);
+  if (!id) return "";
+  if (ANH_DA_TAI[id]) return ANH_DA_TAI[id];
+  taiAnhVe(id);
+  return "";                      // ô trống, taiAnhVe điền vào khi xong
+}
+
+async function taiAnhVe(id){
+  if (ANH_DA_TAI[id] === "dang-tai") return;
+  if (!Storage.coMayChu() || !Storage.token()) return;
+  ANH_DA_TAI[id] = "dang-tai";
+  try {
+    const d = await Storage.goi("docAnh", { token: Storage.token(), id: id }, false);
+    const bin = atob(d.base64);
+    const u8 = new Uint8Array(bin.length);
+    for (let i = 0; i < bin.length; i++) u8[i] = bin.charCodeAt(i);
+    const url = URL.createObjectURL(new Blob([u8], { type: d.kieu || "image/jpeg" }));
+    ANH_DA_TAI[id] = url;
+    // Điền vào mọi thẻ đang chờ ảnh này, không vẽ lại cả màn hình.
+    document.querySelectorAll('[data-anh-id="' + id + '"]').forEach(el => {
+      if (el.tagName === "IMG" || el.tagName === "VIDEO") el.src = url;
+    });
+  } catch (e) {
+    delete ANH_DA_TAI[id];
+    document.querySelectorAll('[data-anh-id="' + id + '"]').forEach(el => {
+      el.setAttribute("alt", "Không tải được ảnh: " + (e.message || ""));
+    });
+  }
 }
 
 /** Ảnh kèm bản ghi, bấm vào để xem lớn. */
@@ -2817,7 +2863,7 @@ function anhHTML(r){
   if (!as.length) return "";
   return '<div class="anh-xem" style="margin-top:10px">' + as.map((a, i) =>
     '<div class="anh-o"><img src="' + nguonAnh(a) + '" alt="' + esc(a.ten || "ảnh") +
-    '" data-xem-anh="' + r.id + ":" + i + '"></div>').join("") + "</div>";
+    '" data-anh-id="' + maAnh(a) + '" data-xem-anh="' + r.id + ":" + i + '"></div>').join("") + "</div>";
 }
 function openAnh(key, tuKhieuNai){
   const parts = String(key).split(":");
@@ -2829,8 +2875,10 @@ function openAnh(key, tuKhieuNai){
   if (!a) return;
   openModal(a.ten || (tuKhieuNai ? "Tệp kèm đơn kháng nghị" : "Ảnh kèm bản ghi"),
     a.kieu === "video"
-      ? '<video src="' + nguonAnh(a) + '" controls playsinline style="width:100%;border-radius:10px;display:block"></video>'
-      : '<img src="' + a.data + '" alt="" style="width:100%;border-radius:10px;display:block">');
+      ? '<video src="' + nguonAnh(a) + '" data-anh-id="' + maAnh(a) +
+        '" controls playsinline style="width:100%;border-radius:10px;display:block"></video>'
+      : '<img src="' + nguonAnh(a) + '" data-anh-id="' + maAnh(a) +
+        '" alt="" style="width:100%;border-radius:10px;display:block">');
 }
 
 function viewBook(){
@@ -3655,7 +3703,20 @@ function nenAnh(file){
  * Có máy chủ thì đẩy ảnh lên Drive, kho chỉ giữ đường dẫn. Kho ở lại nhỏ, ảnh
  * nằm trong thư mục riêng cạnh tệp dữ liệu, và Drive lo phần phục vụ ảnh.
  */
-async function catAnh(dataUrl, tenGoi){
+/**
+ * Cất một ảnh.
+ *
+ * Trên Drive ảnh xếp theo NGƯỜI trước, theo LOẠI sau:
+ *     Ảnh / <mã> - <tên> / Chung · Vi phạm · Ghi nhận
+ * Nên phải nói cho máy chủ biết ảnh này của ai và thuộc loại nào. Thiếu thì nó
+ * cất vào thư mục của chính người đang gửi, ngăn Chung.
+ *
+ * @param cuaAi  mã nhân sự — người mà ảnh nói về, KHÔNG phải người đang gửi.
+ *               Biên bản do quản lý lập nhưng ảnh là bằng chứng về nhân viên,
+ *               nên phải nằm trong thư mục của nhân viên đó.
+ * @param loai   "vi_pham" · "ghi_nhan" · "chung"
+ */
+async function catAnh(dataUrl, tenGoi, cuaAi, loai){
   if (!Storage.coMayChu() || !Storage.token()) return { data: dataUrl };
   try {
     const p = String(dataUrl).indexOf(",");
@@ -3664,7 +3725,9 @@ async function catAnh(dataUrl, tenGoi){
       token: Storage.token(),
       ten: (tenGoi || "anh") + "_" + Date.now() + ".jpg",
       base64: String(dataUrl).slice(p + 1),
-      kieu: kieu
+      kieu: kieu,
+      maNV: cuaAi || "",
+      loai: loai || "chung"
     }, true);
     return { url: d.url, id: d.id };
   } catch (e) {
@@ -3893,8 +3956,12 @@ async function saveRecord(type){
     critCode: isB ? boundaryText(u, pick) : (crit(pick) || {}).code || "",
     isBoundary: isB,
     detail, xayRaLuc: tLuc.toISOString(), period: kyTu(luc),
+    /* Ảnh vào thư mục của NGƯỜI ĐƯỢC NÊU, không phải người lập. Biên bản do
+       quản lý viết nhưng ảnh là bằng chứng về nhân viên, nên phải nằm trong
+       hồ sơ của nhân viên đó. */
     anh: await Promise.all(RC_ANH.map(async a =>
-      Object.assign({ ten: a.ten }, await catAnh(a.data, a.ten)))),
+      Object.assign({ ten: a.ten },
+        await catAnh(a.data, a.ten, (u || {}).code, type)))),
     status: "pending", kyQL: null, kyNS: null, tuChoi: null, khieuNai: null,
     decidedBy: null, decidedAt: null,
     note: "", reply: "", createdAt: nowISO()
@@ -4054,7 +4121,11 @@ async function saveKhieuNai(id){
 
   r.khieuNai = { text: t, at: nowISO(), by: ME.id, status: "open",
                  xayRaLuc: tLuc.toISOString(),
-                 tep: KN_TEP.map(a => ({ data: a.data, ten: a.ten, kieu: a.kieu })),
+                 /* Người kháng nghị chính là người bị nêu, nên tệp về đúng hồ sơ của họ,
+       xếp cùng ngăn với biên bản đang tranh chấp. */
+    tep: await Promise.all(KN_TEP.map(async a =>
+      Object.assign({ ten: a.ten, kieu: a.kieu },
+        await catAnh(a.data, a.ten, (user(r.subjectId) || {}).code, r.type)))),
                  decidedBy: null, decidedAt: null, note: "" };
   const ok = await Storage.save(DB);
   if (ok === false){
@@ -5387,9 +5458,70 @@ function openXuatDiem(){
   });
 }
 
-/* Đưa tệp cho người dùng lưu về máy. Nền tảng có cửa riêng cho việc này —
-   trang tự gọi tải xuống thì bị chặn im lặng, nên phải đi qua cửa đó. */
-async function luuTepVeMay(ten, buf){
+/* ==================== LƯU TỆP VỀ MÁY ====================
+
+   Ba đường, và đường đầu là đường anh muốn: hỏi thẳng người dùng lưu vào thư
+   mục nào, tên gì.
+
+     chọn chỗ   window.showSaveFilePicker — trình duyệt mở hộp thoại lưu tệp
+                thật, người dùng tự chọn thư mục. Chrome và Edge có; Firefox và
+                Safari chưa. Cần HTTPS, nên chạy trên GitHub Pages thì được.
+
+     cửa nền tảng  Trên Artifact, trang không tự tải tệp xuống được — sandbox
+                chặn im lặng. Phải đi qua cửa riêng của nền tảng.
+
+     liên kết   Đường cuối, trình duyệt tự cho vào thư mục Tải xuống.
+
+   ⛔ RÀNG BUỘC PHẢI NHỚ: showSaveFilePicker chỉ mở được TRONG VÀI GIÂY sau khi
+   người dùng bấm nút. Dựng một bảng ba mươi dòng mất vài giây, nên nếu dựng
+   xong mới hỏi chỗ lưu thì trình duyệt đã coi cú bấm là hết hạn và từ chối
+   thẳng. Vì vậy thứ tự phải là: BẤM → HỎI CHỖ LƯU → DỰNG TỆP → GHI. Đó là lý
+   do có hàm honChoLuu tách riêng, gọi ngay đầu mỗi nút. */
+
+function coChonCho(){ return typeof window.showSaveFilePicker === "function"; }
+
+/**
+ * Hỏi chỗ lưu. GỌI NGAY khi bấm nút, đừng chờ dựng tệp xong.
+ * Trả về: chỗ đã chọn · "huy" nếu người dùng bấm Huỷ · null nếu trình duyệt
+ * không hỗ trợ (lúc đó rơi xuống hai đường sau).
+ */
+async function honChoLuu(tenGoiY){
+  if (!coChonCho()) return null;
+  try {
+    return await window.showSaveFilePicker({
+      suggestedName: tenGoiY,
+      types: [{
+        description: "Bảng tính Excel",
+        accept: { "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet": [".xlsx"] }
+      }]
+    });
+  } catch (e) {
+    // Bấm Huỷ ném AbortError — đó là ý người dùng, không phải lỗi.
+    if (e && e.name === "AbortError") return "huy";
+    return null;
+  }
+}
+
+/* Đưa tệp cho người dùng lưu về máy. Truyền cho nó chỗ đã hỏi ở trên nếu có. */
+async function luuTepVeMay(ten, buf, cho){
+  // ── ĐƯỜNG 1: ghi thẳng vào chỗ người dùng đã chọn ──
+  if (cho && cho !== "huy" && typeof cho.createWritable === "function"){
+    try {
+      const w = await cho.createWritable();
+      await w.write(buf);
+      await w.close();
+      return '<b style="color:var(--ok)">Đã lưu vào chỗ anh chọn</b> — ' +
+             esc(cho.name || ten) + ".";
+    } catch (e) {
+      return '<span style="color:var(--bad)">Không ghi được vào chỗ đã chọn: ' +
+             esc(e.message) + "</span>";
+    }
+  }
+  if (cho === "huy") return '<span class="muted">Đã huỷ, chưa lưu gì.</span>';
+  return await _luuQuaNenTang(ten, buf);
+}
+
+async function _luuQuaNenTang(ten, buf){
   let cua = null;
   try{
     if (window.claude && typeof window.claude.use === "function")
@@ -5411,6 +5543,23 @@ async function luuTepVeMay(ten, buf){
     return '<span style="color:var(--bad)">Không lưu được tệp về máy. ' +
            'Dùng cách copy dán bên dưới giúp em.</span>';
   }
+
+  /* ── ĐƯỜNG 3: liên kết tải xuống thường ──
+     Chạy trên GitHub Pages hoặc bất kỳ trang thật nào. Trình duyệt tự cho tệp
+     vào thư mục Tải xuống, không hỏi chỗ. Trên Artifact thì đường này bị chặn
+     im lặng, nên phải để sau đường cửa nền tảng. */
+  try {
+    const blob = new Blob([buf], {
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet" });
+    const u = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = u; a.download = ten;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(() => { try { a.remove(); URL.revokeObjectURL(u); } catch (e) {} }, 4000);
+    return '<b style="color:var(--ok)">Đã tải xuống</b> — ' + esc(ten) +
+           ', tìm trong thư mục Tải xuống.';
+  } catch (e) {}
   return '<span style="color:var(--warn)">Trang này chưa được cấp quyền lưu tệp về máy. ' +
          'Dùng cách copy dán bên dưới giúp em.</span>';
 }
@@ -5720,65 +5869,69 @@ document.addEventListener("click", async (e) => {
     return;
   }
   if (act === "so-su-viec") return openSoSuViec();
-  if (act === "ss-tao"){
-    const o = $("#ss-ket"); if (!o) return;
-    const ky = $("#ss-ky").value;
-    o.innerHTML = "Đang dựng sổ…";
-    const ai = $("#ss-ai").value;
-    (ai === "*" ? taoSoSuViec(ky, daTich("ss-thu")) : taoSoMotNguoi(ky, ai)).then(async kq => {
-      const ten = kq.motNguoi
-        ? "So-su-viec_" + (kq.ma || "nhan-su") + "_" + (ky === "*" ? "tat-ca" : ky) + ".xlsx"
-        : "So-su-viec_" + (ky === "*" ? "tat-ca" : ky) + ".xlsx";
-      o.innerHTML =
-        '<div style="color:var(--ok);font-weight:600">Đã dựng sổ ' +
-          (kq.motNguoi ? "của " + esc(kq.ten) : esc(kq.nhan)) + "</div>" +
-        '<div class="muted" style="margin-top:4px">' + kq.soSuViec + " sự việc" +
-          (kq.motNguoi ? " · kỳ " + esc(kq.nhan) : " của " + kq.soNguoi + " người") +
-          (kq.cho ? " · " + kq.cho + " đang chờ duyệt" : "") +
-          (kq.tuChoi ? " · " + kq.tuChoi + " bị từ chối" : "") +
-          (kq.khangNghi ? " · " + kq.khangNghi + " có kháng nghị" : "") + "</div>" +
-        '<div style="margin-top:6px">' + (await luuTepVeMay(ten, kq.buf)) + "</div>";
-    }).catch(e => {
-      o.innerHTML = '<span style="color:var(--bad)">' + esc(e.message || String(e)) + "</span>";
-    });
+  /* BA NÚT XUẤT TỆP — cùng một khuôn.
+     ⛔ Hỏi chỗ lưu TRƯỚC khi dựng tệp. showSaveFilePicker chỉ mở được trong
+     vài giây sau cú bấm; dựng bảng ba mươi dòng mất lâu hơn thế, nên hỏi sau
+     là trình duyệt từ chối thẳng. */
+  if (act === "ss-tao" || act === "tk-tao" || act === "bl-tao"){
+    const cau = {
+      "ss-tao": { o: "#ss-ket", ky: "#ss-ky", dang: "Đang dựng sổ…" },
+      "tk-tao": { o: "#tk-ket", ky: "#tk-ky", dang: "Đang dựng thống kê…" },
+      "bl-tao": { o: "#bl-ket", ky: "#bl-ky", dang: "Đang dựng bảng…" }
+    }[act];
+    const o = $(cau.o); if (!o) return;
+    const ky = $(cau.ky).value;
+    const ai = act === "ss-tao" ? $("#ss-ai").value : null;
+
+    const ten = act === "bl-tao" ? "Bang-luong_" + ky + ".xlsx"
+              : act === "tk-tao" ? "Thong-ke_" + (ky === "*" ? "tat-ca" : ky) + ".xlsx"
+              : ai && ai !== "*"
+                ? "So-su-viec_" + ((user(ai) || {}).code || "nhan-su") + "_" +
+                  (ky === "*" ? "tat-ca" : ky) + ".xlsx"
+                : "So-su-viec_" + (ky === "*" ? "tat-ca" : ky) + ".xlsx";
+
+    (async () => {
+      const cho = await honChoLuu(ten);
+      if (cho === "huy"){ o.innerHTML = '<span class="muted">Đã huỷ, chưa dựng gì.</span>'; return; }
+      o.innerHTML = esc(cau.dang);
+      try {
+        let kq, dau;
+        if (act === "bl-tao"){
+          kq = await taoBangLuong(ky, daTich("bl-thu"));
+          dau = '<div style="color:var(--ok);font-weight:600">Đã dựng bảng ' +
+                  kq.soNguoi + " dòng</div>" +
+                (kq.chuaCo ? '<div class="tiny muted" style="margin-top:4px">' + kq.chuaCo +
+                  " người chưa có sự việc nào trong kỳ — vẫn có dòng, ghi rõ ở cột Ghi chú.</div>" : "") +
+                (kq.chuaTuyen ? '<div class="tiny" style="color:var(--warn);margin-top:2px">' +
+                  kq.chuaTuyen + " người chưa gán tuyến, chỉ chấm khung chung.</div>" : "");
+        } else if (act === "tk-tao"){
+          kq = await taoThongKe(ky, daTich("tk-thu"));
+          dau = '<div style="color:var(--ok);font-weight:600">Đã dựng thống kê ' +
+                  esc(kq.nhan) + "</div>" +
+                '<div class="muted" style="margin-top:4px">' + kq.soNguoi + " nhân sự · " +
+                  kq.soSuViec + " sự việc · " + kq.soLoi + " mã câu từng bị lập biên bản</div>";
+        } else {
+          kq = (ai === "*") ? await taoSoSuViec(ky, daTich("ss-thu"))
+                            : await taoSoMotNguoi(ky, ai);
+          dau = '<div style="color:var(--ok);font-weight:600">Đã dựng sổ ' +
+                  (kq.motNguoi ? "của " + esc(kq.ten) : esc(kq.nhan)) + "</div>" +
+                '<div class="muted" style="margin-top:4px">' + kq.soSuViec + " sự việc" +
+                  (kq.motNguoi ? " · kỳ " + esc(kq.nhan) : " của " + kq.soNguoi + " người") +
+                  (kq.cho ? " · " + kq.cho + " đang chờ duyệt" : "") +
+                  (kq.tuChoi ? " · " + kq.tuChoi + " bị từ chối" : "") +
+                  (kq.khangNghi ? " · " + kq.khangNghi + " có kháng nghị" : "") + "</div>";
+        }
+        o.innerHTML = dau +
+          '<div style="margin-top:8px">' + (await luuTepVeMay(ten, kq.buf, cho)) + "</div>";
+      } catch (e) {
+        o.innerHTML = '<span style="color:var(--bad)">' + esc(e.message || String(e)) + "</span>";
+      }
+    })();
     return;
   }
+  if (act === "so-su-viec") return openSoSuViec();
   if (act === "thong-ke")   return openThongKe();
-  if (act === "tk-tao"){
-    const o = $("#tk-ket"); if (!o) return;
-    const ky = $("#tk-ky").value;
-    o.innerHTML = "Đang dựng thống kê…";
-    taoThongKe(ky, daTich("tk-thu")).then(async kq => {
-      const ten = "Thong-ke_" + (ky === "*" ? "tat-ca" : ky) + ".xlsx";
-      o.innerHTML =
-        '<div style="color:var(--ok);font-weight:600">Đã dựng thống kê ' + esc(kq.nhan) + "</div>" +
-        '<div class="muted" style="margin-top:4px">' + kq.soNguoi + " nhân sự · " +
-          kq.soSuViec + " sự việc · " + kq.soLoi + " mã câu từng bị lập biên bản</div>" +
-        '<div style="margin-top:6px">' + (await luuTepVeMay(ten, kq.buf)) + "</div>";
-    }).catch(e => {
-      o.innerHTML = '<span style="color:var(--bad)">' + esc(e.message || String(e)) + "</span>";
-    });
-    return;
-  }
   if (act === "bang-luong") return openBangLuong();
-  if (act === "bl-tao"){
-    const o = $("#bl-ket"); if (!o) return;
-    const ky = $("#bl-ky").value;
-    o.innerHTML = "Đang dựng bảng…";
-    taoBangLuong(ky, daTich("bl-thu")).then(async kq => {
-      const luu = await luuTepVeMay("Bang-luong_" + ky + ".xlsx", kq.buf);
-      o.innerHTML =
-        '<div style="color:var(--ok);font-weight:600">Đã dựng bảng ' + kq.soNguoi + " dòng</div>" +
-        '<div style="margin-top:6px">' + luu + "</div>" +
-        (kq.chuaCo ? '<div class="tiny muted" style="margin-top:8px">' + kq.chuaCo +
-          " người chưa có sự việc nào trong kỳ — vẫn có dòng, ghi rõ ở cột Ghi chú.</div>" : "") +
-        (kq.chuaTuyen ? '<div class="tiny" style="color:var(--warn);margin-top:4px">' +
-          kq.chuaTuyen + " người chưa gán tuyến, chỉ chấm khung chung.</div>" : "");
-    }).catch(e => {
-      o.innerHTML = '<span style="color:var(--bad)">' + esc(e.message || String(e)) + "</span>";
-    });
-    return;
-  }
   if (act === "xuat-diem")  return openXuatDiem();
   if (act === "xd-chon")    { const t = $("#xd-text"); if (!t){ toast("Chưa có gì để copy."); return; }
                               t.focus(); t.select(); toast("Đã chọn — nhấn Ctrl/⌘+C để copy."); return; }
