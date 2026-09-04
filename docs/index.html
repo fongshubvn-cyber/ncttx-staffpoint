@@ -667,12 +667,32 @@ const Storage = (() => {
     catch (e) { return null; }
   }
 
+  /**
+   * Ghi kho.
+   *
+   * ⚠️ TRẢ VỀ LÝ DO THẬT, không chỉ đúng/sai. Ba đường hỏng vì ba chuyện khác
+   * hẳn nhau — chưa đăng nhập, máy chủ từ chối, trình duyệt hết chỗ — mà bản
+   * trước gộp cả ba thành một câu "bộ nhớ trình duyệt đã đầy". Người dùng đi
+   * xoá bớt ảnh trong khi lỗi thật nằm chỗ khác.
+   *
+   * Trả về { ok: true } hoặc { ok: false, loi: "...", cach: "..." }.
+   */
   async function save(data) {
     // ── ĐƯỜNG 1: máy chủ. Gửi cả kho, bên đó tự lọc lại theo vai người gửi. ──
     if (coMayChu()){
-      if (!token()) return false;
-      try { await goiMayChu("luuDuLieu", { token: token(), db: data }, true); return true; }
-      catch (e) { bao = "máy chủ Google: ghi hỏng — " + e.message; return false; }
+      if (!token())
+        return { ok: false, loi: "Phiên đăng nhập đã hết hạn.",
+                 cach: "Đăng nhập lại rồi làm lại giúp em." };
+      try {
+        await goiMayChu("luuDuLieu", { token: token(), db: data }, true);
+        return { ok: true };
+      } catch (e) {
+        bao = "máy chủ Google: ghi hỏng — " + e.message;
+        return { ok: false, loi: "Máy chủ không nhận: " + e.message,
+                 cach: /hết hạn|đăng nhập/i.test(e.message)
+                   ? "Đăng nhập lại giúp em."
+                   : "Kiểm tra mạng rồi thử lại. Nếu vẫn vậy, báo em." };
+      }
     }
 
     const d = await ketNoi();
@@ -687,14 +707,28 @@ const Storage = (() => {
           daGhi[ten] = s;
         }
         mode = "shared";
-        return true;
+        return { ok: true };
       } catch (e) {
         bao = "kho chung: ghi hỏng — " + e.message;
         kho = null; mode = "local";
+        /* Rơi xuống localStorage chứ không dừng — mất kho chung còn hơn mất
+           biên bản người ta vừa gõ. Nhưng nhớ lý do để nói cho đúng. */
       }
     }
-    try { localStorage.setItem("sao-nhan-su/v1", JSON.stringify(data)); return true; }
-    catch (e) { return false; }
+
+    try {
+      localStorage.setItem("sao-nhan-su/v1", JSON.stringify(data));
+      return { ok: true };
+    } catch (e) {
+      const day = /quota|exceed|full|storage/i.test(String(e && (e.name + e.message)));
+      return { ok: false,
+        loi: day ? "Bộ nhớ trình duyệt đã đầy." : "Không ghi được: " + e.message,
+        cach: day
+          ? "Nối app vào máy chủ Google để ảnh lên Drive thay vì nằm trong máy — " +
+            "ô đường dẫn ở Quản trị → Dữ liệu. Tạm thời thì bớt ảnh, hoặc xuất " +
+            "bớt dữ liệu cũ."
+          : "Thử lại. Nếu vẫn vậy, báo em kèm dòng chữ này." };
+    }
   }
 
   /* Nghe ngăn sổ sự việc. Người khác lập hay duyệt biên bản thì gọi lại fn.
@@ -827,7 +861,7 @@ const MIN_REVIEWS = 3;
 /* Dấu phiên bản: nhìn là biết trình duyệt đang chạy bản nào.
    Mỗi lần em gửi bản mới, con số này đổi. Anh so với con số em báo là
    biết ngay mình đã tải lại chưa, khỏi phải đoán. */
-const PHIEN_BAN = "01/09/2026 23:59";
+const PHIEN_BAN = "04/09/2026 · ảnh sang IndexedDB và Drive";
 
 const LEVELS = [
   { k:"founder", name:"Founder",      role:"admin"   },
@@ -1097,7 +1131,13 @@ const ngachName = k => NGACH[k] || k;
 /** Chức danh hiển thị: ưu tiên chức danh thật, không có thì lấy cấp bậc. */
 const titleOf = u => (u && (u.titleVi || levelName(u.level))) || roleName(u && u.role);
 
-async function persist(){ await Storage.save(DB); }
+/* Dùng ở hàng chục chỗ. Trước đây nuốt luôn kết quả, nên ghi hỏng thì màn
+   hình vẫn vẽ như đã lưu — người dùng đóng máy rồi mới biết mất. */
+async function persist(){
+  const kq = await Storage.save(DB);
+  if (kq && !kq.ok) toast(kq.loi + " " + (kq.cach || ""));
+  return kq;
+}
 
 /* ---------------- 6. PHÂN QUYỀN ---------------- */
 const isAdmin   = u => u && u.role === "admin";
@@ -2809,6 +2849,7 @@ const ANH_DA_TAI = {};
 
 function maAnh(a){
   if (!a) return "";
+  if (a.idb) return a.idb;
   if (a.id) return a.id;
   const m = String(a.url || "").match(/[-\w]{25,}/);
   return m ? m[0] : "";
@@ -2826,12 +2867,37 @@ function maAnh(a){
  */
 function nguonAnh(a){
   if (!a) return "";
-  if (a.data) return a.data;
-  const id = maAnh(a);
+  if (a.data) return a.data;              // ảnh cũ, nằm ngay trong kho
+
+  if (a.idb){                             // ảnh trong máy này
+    if (ANH_DA_TAI[a.idb]) return ANH_DA_TAI[a.idb];
+    taiAnhIDB(a.idb);
+    return "";
+  }
+
+  const id = maAnh(a);                    // ảnh trên Drive
   if (!id) return "";
   if (ANH_DA_TAI[id]) return ANH_DA_TAI[id];
   taiAnhVe(id);
-  return "";                      // ô trống, taiAnhVe điền vào khi xong
+  return "";                              // ô trống, tải xong sẽ điền vào
+}
+
+async function taiAnhIDB(id){
+  if (ANH_DA_TAI[id] === "dang-tai") return;
+  ANH_DA_TAI[id] = "dang-tai";
+  try {
+    const d = await idbDoc(id);
+    if (!d) throw new Error("Không còn trong máy này");
+    ANH_DA_TAI[id] = d;
+    document.querySelectorAll('[data-anh-id="' + id + '"]').forEach(el => {
+      if (el.tagName === "IMG" || el.tagName === "VIDEO") el.src = d;
+    });
+  } catch (e) {
+    delete ANH_DA_TAI[id];
+    document.querySelectorAll('[data-anh-id="' + id + '"]').forEach(el => {
+      el.setAttribute("alt", "Ảnh này lưu trên máy khác, không xem được ở đây.");
+    });
+  }
 }
 
 async function taiAnhVe(id){
@@ -3271,9 +3337,10 @@ function manageData(){
           "(để trống thì dùng kho của nền tảng)</div>" +
         '<input class="input" id="api-url" placeholder="https://script.google.com/macros/s/.../exec" ' +
           'value="' + esc(apiUrl()) + '" style="font-size:12.5px">' +
-        '<div class="row" style="gap:8px;margin-top:8px">' +
+        '<div class="row" style="gap:8px;margin-top:8px;flex-wrap:wrap">' +
           '<button class="btn primary sm" data-act="api-luu">Lưu và tải lại</button>' +
           '<button class="btn sm" data-act="api-thu">Thử kết nối</button>' +
+          '<button class="btn sm" data-act="api-soi">Soi đường đi của ảnh</button>' +
           (apiUrl() ? '<button class="btn sm" data-act="api-xoa">Bỏ nối</button>' : "") +
         "</div>" +
         '<div id="api-ket" class="tiny" style="margin-top:8px"></div>' +
@@ -3716,8 +3783,70 @@ function nenAnh(file){
  *               nên phải nằm trong thư mục của nhân viên đó.
  * @param loai   "vi_pham" · "ghi_nhan" · "chung"
  */
+/* ---------------- KHO ẢNH TRONG MÁY ----------------
+
+   ⛔ ẢNH KHÔNG BAO GIỜ ĐƯỢC NẰM TRONG KHO CHÍNH.
+
+   Trước đây chưa nối Drive thì ảnh nhét thẳng vào kho dưới dạng data URL. Kho
+   đó ghi bằng localStorage, mà localStorage chỉ có vài megabyte cho cả tên
+   miền — và quan trọng hơn, MỖI LẦN LƯU BẤT CỨ THỨ GÌ đều đẩy lại toàn bộ kho
+   kèm mọi tấm ảnh. Sửa một chữ trong biên bản cũng viết lại vài megabyte.
+
+   Nay ảnh sang IndexedDB — nơi tính bằng trăm megabyte thay vì năm — và kho
+   chính chỉ giữ một mã. Kho ở lại vài trăm KB mãi mãi, dù có bao nhiêu ảnh. */
+
+const IDB_TEN = "ttx-anh", IDB_KHO = "anh";
+let _idb = null;
+
+function moIDB(){
+  if (_idb) return _idb;
+  _idb = new Promise((ok, loi) => {
+    try {
+      const r = indexedDB.open(IDB_TEN, 1);
+      r.onupgradeneeded = () => {
+        const d = r.result;
+        if (!d.objectStoreNames.contains(IDB_KHO)) d.createObjectStore(IDB_KHO);
+      };
+      r.onsuccess = () => ok(r.result);
+      r.onerror = () => loi(r.error || new Error("Không mở được kho ảnh"));
+    } catch (e) { loi(e); }
+  }).catch(e => { _idb = null; throw e; });
+  return _idb;
+}
+
+function idbGhi(id, val){
+  return moIDB().then(d => new Promise((ok, loi) => {
+    const t = d.transaction(IDB_KHO, "readwrite");
+    t.objectStore(IDB_KHO).put(val, id);
+    t.oncomplete = () => ok(true);
+    t.onerror = () => loi(t.error || new Error("Không ghi được ảnh"));
+  }));
+}
+
+function idbDoc(id){
+  return moIDB().then(d => new Promise((ok, loi) => {
+    const t = d.transaction(IDB_KHO, "readonly");
+    const r = t.objectStore(IDB_KHO).get(id);
+    r.onsuccess = () => ok(r.result || null);
+    r.onerror = () => loi(r.error || new Error("Không đọc được ảnh"));
+  }));
+}
+
 async function catAnh(dataUrl, tenGoi, cuaAi, loai){
-  if (!Storage.coMayChu() || !Storage.token()) return { data: dataUrl };
+  if (!Storage.coMayChu() || !Storage.token()){
+    /* Chưa nối Drive: ảnh vào IndexedDB của máy này, kho chính chỉ giữ mã.
+       Ảnh không đi theo người dùng sang máy khác — nhưng chưa nối Drive thì
+       vốn đã không đi được rồi, và ít nhất kho không phình lên. */
+    try {
+      const id = "idb_" + Date.now() + "_" + Math.random().toString(36).slice(2, 8);
+      await idbGhi(id, dataUrl);
+      return { idb: id };
+    } catch (e) {
+      /* IndexedDB hỏng — riêng tư, hết chỗ, trình duyệt cũ. Quay về cách cũ
+         chứ đừng để mất ảnh của người ta. */
+      return { data: dataUrl };
+    }
+  }
   try {
     const p = String(dataUrl).indexOf(",");
     const kieu = (String(dataUrl).match(/^data:([^;]+)/) || [])[1] || "image/jpeg";
@@ -3836,7 +3965,8 @@ function openRecord(type, presetUserId){
       '<input class="input" id="rc-anh" type="file" accept="image/*" multiple>' +
       '<span class="tiny muted" style="display:block;margin-top:4px">Tối đa ' + ANH_MOI_BAN_GHI +
         " ảnh, mỗi tệp không quá " + ANH_TOI_DA_MB + "MB. Ảnh được nén lại trước khi lưu.</span>" +
-      '<div id="rc-xem" class="anh-xem"></div></div>' +
+      '<div id="rc-xem" class="anh-xem"></div>' +
+      '<div id="rc-anh-noi" class="tiny" style="margin-top:6px"></div></div>' +
     '<p class="tiny" id="rc-err" style="margin:0;color:var(--bad);min-height:16px"></p>',
     '<button class="btn ' + (type === "vi_pham" ? "bad" : "ok") + '" style="width:100%" ' +
       'data-act="save-rec" data-type="' + type + '">Gửi cho quản lý duyệt</button>');
@@ -3899,6 +4029,25 @@ async function chonAnh(input){
     '<div class="anh-o"><img src="' + a.data + '" alt="">' +
     '<button type="button" class="bo" data-bo-anh="' + i + '" title="Bỏ ảnh">✕</button>' +
     '<span class="dl">' + (a.goc/1048576).toFixed(1) + "MB → " + Math.round(a.sau/1024) + "KB</span></div>").join("");
+
+  /* Nói thẳng ảnh này sẽ đi đâu, NGAY LÚC CHỌN.
+     Trước đây người dùng không có cách nào biết ảnh lên Drive hay nằm lại
+     trong máy, cho tới khi mở Drive tìm không thấy. Mà lúc đó biên bản đã lập
+     xong rồi, không quay lại được. */
+  const noi = $("#rc-anh-noi");
+  if (noi) noi.innerHTML = RC_ANH.length ? moTaChoAnh() : "";
+}
+
+/** Một câu nói ảnh sắp cất vào đâu, và nếu không lên Drive thì vì sao. */
+function moTaChoAnh(){
+  if (!Storage.coMayChu())
+    return '<span style="color:var(--warn)">Ảnh lưu trong máy này, <b>chưa nối Drive</b> — ' +
+      'người khác mở app sẽ không xem được. Dán đường dẫn máy chủ ở Quản trị → Dữ liệu.</span>';
+  if (!Storage.token())
+    return '<span style="color:var(--warn)">Ảnh lưu trong máy này — đã nối Drive nhưng ' +
+      '<b>chưa có phiên đăng nhập</b>. Đăng xuất rồi vào lại.</span>';
+  return '<span style="color:var(--ok)">Ảnh sẽ lên Drive, vào thư mục của người ' +
+    'được nêu.</span>';
 }
 
 /** Đổ danh sách mục theo đúng người được chọn: ranh giới cộng câu cùng kiểu chấm. */
@@ -3966,10 +4115,10 @@ async function saveRecord(type){
     decidedBy: null, decidedAt: null,
     note: "", reply: "", createdAt: nowISO()
   });
-  const ok = await Storage.save(DB);
-  if (!ok){
-    recs().pop();
-    return fail("Bộ nhớ trình duyệt đã đầy, chưa lưu được. Bớt ảnh hoặc xuất bớt dữ liệu cũ ở Quản lý → Dữ liệu.");
+  const kq = await Storage.save(DB);
+  if (!kq.ok){
+    recs().pop();          // gỡ bản ghi vừa thêm, đừng để nó lửng lơ trong trí nhớ
+    return fail(kq.loi + " " + (kq.cach || ""));
   }
   RC_ANH = []; closeModal(); render();
   toast(type === "vi_pham"
@@ -4127,11 +4276,10 @@ async function saveKhieuNai(id){
       Object.assign({ ten: a.ten, kieu: a.kieu },
         await catAnh(a.data, a.ten, (user(r.subjectId) || {}).code, r.type)))),
                  decidedBy: null, decidedAt: null, note: "" };
-  const ok = await Storage.save(DB);
-  if (ok === false){
+  const kq = await Storage.save(DB);
+  if (!kq.ok){
     r.khieuNai = null;
-    $("#kn-err").textContent =
-      "Chưa lưu được, có thể do tệp kèm quá nặng. Bỏ bớt ảnh hoặc video rồi gửi lại.";
+    $("#kn-err").textContent = kq.loi + " " + (kq.cach || "");
     return;
   }
   KN_TEP = []; closeModal(); render();
@@ -5851,6 +5999,69 @@ document.addEventListener("click", async (e) => {
     return;
   }
   if (act === "api-xoa"){ datApiUrl(""); Storage.datToken(""); location.reload(); return; }
+  if (act === "api-soi"){
+    /* Soi từng mắt xích của đường ảnh, từ trên xuống. Dừng ở mắt đầu tiên
+       đứt và nói ngay phải làm gì — thay vì để người dùng lập xong biên bản
+       rồi mở Drive tìm không thấy. */
+    const o = $("#api-ket"); if (!o) return;
+    o.textContent = "Đang soi…";
+    (async () => {
+      const buoc = [];
+      const them = (ten, ok, chu) =>
+        buoc.push('<div style="display:flex;gap:8px;padding:3px 0">' +
+          '<span>' + (ok === null ? "…" : ok ? "✅" : "❌") + "</span><span>" +
+          "<b>" + ten + "</b>" + (chu ? " — " + chu : "") + "</span></div>");
+
+      const coUrl = !!apiUrl();
+      them("Đã dán đường dẫn máy chủ", coUrl,
+        coUrl ? esc(apiUrl().slice(0, 56)) + "…"
+              : "ô trên đang trống, dán đường dẫn /exec rồi bấm Lưu và tải lại");
+      if (!coUrl){ o.innerHTML = buoc.join(""); return; }
+
+      let song = false;
+      try { const r = await fetch(apiUrl()); const j = await r.json(); song = !!(j && j.ok); }
+      catch (e) {}
+      them("Máy chủ trả lời", song,
+        song ? "" : "kiểm Triển khai → Ai có quyền truy cập: Bất kỳ ai");
+      if (!song){ o.innerHTML = buoc.join(""); return; }
+
+      const coToken = !!Storage.token();
+      them("Có phiên đăng nhập với máy chủ", coToken,
+        coToken ? "" : "đăng xuất rồi đăng nhập lại — lần này máy chủ sẽ cấp phiên");
+      if (!coToken){ o.innerHTML = buoc.join(""); return; }
+
+      // Đẩy thử một ảnh một điểm ảnh, rồi đọc lại. Nhẹ, nhưng đi hết đường.
+      let idThu = "";
+      try {
+        const d = await Storage.goi("luuAnh", {
+          token: Storage.token(),
+          ten: "thu-duong-anh.png",
+          base64: "iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mP8z8BQDwAEhQGAhKmMIQAAAABJRU5ErkJggg==",
+          kieu: "image/png", maNV: (ME || {}).code || "", loai: "chung"
+        }, true);
+        idThu = d.id || "";
+        them("Đẩy được ảnh lên Drive", true,
+          "vào thư mục <b>" + esc(d.thuMuc || "?") + "</b> của " + esc(d.cuaAi || "?"));
+      } catch (e) {
+        them("Đẩy được ảnh lên Drive", false, esc(e.message));
+        o.innerHTML = buoc.join("");
+        return;
+      }
+
+      try {
+        await Storage.goi("docAnh", { token: Storage.token(), id: idThu }, false);
+        them("Tải lại được ảnh vừa đẩy", true, "cả đường thông");
+      } catch (e) {
+        them("Tải lại được ảnh vừa đẩy", false, esc(e.message));
+      }
+
+      o.innerHTML = buoc.join("") +
+        '<div class="tiny muted" style="margin-top:6px">Ảnh thử tên ' +
+        '<code>thu-duong-anh.png</code> nằm trong ngăn Chung của ' +
+        esc((ME || {}).code || "anh") + ", xoá đi được.</div>";
+    })();
+    return;
+  }
   if (act === "api-thu"){
     const o = $("#api-ket"); if (!o) return;
     const v = (($("#api-url") || {}).value || "").trim();
