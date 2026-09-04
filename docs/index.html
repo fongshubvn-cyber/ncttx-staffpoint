@@ -632,7 +632,7 @@ const Storage = (() => {
         const d2 = await goiMayChu("taiDuLieu", { token: token() }, false);
         mode = "mayChu";
         bao = "máy chủ Google: đang dùng, dữ liệu trong Drive";
-        return d2;
+        return duCanh(d2);
       } catch (e) {
         // Phiên hết hạn thì để app hiện màn hình đăng nhập, đừng rơi về kho khác:
         // rơi xuống là người dùng thấy dữ liệu cũ của máy này mà tưởng là mới.
@@ -659,12 +659,14 @@ const Storage = (() => {
           }
         }
         mode = "shared";
-        return coGi ? ra : null;
+        return coGi ? duCanh(ra) : null;
       } catch (e) { bao = "kho chung: đọc hỏng — " + e.message; kho = null; }
     }
     mode = "local";
-    try { const raw = localStorage.getItem("sao-nhan-su/v1"); return raw ? JSON.parse(raw) : null; }
-    catch (e) { return null; }
+    try {
+      const raw = localStorage.getItem("sao-nhan-su/v1");
+      return raw ? duCanh(JSON.parse(raw)) : null;
+    } catch (e) { return null; }
   }
 
   /**
@@ -731,6 +733,28 @@ const Storage = (() => {
     }
   }
 
+  /**
+   * ⛔ BÙ ĐỦ MỌI NHÁNH TRƯỚC KHI ĐƯA CHO APP.
+   *
+   * Giao diện gọi thẳng DB.criteria.filter, DB.records.filter… ở hàng chục chỗ.
+   * Thiếu đúng một khoá là app ném "Cannot read properties of undefined" ngay
+   * lúc vẽ, và người dùng thấy màn hình trắng hoặc kẹt cứng — không có cách nào
+   * đoán ra thiếu cái gì.
+   *
+   * Kho do máy chủ tạo mới không có criteria và boundaries, vì appCaiDatLanDau
+   * chỉ dựng khung rỗng. Bù ở đây là hàng rào cuối, đứng độc lập với việc máy
+   * chủ có gửi đủ hay không.
+   */
+  const NHANH_MANG = ["users", "criteria", "records", "reviews",
+                      "sites", "depts", "tracks"];
+  function duCanh(d){
+    if (!d || typeof d !== "object") return d;
+    NHANH_MANG.forEach(k => { if (!Array.isArray(d[k])) d[k] = []; });
+    if (!d.settings   || typeof d.settings   !== "object") d.settings = {};
+    if (!d.boundaries || typeof d.boundaries !== "object") d.boundaries = {};
+    return d;
+  }
+
   /* Nghe ngăn sổ sự việc. Người khác lập hay duyệt biên bản thì gọi lại fn.
      ⚠️ KHÔNG tự vẽ lại màn hình — ai đang gõ dở một biên bản sẽ mất chữ. Chỉ
      báo cho biết có cái mới, để họ tự bấm cập nhật. */
@@ -754,7 +778,7 @@ const Storage = (() => {
 
   return {
     load, save, ngheSoSuViec,
-    coMayChu, token, datToken, goi: goiMayChu,
+    coMayChu, token, datToken, goi: goiMayChu, duCanh,
     probeReport: () => bao,
     get mode() { return mode; }
   };
@@ -4440,7 +4464,7 @@ async function doLogin(code, pw){
     try {
       const d = await Storage.goi("dangNhap", { maNV: c, matKhau: pw }, true);
       Storage.datToken(d.token);
-      DB = d.db;
+      DB = Storage.duCanh(d.db);
       ME = (DB.users || []).find(x => x.id === d.meId) || null;
       if (!ME){ Storage.datToken(""); return fail("Máy chủ trả về tài khoản không rõ."); }
       VIEW = { tab:"home", profileId:null, adminTab:"criteria", boardSite:"all" };
