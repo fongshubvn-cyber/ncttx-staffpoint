@@ -3,8 +3,13 @@
 <!-- Đọc và ghi tệp .xlsx ngay trong trình duyệt, để app tự điền vào phiếu
      thay vì bắt người ta copy dán từng cột. Nạp từ cdnjs vì đó là nơi duy nhất
      trang này được phép lấy mã về. Không có nó thì màn hình tự điền tự ẩn, mọi
-     thứ còn lại vẫn chạy. -->
-<script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
+     thứ còn lại vẫn chạy.
+
+     ⛔ PHẢI CÓ defer. Thẻ script thường CHẶN trình duyệt dựng trang cho tới khi
+     tải xong — mà tệp này nặng 900 KB. Mạng chậm là người dùng nhìn màn hình
+     trắng hàng chục giây, tưởng app hỏng. Có defer thì trang hiện ra trước,
+     thư viện về sau; app chỉ cần nó lúc bấm nút xuất tệp. -->
+<script defer src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.4.0/exceljs.min.js"></script>
 
 <style>
 :root{
@@ -526,16 +531,38 @@ async function goiMayChu(viec, duLieu, laPost){
   if (!url) throw new Error("Chưa nối máy chủ.");
   const d = Object.assign({ action: viec }, duLieu || {});
 
+  /* ⛔ PHẢI CÓ HẠN GIỜ. fetch không tự bỏ cuộc: máy chủ không trả lời thì lời
+     hứa treo mãi, và vì app await nó ngay lúc khởi động, cả trang đứng im —
+     không lỗi, không thông báo, không cách nào đoán. Đó đúng là kiểu hỏng khó
+     chịu nhất. Hai mươi lăm giây là rộng rãi cho Apps Script lúc nó phải khởi
+     động nguội. */
+  const boCuoc = new AbortController();
+  const hen = setTimeout(() => boCuoc.abort(), 25000);
   let r;
-  if (laPost){
-    r = await fetch(url, { method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify(d) });
-  } else {
-    r = await fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") +
-      new URLSearchParams(d).toString());
+  try {
+    if (laPost){
+      r = await fetch(url, { method: "POST",
+        headers: { "Content-Type": "text/plain;charset=utf-8" },
+        body: JSON.stringify(d), signal: boCuoc.signal });
+    } else {
+      r = await fetch(url + (url.indexOf("?") >= 0 ? "&" : "?") +
+        new URLSearchParams(d).toString(), { signal: boCuoc.signal });
+    }
+  } catch (e) {
+    clearTimeout(hen);
+    if (e && e.name === "AbortError")
+      throw new Error("Máy chủ không trả lời sau 25 giây. Kiểm mạng, hoặc " +
+        "Triển khai → Ai có quyền truy cập phải là Bất kỳ ai.");
+    throw new Error("Không gọi được máy chủ: " + (e.message || e));
   }
-  const j = await r.json();
+  clearTimeout(hen);
+
+  let j;
+  try { j = await r.json(); }
+  catch (e) {
+    throw new Error("Máy chủ trả về thứ không đọc được. Thường là do đường dẫn " +
+      "trỏ vào bản triển khai cũ, hoặc dán nhầm /dev thay vì /exec.");
+  }
   if (!j.ok) throw new Error(j.loi || j.error || "Máy chủ báo lỗi.");
   return j.data;
 }
@@ -6284,8 +6311,24 @@ document.addEventListener("keydown", e => {
 
 /* ---------------- 12. KHỞI ĐỘNG ---------------- */
 (async function boot(){
+ /* Báo cho biết app đang chạy, đừng để trang trắng im lìm. Nếu mọi thứ trôi
+    chảy thì dòng này biến mất trong tích tắc, không ai kịp thấy. */
+ try {
+   const el = document.getElementById("app");
+   if (el && !el.innerHTML.trim())
+     el.innerHTML = '<div style="padding:60px 20px;text-align:center;color:#8e9a83;' +
+       'font:15px system-ui">Đang mở ứng dụng…</div>';
+ } catch (e) {}
+
  try{
-  const saved = await Storage.load();
+  /* ⛔ KHỞI ĐỘNG KHÔNG ĐƯỢC PHÉP TREO VÔ HẠN.
+     Storage.load có thể đợi máy chủ, và nếu máy chủ im lặng thì cả app đứng
+     im — không lỗi, không chữ, không cách nào đoán. Ba mươi giây rồi đi tiếp
+     với dữ liệu trong máy còn hơn để người dùng nhìn màn hình chết. */
+  const saved = await Promise.race([
+    Storage.load(),
+    new Promise(ok => setTimeout(() => ok(null), 30000))
+  ]);
   // Bản trước dùng danh sách demo (ADMIN/QL01/NS01). Dữ liệu cũ hơn phiên bản 3
   // là dữ liệu demo, thay hẳn bằng danh sách nhân sự thật.
   const stale = saved && (!saved.version || saved.version < 3);
