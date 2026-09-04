@@ -4463,23 +4463,78 @@ async function doLogin(code, pw){
   render();
 }
 
+/**
+ * ĐỔI MẬT KHẨU LẦN ĐẦU.
+ *
+ * ⛔ CÓ MÁY CHỦ THÌ PHẢI ĐI QUA CỬA RIÊNG, KHÔNG LƯU KIỂU THƯỜNG.
+ *
+ * Máy chủ cố ý không nhận mật khẩu gửi lên trong cục dữ liệu chung — nó lấy
+ * lại băm cũ và cả cờ mustChange từ bản đang có, để không ai sửa mật khẩu
+ * người khác bằng cách gửi một cục dữ liệu đã bị chỉnh. Đúng về bảo mật, nhưng
+ * nghĩa là màn hình này lưu kiểu thường thì mật khẩu mới bị vứt và cờ vẫn bật:
+ * app quay lại đúng màn hình đổi mật khẩu, thành vòng lặp không lối ra.
+ */
 async function doForcePw(){
   const p1 = ($("#np1")||{}).value, p2 = ($("#np2")||{}).value, err = $("#pwerr");
+  const fail = m => { if (err) err.textContent = m; };
   const bad = pwProblem(p1, p2);
-  if (bad){ if (err) err.textContent = bad; return; }
+  if (bad) return fail(bad);
+
+  if (Storage.coMayChu()){
+    const nut = document.querySelector('[data-act="force-pw"]');
+    if (nut){ nut.disabled = true; nut.textContent = "Đang lưu…"; }
+    try {
+      // Lần đầu thì máy chủ không đòi mật khẩu cũ, vì chính nó đã bật cờ.
+      const d = await Storage.goi("doiMatKhau", { token: Storage.token(), cu: "", moi: p1 }, true);
+      if (d && d.token) Storage.datToken(d.token);   // phiên mới, phiên cũ bỏ
+      const moi = await Storage.load();
+      if (moi){
+        DB = moi;
+        ME = (DB.users || []).find(u => u.id === ME.id) || ME;
+      }
+      ME.mustChange = false;
+      render();
+      toast("Đã đặt mật khẩu mới.");
+    } catch (e) {
+      if (nut){ nut.disabled = false; nut.textContent = "Lưu và vào app"; }
+      fail(e.message || "Máy chủ không nhận được mật khẩu mới.");
+    }
+    return;
+  }
+
   await setPw(ME, p1, false); setSession(ME);
-  await persist(); render(); toast("Đã đặt mật khẩu mới.");
+  const kq = await Storage.save(DB);
+  if (kq && !kq.ok) return fail(kq.loi + " " + (kq.cach || ""));
+  render(); toast("Đã đặt mật khẩu mới.");
 }
 
 async function saveMyPw(){
   const cur = ($("#cp0")||{}).value, p1 = ($("#cp1")||{}).value, p2 = ($("#cp2")||{}).value, err = $("#cperr");
   const fail = m => { if (err) err.textContent = m; };
-  if (!(await checkPw(ME, cur))) return fail("Mật khẩu hiện tại không đúng.");
   const bad = pwProblem(p1, p2);
   if (bad) return fail(bad);
   if (p1 === cur) return fail("Mật khẩu mới phải khác mật khẩu cũ.");
+
+  /* Có máy chủ: gửi cả mật khẩu cũ lên cho MÁY CHỦ kiểm, đừng kiểm ở đây.
+     Băm không nằm trong dữ liệu tải về nữa nên checkPw ở trình duyệt luôn sai. */
+  if (Storage.coMayChu()){
+    if (!cur) return fail("Nhập mật khẩu hiện tại.");
+    try {
+      const d = await Storage.goi("doiMatKhau", { token: Storage.token(), cu: cur, moi: p1 }, true);
+      if (d && d.token) Storage.datToken(d.token);
+      closeModal();
+      toast("Đã đổi mật khẩu. Các thiết bị khác sẽ phải đăng nhập lại.");
+    } catch (e) {
+      fail(e.message || "Máy chủ không nhận được mật khẩu mới.");
+    }
+    return;
+  }
+
+  if (!(await checkPw(ME, cur))) return fail("Mật khẩu hiện tại không đúng.");
   await setPw(ME, p1, false); setSession(ME);
-  await persist(); closeModal(); toast("Đã đổi mật khẩu. Các thiết bị khác sẽ phải đăng nhập lại.");
+  const kq = await Storage.save(DB);
+  if (kq && !kq.ok) return fail(kq.loi + " " + (kq.cach || ""));
+  closeModal(); toast("Đã đổi mật khẩu. Các thiết bị khác sẽ phải đăng nhập lại.");
 }
 
 async function doResetPw(id){
