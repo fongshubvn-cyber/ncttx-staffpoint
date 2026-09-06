@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { AuthUser, Staff } from '../types';
-import { Lock, User, KeyRound, ShieldAlert, CheckCircle2, Sparkles, LogOut, ArrowRight, ShieldCheck, Leaf, Cloud, Rocket, Terminal, Check, ExternalLink } from 'lucide-react';
+import { Lock, User, KeyRound, ShieldAlert, CheckCircle2, Sparkles, LogOut, ArrowRight, ShieldCheck, Leaf } from 'lucide-react';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -33,7 +33,6 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [idInput, setIdInput] = useState<string>('');
   const [passwordInput, setPasswordInput] = useState<string>('');
   const [errorMsg, setErrorMsg] = useState<string>('');
-  const [showDeployModal, setShowDeployModal] = useState<boolean>(false);
 
   // Password Change Step State
   const [isChangingPasswordStep, setIsChangingPasswordStep] = useState<boolean>(false);
@@ -385,91 +384,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
               </div>
             </form>
           )}
-
-          {/* SECTION: DEPLOY CLOUD ACTIONS */}
-          <div className="pt-3 border-t border-slate-100">
-            <button
-              type="button"
-              onClick={() => setShowDeployModal(true)}
-              className="w-full py-2.5 rounded-2xl bg-gradient-to-r from-slate-900 to-emerald-950 text-white font-extrabold text-xs shadow-md border border-emerald-500/30 flex items-center justify-center gap-2 hover:bg-slate-800 active:scale-95 transition-all"
-            >
-              <Rocket className="w-3.5 h-3.5 text-emerald-400 animate-pulse" />
-              <span>🚀 Triển Khai Cloud (Deploy Web)</span>
-            </button>
-          </div>
-
         </div>
       </div>
-
-      {/* DEPLOY INSTRUCTIONS & STATUS MODAL */}
-      {showDeployModal && (
-        <div className="fixed inset-0 z-50 bg-black/75 backdrop-blur-md flex items-center justify-center p-4 animate-in fade-in duration-200">
-          <div className="bg-slate-900 text-white max-w-md w-full rounded-3xl p-5 border border-emerald-500/40 shadow-2xl space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-              <div className="flex items-center gap-2">
-                <Rocket className="w-5 h-5 text-emerald-400" />
-                <h3 className="font-extrabold text-base text-white">Triển Khai WebApp Lên Cloud</h3>
-              </div>
-              <button
-                onClick={() => setShowDeployModal(false)}
-                className="text-slate-400 hover:text-white p-1"
-              >
-                ✕
-              </button>
-            </div>
-
-            <div className="space-y-3 text-xs text-slate-300">
-              <div className="p-3 rounded-2xl bg-emerald-950/60 border border-emerald-500/30 space-y-1">
-                <p className="font-bold text-emerald-300 flex items-center gap-1.5">
-                  <Check className="w-4 h-4 text-emerald-400" />
-                  <span>Dự án đã đóng gói sẵn sàng!</span>
-                </p>
-                <p className="text-[11px] text-slate-300">
-                  Mọi thay đổi giao diện (Option 1 Glass) & dữ liệu đã được biên dịch thành công vào thư mục <code className="text-emerald-300 font-mono bg-black/40 px-1 py-0.5 rounded">dist/</code>.
-                </p>
-              </div>
-
-              <div className="space-y-2">
-                <p className="font-extrabold text-white text-xs">💻 Lệnh Deploy Nhanh Từ Terminal:</p>
-                <div className="p-3 bg-black/80 rounded-2xl border border-slate-800 font-mono text-[11px] text-emerald-400 space-y-1">
-                  <div className="flex items-center gap-1.5">
-                    <Terminal className="w-3.5 h-3.5 text-slate-400" />
-                    <span>Windows Batch Script:</span>
-                  </div>
-                  <div className="text-white pl-5 font-bold">.\deploy.bat</div>
-                  <div className="text-slate-500 pt-1 text-[10px]">Hoặc lệnh trực tiếp:</div>
-                  <div className="text-emerald-300 pl-5">npm run deploy</div>
-                </div>
-              </div>
-
-              <div className="p-3 rounded-2xl bg-slate-800/80 border border-slate-700 flex items-center justify-between gap-2">
-                <div>
-                  <div className="font-bold text-white text-xs">Link Web Trực Tuyến GitHub Pages:</div>
-                  <div className="text-[10px] text-slate-400 font-mono truncate">
-                    https://fongshubvn-cyber.github.io/ncttx-staffpoint/
-                  </div>
-                </div>
-                <a
-                  href="https://fongshubvn-cyber.github.io/ncttx-staffpoint/"
-                  target="_blank"
-                  rel="noreferrer"
-                  className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-[11px] shrink-0 flex items-center gap-1 shadow"
-                >
-                  <span>Truy Cập</span>
-                  <ExternalLink className="w-3 h-3" />
-                </a>
-              </div>
-            </div>
-
-            <button
-              onClick={() => setShowDeployModal(false)}
-              className="w-full py-2.5 rounded-2xl bg-slate-800 hover:bg-slate-700 text-white font-bold text-xs border border-slate-700"
-            >
-              Đóng Cửa Sổ
-            </button>
-          </div>
-        </div>
-      )}
     </div>
   );
 };

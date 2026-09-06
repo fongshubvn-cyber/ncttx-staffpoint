@@ -34,6 +34,8 @@ interface NavbarProps {
   onOpenLoginModal: () => void;
   onLogout: () => void;
   incidents?: IncidentRecord[];
+  uiOption?: 'default' | 'option1';
+  onSelectUiOption?: (option: 'default' | 'option1') => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -47,6 +49,8 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenLoginModal,
   onLogout,
   incidents = [],
+  uiOption = 'default',
+  onSelectUiOption,
 }) => {
   const [cloudSyncInfo, setCloudSyncInfo] = React.useState<{ status: CloudSyncState; errorDetails: string | null }>({
     status: 'connecting',
@@ -166,6 +170,18 @@ export const Navbar: React.FC<NavbarProps> = ({
               >
                 <LogOut className="w-3 h-3 text-rose-300" />
                 <span>Đăng xuất</span>
+              </button>
+            )}
+
+            {/* 2-Way UI Mode Toggle Button */}
+            {onSelectUiOption && (
+              <button
+                onClick={() => onSelectUiOption(uiOption === 'option1' ? 'default' : 'option1')}
+                className="text-[10px] px-2.5 py-1 rounded-full bg-gradient-to-r from-emerald-500 to-teal-500 hover:from-emerald-400 hover:to-teal-400 text-white font-extrabold flex items-center space-x-1 border border-emerald-300 shadow-sm transition-all active:scale-95 whitespace-nowrap"
+                title="Đổi giao diện Option 1 Glass / Classic Forest (2 chiều)"
+              >
+                <Sparkles className="w-3 h-3 text-amber-300 animate-pulse" />
+                <span>{uiOption === 'option1' ? 'Option 1' : 'Đổi sang Option 1'}</span>
               </button>
             )}
 

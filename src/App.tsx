@@ -541,6 +541,11 @@ export function App() {
             setShowLoginModal(false);
           }}
           incidents={incidents}
+          uiOption={uiOption}
+          onSelectUiOption={(opt) => {
+            setUiOption(opt);
+            localStorage.setItem('ncttx_ui_option', opt);
+          }}
         />
 
         {/* Main Mobile Body Content */}
