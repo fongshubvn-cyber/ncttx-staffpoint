@@ -10,6 +10,7 @@ import { HistoryView } from './components/HistoryView';
 import { GuideView } from './components/GuideView';
 import { IncidentFormModal } from './components/IncidentFormModal';
 import { LoginModal } from './components/LoginModal';
+import { Option1Layout } from './components/option1/Option1Layout';
 
 import { 
   Staff, 
@@ -42,6 +43,19 @@ export function App() {
   const [incidentModalType, setIncidentModalType] = useState<IncidentType | undefined>(undefined);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [incidentsFilterType, setIncidentsFilterType] = useState<string>('all');
+
+  const [uiOption, setUiOption] = useState<'default' | 'option1'>(() => {
+    const saved = localStorage.getItem('ncttx_ui_option');
+    return (saved === 'default' || saved === 'option1') ? saved : 'option1';
+  });
+
+  const handleToggleUiOption = () => {
+    setUiOption(prev => {
+      const next = prev === 'option1' ? 'default' : 'option1';
+      localStorage.setItem('ncttx_ui_option', next);
+      return next;
+    });
+  };
 
   const handleOpenIncidentModal = (targetId?: string, type?: IncidentType) => {
     setIncidentModalTargetId(targetId);
@@ -429,6 +443,72 @@ export function App() {
     );
   }
 
+  if (uiOption === 'option1') {
+    return (
+      <>
+        <Option1Layout
+          activeTab={activeTab}
+          setActiveTab={setActiveTab}
+          staffList={staffList}
+          incidents={incidents}
+          questions={questions}
+          lines={lines}
+          params={params}
+          currentUser={currentUser}
+          isManager={isManager}
+          onOpenIncidentModal={handleOpenIncidentModal}
+          onOpenLoginModal={() => setShowLoginModal(true)}
+          onLogout={() => setCurrentUser(null)}
+          onAddStaff={handleAddStaff}
+          onAddQuestion={handleAddQuestion}
+          onDeleteQuestion={handleDeleteQuestion}
+          onAddIncident={handleAddIncident}
+          onUpdateStatus={handleUpdateIncidentStatus}
+          onAppealIncident={handleAppealIncident}
+          onResolveAppeal={handleResolveAppeal}
+          uiOption={uiOption}
+          onToggleUiOption={handleToggleUiOption}
+        />
+
+        <IncidentFormModal
+          show={showGlobalIncidentModal}
+          onClose={() => {
+            setShowGlobalIncidentModal(false);
+            setIncidentModalTargetId(undefined);
+            setIncidentModalType(undefined);
+          }}
+          staffList={staffList}
+          questions={questions}
+          lines={lines}
+          onAddIncident={handleAddIncident}
+          isManager={isManager}
+          initialTargetId={incidentModalTargetId}
+          initialType={incidentModalType}
+          params={params}
+          currentUser={currentUser}
+          onViewSubmittedList={() => {
+            setActiveTab('incidents');
+            setIncidentsFilterType('my_submitted');
+          }}
+        />
+
+        <LoginModal
+          isOpen={showLoginModal}
+          onClose={() => setShowLoginModal(false)}
+          staffList={staffList}
+          currentUser={currentUser}
+          onLogin={(user) => setCurrentUser(user)}
+          onLogout={() => {
+            setCurrentUser(null);
+            setShowLoginModal(false);
+          }}
+          userPasswords={userPasswords}
+          onUpdatePassword={handleUpdatePassword}
+        />
+      </>
+    );
+  }
+
   return (
     <div className="min-h-screen bg-[#EDEAE3] text-[#2D3748] flex items-center justify-center p-0 sm:p-4 font-sans">
       
@@ -450,6 +530,8 @@ export function App() {
             setShowLoginModal(false);
           }}
           incidents={incidents}
+          uiOption={uiOption}
+          onToggleUiOption={handleToggleUiOption}
         />
 
         {/* Main Mobile Body Content */}
