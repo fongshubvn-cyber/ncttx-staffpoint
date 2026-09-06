@@ -52,8 +52,6 @@ interface Option1LayoutProps {
   onUpdateStatus: (id: string, status: 'Đã duyệt' | 'Từ chối') => void;
   onAppealIncident: (incidentId: string, reason: string) => void;
   onResolveAppeal: (incidentId: string, approved: boolean) => void;
-  uiOption: 'default' | 'option1';
-  onToggleUiOption: () => void;
 }
 
 export const Option1Layout: React.FC<Option1LayoutProps> = ({
@@ -76,8 +74,6 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   onUpdateStatus,
   onAppealIncident,
   onResolveAppeal,
-  uiOption,
-  onToggleUiOption,
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
@@ -137,18 +133,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             })}
           </nav>
 
-          {/* Right Header Controls: UI Switcher & Account */}
+          {/* Right Header Controls: Account */}
           <div className="flex items-center gap-2">
-            {/* UI Mode Toggle Pill */}
-            <button
-              onClick={onToggleUiOption}
-              className="flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold border border-emerald-200 transition-all shadow-sm"
-              title="Chuyển sang Giao diện Gốc (v3.0 Default)"
-            >
-              <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-              <span className="hidden sm:inline">Giao Diện Option 1</span>
-              <span className="sm:hidden text-[10px]">Option 1</span>
-            </button>
 
             {/* Account Profile / Login Button */}
             {currentUser ? (

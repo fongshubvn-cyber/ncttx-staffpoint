@@ -34,8 +34,6 @@ interface NavbarProps {
   onOpenLoginModal: () => void;
   onLogout: () => void;
   incidents?: IncidentRecord[];
-  uiOption?: 'default' | 'option1';
-  onToggleUiOption?: () => void;
 }
 
 export const Navbar: React.FC<NavbarProps> = ({
@@ -49,8 +47,6 @@ export const Navbar: React.FC<NavbarProps> = ({
   onOpenLoginModal,
   onLogout,
   incidents = [],
-  uiOption,
-  onToggleUiOption,
 }) => {
   const [cloudSyncInfo, setCloudSyncInfo] = React.useState<{ status: CloudSyncState; errorDetails: string | null }>({
     status: 'connecting',
@@ -137,17 +133,6 @@ export const Navbar: React.FC<NavbarProps> = ({
                 </>
               )}
             </div>
-
-            {onToggleUiOption && (
-              <button
-                onClick={onToggleUiOption}
-                className="text-[10px] px-2.5 py-1 rounded-full bg-emerald-700 hover:bg-emerald-600 text-white font-extrabold flex items-center space-x-1 border border-emerald-400/50 shadow-sm transition-all active:scale-95"
-                title="Chuyển sang Giao diện Option 1 (WebApp Mobile & Desktop)"
-              >
-                <Sparkles className="w-3 h-3 text-emerald-300 animate-pulse" />
-                <span>Giao diện Option 1</span>
-              </button>
-            )}
           </div>
 
           {/* Button System: Account, Đăng Nhập, Đăng Xuất */}

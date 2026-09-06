@@ -46,16 +46,8 @@ export function App() {
 
   const [uiOption, setUiOption] = useState<'default' | 'option1'>(() => {
     const saved = localStorage.getItem('ncttx_ui_option');
-    return (saved === 'default' || saved === 'option1') ? saved : 'option1';
+    return (saved === 'default' || saved === 'option1') ? saved : 'default';
   });
-
-  const handleToggleUiOption = () => {
-    setUiOption(prev => {
-      const next = prev === 'option1' ? 'default' : 'option1';
-      localStorage.setItem('ncttx_ui_option', next);
-      return next;
-    });
-  };
 
   const handleOpenIncidentModal = (targetId?: string, type?: IncidentType) => {
     setIncidentModalTargetId(targetId);
@@ -466,8 +458,6 @@ export function App() {
           onUpdateStatus={handleUpdateIncidentStatus}
           onAppealIncident={handleAppealIncident}
           onResolveAppeal={handleResolveAppeal}
-          uiOption={uiOption}
-          onToggleUiOption={handleToggleUiOption}
         />
 
         <IncidentFormModal
@@ -530,8 +520,6 @@ export function App() {
             setShowLoginModal(false);
           }}
           incidents={incidents}
-          uiOption={uiOption}
-          onToggleUiOption={handleToggleUiOption}
         />
 
         {/* Main Mobile Body Content */}
