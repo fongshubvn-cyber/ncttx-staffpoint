@@ -1,0 +1,172 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 16px;
+  }
+
+  body {
+    background-color: #EDEAE3;
+    color: #2D3748;
+    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    -webkit-tap-highlight-color: transparent;
+    font-size: 1rem;
+    line-height: 1.45;
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    font-family: 'Be Vietnam Pro', sans-serif;
+  }
+}
+
+/* Mobile Container - Warm Sand Background & Slate Frame */
+.mobile-container {
+  max-width: 480px;
+  margin: 0 auto;
+  min-height: 100vh;
+  position: relative;
+  background-color: #EDEAE3;
+  box-shadow: 0 20px 40px -15px rgba(27, 67, 50, 0.15);
+  overflow-x: hidden;
+  display: flex;
+  flex-direction: column;
+}
+
+@media (min-width: 640px) {
+  .mobile-container {
+    min-height: 90vh;
+    margin-top: 1.5rem;
+    margin-bottom: 1.5rem;
+    border-radius: 40px;
+    border: 8px solid #1B4332;
+    outline: 2px solid #2D6A4F;
+  }
+}
+
+/* Brand Card Style: Clean White on Warm Sand */
+.mobile-card {
+  background: #FFFFFF;
+  border: 1px solid rgba(27, 67, 50, 0.08);
+  border-radius: 1.5rem;
+  box-shadow: 0 4px 18px -2px rgba(27, 67, 50, 0.06);
+}
+
+.brand-gradient {
+  background: linear-gradient(135deg, #1B4332 0%, #2D6A4F 100%);
+}
+
+.brand-gradient-soft {
+  background: linear-gradient(135deg, #2D6A4F 0%, #52B788 100%);
+}
+
+/* Mobile Bottom Sheet Modal */
+.bottom-sheet {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
+  background: rgba(27, 67, 50, 0.45);
+  backdrop-filter: blur(8px);
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.bottom-sheet-content {
+  background: #FFFFFF;
+  border-top-left-radius: 2rem;
+  border-top-right-radius: 2rem;
+  border-top: 1px solid rgba(27, 67, 50, 0.12);
+  padding: 1.5rem;
+  max-height: 90vh;
+  overflow-y: auto;
+  box-shadow: 0 -10px 30px rgba(0, 0, 0, 0.1);
+}
+
+@keyframes slideUp {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #2D6A4F;
+  border-radius: 9999px;
+}
+
+/* PDF Print & Export Styles */
+@media print {
+  @page {
+    margin: 8mm 10mm;
+    size: A4 portrait;
+  }
+
+  body {
+    background-color: #FFFFFF !important;
+    color: #000000 !important;
+    font-size: 11px !important;
+  }
+
+  /* Hide app navigation chrome when generating PDF */
+  header, nav, .bottom-sheet, .print\:hidden, button {
+    display: none !important;
+  }
+
+  .mobile-container {
+    max-width: 100% !important;
+    min-height: auto !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    background: #FFFFFF !important;
+  }
+
+  .mobile-card {
+    box-shadow: none !important;
+    border: 1px solid #CBD5E1 !important;
+    page-break-inside: auto !important;
+    break-inside: auto !important;
+    margin-bottom: 8px !important;
+    padding: 10px !important;
+  }
+
+  main {
+    padding: 0 !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure attached evidence images render directly on PDF pages cleanly */
+  img {
+    max-width: 100% !important;
+    max-height: 200px !important;
+    object-fit: contain !important;
+    display: block !important;
+    page-break-inside: avoid !important;
+    break-inside: avoid !important;
+    border-radius: 6px !important;
+    border: 1px solid #CBD5E1 !important;
+  }
+
+  /* Compact headings and elements for print */
+  h1, h2, h3, h4 {
+    page-break-after: avoid;
+    break-after: avoid;
+  }
+}

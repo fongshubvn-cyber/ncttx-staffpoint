@@ -1,0 +1,26 @@
+# ⛔ KHO DỮ LIỆU — TUYỆT ĐỐI KHÔNG LÊN GITHUB
+# Chứa mật khẩu đã băm của 33 người thật, tên thật, chức danh, và nội dung
+# biên bản về từng cá nhân. Repo này PUBLIC (điều kiện của GitHub Pages bản
+# miễn phí), nên mọi thứ ở đây ai cũng đọc được.
+DuLieu_DanhGiaNhanSu.json
+SaoLuu_*.json
+NhapVao.json
+
+# Phiếu và bảng tải về — có tên và điểm của người thật
+*.xlsx
+*.xlsm
+*.csv
+
+# Bản goc/ trước khi áp bản mới, soat.py tự sinh
+_goc_cu/
+thu-nghiem/
+
+# Thư viện của bộ kiểm thử SQL, npm tự tải lại được
+node_modules/
+
+# Rác hệ điều hành
+.DS_Store
+Thumbs.db
+desktop.ini
+__pycache__/
+*.pyc
