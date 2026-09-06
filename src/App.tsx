@@ -55,7 +55,7 @@ export function App() {
     } catch (e) {}
 
     const saved = localStorage.getItem('ncttx_ui_option');
-    return (saved === 'default' || saved === 'option1') ? saved : 'default';
+    return (saved === 'default' || saved === 'option1') ? saved : 'option1';
   });
 
   const handleOpenIncidentModal = (targetId?: string, type?: IncidentType) => {
@@ -455,6 +455,8 @@ export function App() {
           questions={questions}
           lines={lines}
           params={params}
+          baselinePoints={baselinePoints}
+          onUpdateParams={(newParams) => setParams(newParams)}
           currentUser={currentUser}
           isManager={isManager}
           onOpenIncidentModal={handleOpenIncidentModal}
@@ -467,6 +469,11 @@ export function App() {
           onUpdateStatus={handleUpdateIncidentStatus}
           onAppealIncident={handleAppealIncident}
           onResolveAppeal={handleResolveAppeal}
+          uiOption={uiOption}
+          onSelectUiOption={(opt) => {
+            setUiOption(opt);
+            localStorage.setItem('ncttx_ui_option', opt);
+          }}
         />
 
         <IncidentFormModal
@@ -503,6 +510,11 @@ export function App() {
           }}
           userPasswords={userPasswords}
           onUpdatePassword={handleUpdatePassword}
+          uiOption={uiOption}
+          onSelectUiOption={(opt) => {
+            setUiOption(opt);
+            localStorage.setItem('ncttx_ui_option', opt);
+          }}
         />
       </>
     );
@@ -651,6 +663,11 @@ export function App() {
           }}
           userPasswords={userPasswords}
           onUpdatePassword={handleUpdatePassword}
+          uiOption={uiOption}
+          onSelectUiOption={(opt) => {
+            setUiOption(opt);
+            localStorage.setItem('ncttx_ui_option', opt);
+          }}
         />
 
       </div>

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Staff, DepartmentLine, ParameterConfig, AuthUser, SpeechType } from '../../types';
-import { getSalaryTierBadge } from '../../utils/calculator';
+import { getSalaryTierBadge, calculateTotalScoreForStaff, calculateSalaryTier } from '../../utils/calculator';
 import { 
   Users, 
   Search, 
@@ -147,8 +147,9 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
       {/* Staff Grid Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {filteredStaff.map((staff) => {
-          const overallScore = Math.round(((staff.generalScore * 0.4) + (staff.techScore * 0.6)) * 10) / 10;
-          const tier = getSalaryTierBadge(overallScore);
+          const overallScore = calculateTotalScoreForStaff(staff, params);
+          const salaryTierNum = calculateSalaryTier(overallScore, params);
+          const tier = getSalaryTierBadge(salaryTierNum);
           const isDeaf = staff.speechCapability === 'Người điếc/ khiếm thính';
 
           return (

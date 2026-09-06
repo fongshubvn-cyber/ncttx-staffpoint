@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Staff, IncidentRecord, DepartmentLine, ParameterConfig, AuthUser, Question } from '../../types';
-import { getSalaryTierBadge } from '../../utils/calculator';
+import { getSalaryTierBadge, calculateTotalScoreForStaff, calculateSalaryTier } from '../../utils/calculator';
 import { 
   BarChart3, 
   Printer, 
@@ -60,8 +60,9 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
 
   if (!selectedStaff) return null;
 
-  const overallScore = Math.round(((selectedStaff.generalScore * 0.4) + (selectedStaff.techScore * 0.6)) * 10) / 10;
-  const tier = getSalaryTierBadge(overallScore);
+  const overallScore = calculateTotalScoreForStaff(selectedStaff, params);
+  const salaryTierNum = calculateSalaryTier(overallScore, params);
+  const tier = getSalaryTierBadge(salaryTierNum);
 
   return (
     <div className="space-y-6 pb-12">
