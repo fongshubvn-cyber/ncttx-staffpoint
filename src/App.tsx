@@ -45,6 +45,15 @@ export function App() {
   const [incidentsFilterType, setIncidentsFilterType] = useState<string>('all');
 
   const [uiOption, setUiOption] = useState<'default' | 'option1'>(() => {
+    try {
+      const urlParams = new URLSearchParams(window.location.search);
+      const queryUi = urlParams.get('ui');
+      if (queryUi === 'option1' || queryUi === 'default') {
+        localStorage.setItem('ncttx_ui_option', queryUi);
+        return queryUi;
+      }
+    } catch (e) {}
+
     const saved = localStorage.getItem('ncttx_ui_option');
     return (saved === 'default' || saved === 'option1') ? saved : 'default';
   });
