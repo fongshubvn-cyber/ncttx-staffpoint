@@ -337,6 +337,43 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                 </div>
               </div>
 
+              {/* UI Mode Selector directly inside Login Form */}
+              {onSelectUiOption && (
+                <div className="pt-1">
+                  <label className="block text-xs font-bold text-slate-700 mb-1.5 flex items-center justify-between">
+                    <span>Chọn Giao Diện Truy Cập</span>
+                    <span className="text-[10px] text-emerald-600 font-extrabold">Option 1 / Classic</span>
+                  </label>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      type="button"
+                      onClick={() => onSelectUiOption('option1')}
+                      className={`p-2.5 rounded-2xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                        uiOption === 'option1'
+                          ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-600 shadow-md shadow-emerald-600/25 ring-2 ring-emerald-500/30'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Sparkles className="w-3.5 h-3.5 shrink-0 text-amber-300" />
+                      <span className="whitespace-nowrap">Option 1 Glass</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => onSelectUiOption('default')}
+                      className={`p-2.5 rounded-2xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
+                        uiOption === 'default'
+                          ? 'bg-[#1B4332] text-white border-[#1B4332] shadow-md ring-2 ring-[#2D6A4F]/30'
+                          : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-slate-100'
+                      }`}
+                    >
+                      <Leaf className="w-3.5 h-3.5 shrink-0 text-emerald-400" />
+                      <span className="whitespace-nowrap">Classic Forest</span>
+                    </button>
+                  </div>
+                </div>
+              )}
+
               <div className="pt-1">
                 <button
                   type="submit"
@@ -349,45 +386,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
             </form>
           )}
 
-          {/* SECTION: UI MODE SELECTOR & DEPLOY CLOUD ACTIONS */}
-          <div className="pt-3 border-t border-slate-100 space-y-2.5">
-            {/* UI Mode Selector */}
-            {onSelectUiOption && (
-              <div>
-                <label className="block text-[10px] font-extrabold text-slate-400 uppercase tracking-wider text-center mb-1.5">
-                  🎨 Tùy chọn giao diện WebApp
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => onSelectUiOption('option1')}
-                    className={`p-2 rounded-2xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
-                      uiOption === 'option1'
-                        ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-600 shadow-md shadow-emerald-600/20'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Sparkles className="w-3.5 h-3.5" />
-                    <span>Option 1 Glass</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => onSelectUiOption('default')}
-                    className={`p-2 rounded-2xl text-xs font-bold transition-all border flex items-center justify-center gap-1.5 ${
-                      uiOption === 'default'
-                        ? 'bg-[#1B4332] text-white border-[#1B4332] shadow-md shadow-emerald-900/20'
-                        : 'bg-slate-50 text-slate-700 border-slate-200 hover:bg-slate-100'
-                    }`}
-                  >
-                    <Leaf className="w-3.5 h-3.5" />
-                    <span>Classic Forest</span>
-                  </button>
-                </div>
-              </div>
-            )}
-
-            {/* Deploy Cloud Button */}
+          {/* SECTION: DEPLOY CLOUD ACTIONS */}
+          <div className="pt-3 border-t border-slate-100">
             <button
               type="button"
               onClick={() => setShowDeployModal(true)}
