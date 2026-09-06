@@ -1,6 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { IncidentRecord, Staff, Question, AuthUser } from '../../types';
-import { isHRHeadRole, getActiveHRHead } from '../../utils/calculator';
+import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole } from '../../utils/calculator';
 import { 
   Trophy, 
   Plus, 
@@ -11,7 +11,9 @@ import {
   CheckCircle2, 
   Send, 
   X,
-  Image as ImageIcon
+  Image as ImageIcon,
+  UserCheck,
+  FileText
 } from 'lucide-react';
 
 interface Option1IncidentsViewProps {
@@ -47,21 +49,51 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
   const [appealReason, setAppealReason] = useState<string>('');
   const [viewImageModal, setViewImageModal] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (initialFilterType) {
+      setFilterType(initialFilterType);
+    }
+  }, [initialFilterType]);
+
   const isHRManager = isHRHeadRole(currentUser);
+  const isManagerOrDeptHead = isManager || isDeptHeadOrAboveRole(currentUser) || isHRManager;
   const activeHRHead = getActiveHRHead(staffList);
 
-  const filteredIncidents = incidents.filter((item) => {
-    const targetStaff = staffList.find(s => s.id === item.targetId);
-    const staffName = targetStaff ? targetStaff.name : item.targetId;
-    const matchesSearch = staffName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                          item.targetId.toLowerCase().includes(searchTerm.toLowerCase());
+  // Privacy & Access Scoping:
+  // Managers / Dept Heads / HR / Admin see all tickets across company.
+  // Regular staff see tickets where they are the recipient (target) OR creator (reporter).
+  const userIncidents = incidents.filter(item => {
+    if (isManagerOrDeptHead) return true;
+    if (!currentUser) return true;
+    return item.reporterId === currentUser?.id || item.targetId === currentUser?.id;
+  });
 
-    if (!matchesSearch) return false;
+  const mySubmittedIncidents = userIncidents.filter(i => i.reporterId === currentUser?.id);
+  const myReceivedIncidents = userIncidents.filter(i => i.targetId === currentUser?.id);
 
+  const filteredIncidents = userIncidents.filter((item) => {
+    if (filterType === 'my_submitted') {
+      return item.reporterId === currentUser?.id;
+    }
+    if (filterType === 'my_received') {
+      return item.targetId === currentUser?.id;
+    }
     if (filterType === 'ghi_nhan') return item.type === 'ghi_nhan';
     if (filterType === 'vi_pham') return item.type === 'vi_pham';
     if (filterType === 'khang_nghi') return item.status === 'Đang kháng nghị' || !!item.appealReason;
+
+    const targetStaff = staffList.find(s => s.id === item.targetId);
+    const staffName = targetStaff ? targetStaff.name : item.targetId;
+    const reporterName = item.reporterName || '';
+    const term = searchTerm.toLowerCase();
+    const matchesSearch = !term || 
+                          staffName.toLowerCase().includes(term) ||
+                          reporterName.toLowerCase().includes(term) ||
+                          item.title.toLowerCase().includes(term) ||
+                          item.targetId.toLowerCase().includes(term) ||
+                          (item.reporterId && item.reporterId.toLowerCase().includes(term));
+
+    if (!matchesSearch) return false;
 
     return true;
   });
@@ -81,9 +113,11 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-emerald-600" />
-            <h2 className="text-xl font-bold text-slate-900">Nhật Ký Phản Hồi ({incidents.length})</h2>
+            <h2 className="text-xl font-bold text-slate-900">Nhật Ký Phản Hồi ({userIncidents.length})</h2>
           </div>
-          <p className="text-xs text-slate-500 mt-1">Ghi nhận khen thưởng, biên bản vi phạm & kháng nghị 48h</p>
+          <p className="text-xs text-slate-500 mt-1">
+            Ghi nhận khen thưởng, biên bản vi phạm & kháng nghị 48h (Hỗ trợ xem lại phiếu bạn nhận và phiếu bạn đã lập)
+          </p>
         </div>
 
         {isManager && (
@@ -103,7 +137,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm theo tiêu đề, nhân sự nhận phiếu..."
+            placeholder="Tìm theo tiêu đề, tên nhân sự nhận phiếu hoặc người lập..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-white rounded-2xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm"
@@ -111,45 +145,79 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
         </div>
 
         <div className="flex items-center gap-2 overflow-x-auto pb-1 scrollbar-none">
+          {/* Quick Filter: My Received Tickets */}
+          {currentUser && (
+            <button
+              onClick={() => setFilterType('my_received')}
+              className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 whitespace-nowrap ${
+                filterType === 'my_received'
+                  ? 'bg-emerald-700 text-white border-emerald-700 shadow-sm'
+                  : 'bg-emerald-50 text-emerald-800 border-emerald-200 hover:bg-emerald-100'
+              }`}
+            >
+              <span>🎯 Phiếu nhận của tôi</span>
+              <span className="bg-emerald-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                {myReceivedIncidents.length}
+              </span>
+            </button>
+          )}
+
+          {/* Quick Filter: My Submitted Tickets */}
+          {currentUser && (
+            <button
+              onClick={() => setFilterType('my_submitted')}
+              className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border flex items-center gap-1.5 whitespace-nowrap ${
+                filterType === 'my_submitted'
+                  ? 'bg-blue-700 text-white border-blue-700 shadow-sm'
+                  : 'bg-blue-50 text-blue-800 border-blue-200 hover:bg-blue-100'
+              }`}
+            >
+              <span>📝 Phiếu tôi đã lập</span>
+              <span className="bg-blue-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-bold">
+                {mySubmittedIncidents.length}
+              </span>
+            </button>
+          )}
+
           <button
             onClick={() => setFilterType('all')}
-            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border ${
+            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap ${
               filterType === 'all'
                 ? 'bg-slate-900 text-white border-slate-900 shadow-sm'
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Tất cả ({incidents.length})
+            Tất cả ({userIncidents.length})
           </button>
           <button
             onClick={() => setFilterType('ghi_nhan')}
-            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border ${
+            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap ${
               filterType === 'ghi_nhan'
                 ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Tuyên Dương (+{incidents.filter(i => i.type === 'ghi_nhan').length})
+            Tuyên Dương (+{userIncidents.filter(i => i.type === 'ghi_nhan').length})
           </button>
           <button
             onClick={() => setFilterType('vi_pham')}
-            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border ${
+            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap ${
               filterType === 'vi_pham'
                 ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Vi Phạm ({incidents.filter(i => i.type === 'vi_pham').length})
+            Vi Phạm ({userIncidents.filter(i => i.type === 'vi_pham').length})
           </button>
           <button
             onClick={() => setFilterType('khang_nghi')}
-            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border ${
+            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap ${
               filterType === 'khang_nghi'
                 ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Kháng Nghị 48h ({incidents.filter(i => i.status === 'Đang kháng nghị' || !!i.appealReason).length})
+            Kháng Nghị 48h ({userIncidents.filter(i => i.status === 'Đang kháng nghị' || !!i.appealReason).length})
           </button>
         </div>
       </div>
@@ -168,6 +236,8 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
             const canAppeal = !isRecognition &&
                               currentUser?.id === incident.targetId &&
                               incident.status === 'Đã duyệt';
+            const isSubmittedByMe = currentUser?.id === incident.reporterId;
+            const isReceivedByMe = currentUser?.id === incident.targetId;
 
             return (
               <div
@@ -191,9 +261,20 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                           {isRecognition ? 'Tuyên Dương' : 'Vi Phạm'}
                         </span>
                         <span className="text-xs font-semibold text-slate-900">
-                          {staff ? `${staff.name} (${staff.id})` : incident.targetId}
+                          Đối tượng: <strong>{staff ? `${staff.name} (${staff.id})` : incident.targetId}</strong>
                         </span>
                         <span className="text-xs text-slate-400">• {incident.date}</span>
+
+                        {isSubmittedByMe && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-blue-100 text-blue-800 border border-blue-200">
+                            📝 Bạn đã lập phiếu
+                          </span>
+                        )}
+                        {isReceivedByMe && (
+                          <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 border border-emerald-200">
+                            🎯 Phiếu dành cho bạn
+                          </span>
+                        )}
                       </div>
                       <h3 className="text-base font-bold text-slate-900 mt-1">{incident.title}</h3>
                       <p className="text-xs text-slate-600 mt-1 leading-relaxed">{incident.description}</p>
@@ -236,9 +317,10 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                 )}
 
                 {/* Footer Action Bar */}
-                <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2">
-                  <span className="text-[11px] text-slate-400">
-                    Người ghi nhận: {incident.reporterName || 'Quản lý'}
+                <div className="pt-2 border-t border-slate-100 flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] text-slate-500">
+                    Người lập/ghi nhận: <strong className="text-slate-800">{incident.reporterName || 'Quản lý'}</strong>
+                    {incident.reporterId && <span className="text-slate-400 font-mono ml-1">({incident.reporterId})</span>}
                   </span>
 
                   {canAppeal && (
