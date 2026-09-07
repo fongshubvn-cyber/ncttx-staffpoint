@@ -169,7 +169,7 @@ export function get3RecentPeriods(): ReportingPeriod[] {
 /**
  * Permission Check: Can user view a specific incident ticket?
  * - Trưởng phòng / HR Head / C-Level / Admin: sees ALL tickets across company
- * - Quản lý / Lead / Trưởng ca: sees self tickets + tickets of direct subordinates in their department/line
+ * - Quản lý / Lead / Trưởng ca: sees self tickets (as target or reporter) PLUS tickets of DIRECT SUBORDINATES in their department/line (excludes tickets written about superiors/managers).
  * - Regular Staff (Nhân sự thường): sees ONLY tickets where they are target or reporter
  */
 export function canUserViewIncident(
@@ -183,12 +183,12 @@ export function canUserViewIncident(
   const cleanReporterId = (incident.reporterId || '').trim().toUpperCase();
   const cleanTargetId = (incident.targetId || '').trim().toUpperCase();
 
-  // 1. Direct involvement (User is target OR reporter)
+  // 1. Direct involvement (User is target OR reporter) -> Always allowed to see own ticket
   if (cleanUserId === cleanReporterId || cleanUserId === cleanTargetId) {
     return true;
   }
 
-  // 2. Admin, Founder, C-Level, Trưởng phòng, HR Head (Upper Management)
+  // 2. Admin, Founder, C-Level, Trưởng phòng, HR Head (Upper Management) -> Sees all company tickets
   if (user.isAdmin || cleanUserId === 'ADMIN') return true;
 
   const roleLower = (user.role || '').toLowerCase();
@@ -207,24 +207,26 @@ export function canUserViewIncident(
   if (isTeamLead) {
     const userDept = (user.department || '').trim().toLowerCase();
 
-    // Check target staff member (subordinate receiving ticket)
+    // Check target staff member
     const targetStaff = staffList.find(s => s.id.trim().toUpperCase() === cleanTargetId);
     if (targetStaff) {
+      // Exclude tickets written about superiors/managers!
+      const targetRoleLower = (targetStaff.role || '').toLowerCase();
+      const targetLevelLower = (targetStaff.jobLevel || '').toLowerCase();
+
+      const isTargetSuperiorOrManager = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin', 'quản lý', 'manager', 'lead', 'cửa hàng trưởng', 'trưởng ca'].some(
+        kw => targetLevelLower.includes(kw) || targetRoleLower.includes(kw)
+      ) || Boolean(targetStaff.isManager);
+
+      // If target staff is a superior/manager, Lead cannot view it unless directly involved (handled in step 1)
+      if (isTargetSuperiorOrManager) {
+        return false;
+      }
+
       const targetDept = (targetStaff.department || '').trim().toLowerCase();
       const targetLine = (targetStaff.line || '').trim().toLowerCase();
 
       if (userDept && (userDept === targetDept || userDept === targetLine)) {
-        return true;
-      }
-    }
-
-    // Check reporter staff member (subordinate submitting ticket)
-    const reporterStaff = staffList.find(s => s.id.trim().toUpperCase() === cleanReporterId);
-    if (reporterStaff) {
-      const reporterDept = (reporterStaff.department || '').trim().toLowerCase();
-      const reporterLine = (reporterStaff.line || '').trim().toLowerCase();
-
-      if (userDept && (userDept === reporterDept || userDept === reporterLine)) {
         return true;
       }
     }
@@ -237,7 +239,7 @@ export function canUserViewIncident(
 /**
  * Permission Check: Returns staff list visible to user
  * - Trưởng phòng / HR Head / C-Level / Admin: all staff
- * - Quản lý / Lead: self + staff in same department/line
+ * - Quản lý / Lead: self + DIRECT SUBORDINATES (non-management staff in same department/line)
  * - Regular Staff: self only
  */
 export function getVisibleStaffListForUser(
@@ -266,6 +268,16 @@ export function getVisibleStaffListForUser(
 
     return staffList.filter(s => {
       if (s.id.trim().toUpperCase() === cleanUserId) return true;
+
+      // Exclude superiors/managers from Lead's subordinate list
+      const sRoleLower = (s.role || '').toLowerCase();
+      const sLevelLower = (s.jobLevel || '').toLowerCase();
+      const isSuperiorOrManager = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin', 'quản lý', 'manager', 'lead', 'cửa hàng trưởng', 'trưởng ca'].some(
+        kw => sLevelLower.includes(kw) || sRoleLower.includes(kw)
+      ) || Boolean(s.isManager);
+
+      if (isSuperiorOrManager) return false;
+
       const sDept = (s.department || '').trim().toLowerCase();
       const sLine = (s.line || '').trim().toLowerCase();
       return userDept && (userDept === sDept || userDept === sLine);
