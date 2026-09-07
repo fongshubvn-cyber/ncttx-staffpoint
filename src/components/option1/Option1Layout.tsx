@@ -127,9 +127,11 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           
           {/* Brand Logo & Cloud Status Badge */}
           <div className="flex items-center gap-3">
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-emerald-600 via-teal-600 to-emerald-500 text-white flex items-center justify-center font-black text-xl shadow-lg shadow-emerald-500/25 ring-2 ring-white/80 shrink-0">
-              🌱
-            </div>
+            <img 
+              src="/logo.png" 
+              alt="Nhà Của Thời Thanh Xuân Logo" 
+              className="w-10 h-10 object-contain rounded-2xl bg-white p-1 shadow-md ring-2 ring-emerald-500/20 shrink-0 border border-emerald-100" 
+            />
             <div>
               <div className="flex items-center gap-2">
                 <h1 className="font-extrabold text-base tracking-tight text-slate-900 flex items-center gap-1.5 whitespace-nowrap">
@@ -200,19 +202,6 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 
           {/* Right Header Controls: Actions & Profile */}
           <div className="flex items-center gap-2">
-            
-            {/* Quick UI Mode Switcher Button */}
-            {onSelectUiOption && (
-              <button
-                type="button"
-                onClick={() => onSelectUiOption(uiOption === 'option1' ? 'default' : 'option1')}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-white/80 backdrop-blur-md hover:bg-white text-slate-700 text-xs font-bold border border-white/80 shadow-sm transition-all whitespace-nowrap active:scale-95"
-                title="Đổi giao diện Option 1 Glass / Classic Forest"
-              >
-                <Sparkles className="w-3.5 h-3.5 text-emerald-600 animate-pulse" />
-                <span>{uiOption === 'option1' ? 'Option 1' : 'Classic'}</span>
-              </button>
-            )}
 
             {/* Quick Action Button for Managers (Desktop) */}
             {isManager && (

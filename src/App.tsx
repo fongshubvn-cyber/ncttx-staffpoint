@@ -544,248 +544,73 @@ export function App() {
     );
   }
 
-  if (uiOption === 'option1') {
-    return (
-      <>
-        <Option1Layout
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          staffList={staffList}
-          incidents={incidents}
-          questions={questions}
-          lines={lines}
-          params={params}
-          baselinePoints={baselinePoints}
-          onUpdateParams={(newParams) => setParams(newParams)}
-          currentUser={currentUser}
-          isManager={isManager}
-          onOpenIncidentModal={handleOpenIncidentModal}
-          onOpenLoginModal={() => setShowLoginModal(true)}
-          onLogout={() => setCurrentUser(null)}
-          onAddStaff={handleAddStaff}
-          onUpdateStaff={handleUpdateStaff}
-          onDeleteStaff={handleDeleteStaff}
-          onUpdatePassword={handleUpdatePassword}
-          onAddQuestion={handleAddQuestion}
-          onDeleteQuestion={handleDeleteQuestion}
-          onAddIncident={handleAddIncident}
-          onDeleteIncident={handleDeleteIncident}
-          onUpdateStatus={handleUpdateIncidentStatus}
-          onAppealIncident={handleAppealIncident}
-          onResolveAppeal={handleResolveAppeal}
-          uiOption={uiOption}
-          onSelectUiOption={(opt) => {
-            setUiOption(opt);
-            localStorage.setItem('ncttx_ui_option', opt);
-          }}
-        />
-
-        <IncidentFormModal
-          show={showGlobalIncidentModal}
-          onClose={() => {
-            setShowGlobalIncidentModal(false);
-            setIncidentModalTargetId(undefined);
-            setIncidentModalType(undefined);
-          }}
-          staffList={staffList}
-          questions={questions}
-          lines={lines}
-          onAddIncident={handleAddIncident}
-          isManager={isManager}
-          initialTargetId={incidentModalTargetId}
-          initialType={incidentModalType}
-          params={params}
-          currentUser={currentUser}
-          onViewSubmittedList={() => {
-            setActiveTab('incidents');
-            setIncidentsFilterType('my_submitted');
-          }}
-        />
-
-        <LoginModal
-          isOpen={showLoginModal}
-          onClose={() => setShowLoginModal(false)}
-          staffList={staffList}
-          currentUser={currentUser}
-          onLogin={(user) => setCurrentUser(user)}
-          onLogout={() => {
-            setCurrentUser(null);
-            setShowLoginModal(false);
-          }}
-          userPasswords={userPasswords}
-          onUpdatePassword={handleUpdatePassword}
-          uiOption={uiOption}
-          onSelectUiOption={(opt) => {
-            setUiOption(opt);
-            localStorage.setItem('ncttx_ui_option', opt);
-          }}
-        />
-      </>
-    );
-  }
-
+  // OFFICIALLY APPLY OPTION 1 AS THE PRIMARY MAIN INTERFACE!
   return (
-    <div className="min-h-screen bg-[#EDEAE3] text-[#2D3748] flex items-center justify-center p-0 sm:p-4 font-sans">
-      
-      {/* Mobile Device Frame Wrapper */}
-      <div className={isMobileFrame ? 'mobile-container w-full' : 'w-full max-w-5xl min-h-screen bg-[#EDEAE3]'}>
-        
-        {/* Header Navigation */}
-        <Navbar
-          activeTab={activeTab}
-          setActiveTab={setActiveTab}
-          isManager={isManager}
-          setIsManager={setIsManager}
-          isMobileFrame={isMobileFrame}
-          setIsMobileFrame={setIsMobileFrame}
-          currentUser={currentUser}
-          onOpenLoginModal={() => setShowLoginModal(true)}
-          onLogout={() => {
-            setCurrentUser(null);
-            setShowLoginModal(false);
-          }}
-          incidents={incidents}
-          uiOption={uiOption}
-          onSelectUiOption={(opt) => {
-            setUiOption(opt);
-            localStorage.setItem('ncttx_ui_option', opt);
-          }}
-        />
+    <>
+      <Option1Layout
+        activeTab={activeTab}
+        setActiveTab={setActiveTab}
+        staffList={staffList}
+        incidents={incidents}
+        questions={questions}
+        lines={lines}
+        params={params}
+        baselinePoints={baselinePoints}
+        onUpdateParams={(newParams) => setParams(newParams)}
+        currentUser={currentUser}
+        isManager={isManager}
+        onOpenIncidentModal={handleOpenIncidentModal}
+        onOpenLoginModal={() => setShowLoginModal(true)}
+        onLogout={() => setCurrentUser(null)}
+        onAddStaff={handleAddStaff}
+        onUpdateStaff={handleUpdateStaff}
+        onDeleteStaff={handleDeleteStaff}
+        onUpdatePassword={handleUpdatePassword}
+        onAddQuestion={handleAddQuestion}
+        onDeleteQuestion={handleDeleteQuestion}
+        onAddIncident={handleAddIncident}
+        onDeleteIncident={handleDeleteIncident}
+        onUpdateStatus={handleUpdateIncidentStatus}
+        onAppealIncident={handleAppealIncident}
+        onResolveAppeal={handleResolveAppeal}
+      />
 
-        {/* Main Mobile Body Content */}
-        <main className="flex-1 p-4 space-y-4">
-          
-          {/* Section 1: "Tổng hợp" (Overview Dashboard) */}
-          {activeTab === 'summary' && (
-            <SummaryView
-              staffList={staffList}
-              incidents={incidents}
-              questions={questions}
-              params={params}
-              onOpenIncidentModal={() => handleOpenIncidentModal()}
-              isManager={isManager}
-              currentUser={currentUser}
-            />
-          )}
+      <IncidentFormModal
+        show={showGlobalIncidentModal}
+        onClose={() => {
+          setShowGlobalIncidentModal(false);
+          setIncidentModalTargetId(undefined);
+          setIncidentModalType(undefined);
+        }}
+        staffList={staffList}
+        questions={questions}
+        lines={lines}
+        onAddIncident={handleAddIncident}
+        isManager={isManager}
+        initialTargetId={incidentModalTargetId}
+        initialType={incidentModalType}
+        params={params}
+        currentUser={currentUser}
+        onViewSubmittedList={() => {
+          setActiveTab('incidents');
+          setIncidentsFilterType('my_submitted');
+        }}
+      />
 
-          {/* Section 2: "Phiếu" (Incidents / Recognitions) */}
-          {activeTab === 'incidents' && (
-            <IncidentsView
-              incidents={incidents}
-              staffList={staffList}
-              questions={questions}
-              onAddIncident={handleAddIncident}
-              onDeleteIncident={handleDeleteIncident}
-              onUpdateStatus={handleUpdateIncidentStatus}
-              isManager={isManager}
-              onOpenIncidentModal={() => handleOpenIncidentModal()}
-              currentUser={currentUser}
-              onAppealIncident={handleAppealIncident}
-              onResolveAppeal={handleResolveAppeal}
-              initialFilterType={incidentsFilterType}
-            />
-          )}
-
-          {/* Section 3: "Đội ngũ" */}
-          {activeTab === 'staff' && (
-            <StaffView
-              staffList={staffList}
-              lines={lines}
-              onAddStaff={handleAddStaff}
-              onUpdateStaff={handleUpdateStaff}
-              onDeleteStaff={handleDeleteStaff}
-              onUpdatePassword={handleUpdatePassword}
-              isManager={isManager}
-              params={params}
-              currentUser={currentUser}
-              onOpenIncidentModal={handleOpenIncidentModal}
-            />
-          )}
-
-          {/* Section 4: "Tiêu chí" */}
-          {activeTab === 'questions' && (
-            <QuestionsView
-              questions={questions}
-              lines={lines}
-              onAddQuestion={handleAddQuestion}
-              onDeleteQuestion={handleDeleteQuestion}
-              isManager={isManager}
-              currentUser={currentUser}
-            />
-          )}
-
-          {/* Section 5: "Tham số" */}
-          {activeTab === 'baseline' && (
-            <BaselineView
-              baselinePoints={baselinePoints}
-              params={params}
-              onUpdateParams={(newParams) => setParams(newParams)}
-              currentUser={currentUser}
-            />
-          )}
-
-          {/* Section 6: "Báo cáo" (Report & Analytics Dashboard - Restricted to Trưởng phòng & above) */}
-          {activeTab === 'report' && (isDeptHeadOrAboveRole(currentUser) || isManager) && (
-            <ReportView
-              staffList={staffList}
-              incidents={incidents}
-              lines={lines}
-              params={params}
-              currentUser={currentUser}
-              questions={questions}
-            />
-          )}
-
-          {activeTab === 'history' && <HistoryView />}
-          {activeTab === 'guide' && <GuideView />}
-        </main>
-
-        {/* Global Incident Form Modal */}
-        <IncidentFormModal
-          show={showGlobalIncidentModal}
-          onClose={() => {
-            setShowGlobalIncidentModal(false);
-            setIncidentModalTargetId(undefined);
-            setIncidentModalType(undefined);
-          }}
-          staffList={staffList}
-          questions={questions}
-          lines={lines}
-          onAddIncident={handleAddIncident}
-          isManager={isManager}
-          initialTargetId={incidentModalTargetId}
-          initialType={incidentModalType}
-          params={params}
-          currentUser={currentUser}
-          onViewSubmittedList={() => {
-            setActiveTab('incidents');
-            setIncidentsFilterType('my_submitted');
-          }}
-        />
-
-        {/* Authentication & Password Change Modal */}
-        <LoginModal
-          isOpen={showLoginModal}
-          onClose={() => setShowLoginModal(false)}
-          staffList={staffList}
-          currentUser={currentUser}
-          onLogin={(user) => setCurrentUser(user)}
-          onLogout={() => {
-            setCurrentUser(null);
-            setShowLoginModal(false);
-          }}
-          userPasswords={userPasswords}
-          onUpdatePassword={handleUpdatePassword}
-          uiOption={uiOption}
-          onSelectUiOption={(opt) => {
-            setUiOption(opt);
-            localStorage.setItem('ncttx_ui_option', opt);
-          }}
-        />
-
-      </div>
-
-    </div>
+      <LoginModal
+        isOpen={showLoginModal}
+        onClose={() => setShowLoginModal(false)}
+        staffList={staffList}
+        currentUser={currentUser}
+        onLogin={(user) => setCurrentUser(user)}
+        onLogout={() => {
+          setCurrentUser(null);
+          setShowLoginModal(false);
+        }}
+        userPasswords={userPasswords}
+        onUpdatePassword={handleUpdatePassword}
+      />
+    </>
   );
 }
 
