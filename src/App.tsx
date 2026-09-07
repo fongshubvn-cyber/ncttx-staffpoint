@@ -278,11 +278,58 @@ export function App() {
     }
   };
 
-  // Handler: Admin deletes an incident record
+  // Handler: Admin soft-deletes an incident record (moves to Trash Bin)
   const handleDeleteIncident = (incidentId: string) => {
     setIncidents(prev => {
       const targetInc = prev.find(i => i.id === incidentId);
-      if (targetInc && (targetInc.status === 'Đã duyệt' || targetInc.type === 'vi_pham')) {
+      if (targetInc && !targetInc.isDeleted && (targetInc.status === 'Đã duyệt' || targetInc.type === 'vi_pham')) {
+        refundIncidentScoreImpact(targetInc);
+      }
+      const updated = prev.map(i => {
+        if (i.id === incidentId) {
+          return {
+            ...i,
+            isDeleted: true,
+            deletedAt: new Date().toISOString(),
+            deletedBy: currentUser?.name || 'Admin',
+          };
+        }
+        return i;
+      });
+      localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
+      saveToCloud('incidents', updated);
+      return updated;
+    });
+  };
+
+  // Handler: Admin restores an incident record from Trash Bin
+  const handleRestoreIncident = (incidentId: string) => {
+    setIncidents(prev => {
+      const targetInc = prev.find(i => i.id === incidentId);
+      if (targetInc && targetInc.isDeleted && (targetInc.status === 'Đã duyệt' || targetInc.type === 'vi_pham')) {
+        applyIncidentScoreImpact(targetInc);
+      }
+      const updated = prev.map(i => {
+        if (i.id === incidentId) {
+          const copy = { ...i };
+          delete copy.isDeleted;
+          delete copy.deletedAt;
+          delete copy.deletedBy;
+          return copy;
+        }
+        return i;
+      });
+      localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
+      saveToCloud('incidents', updated);
+      return updated;
+    });
+  };
+
+  // Handler: Admin permanently purges an incident record from Trash Bin
+  const handlePermanentDeleteIncident = (incidentId: string) => {
+    setIncidents(prev => {
+      const targetInc = prev.find(i => i.id === incidentId);
+      if (targetInc && !targetInc.isDeleted && (targetInc.status === 'Đã duyệt' || targetInc.type === 'vi_pham')) {
         refundIncidentScoreImpact(targetInc);
       }
       const updated = prev.filter(i => i.id !== incidentId);
@@ -588,6 +635,8 @@ export function App() {
         onDeleteQuestion={handleDeleteQuestion}
         onAddIncident={handleAddIncident}
         onDeleteIncident={handleDeleteIncident}
+        onRestoreIncident={handleRestoreIncident}
+        onPermanentDeleteIncident={handlePermanentDeleteIncident}
         onUpdateStatus={handleUpdateIncidentStatus}
         onAppealIncident={handleAppealIncident}
         onResolveAppeal={handleResolveAppeal}

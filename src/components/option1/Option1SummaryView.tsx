@@ -76,8 +76,9 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
 
   if (!staff) return null;
 
-  const staffIncidents = incidents.filter(i => i.targetId === staff.id);
-  const pendingAppeals = incidents.filter(i => i.status === 'Đang kháng nghị');
+  const activeIncidents = incidents.filter(i => !i.isDeleted);
+  const staffIncidents = activeIncidents.filter(i => i.targetId === staff.id);
+  const pendingAppeals = activeIncidents.filter(i => i.status === 'Đang kháng nghị');
 
   const overallScore = calculateTotalScoreForStaff(staff, params);
   const salaryTierNum = calculateSalaryTier(overallScore, params);

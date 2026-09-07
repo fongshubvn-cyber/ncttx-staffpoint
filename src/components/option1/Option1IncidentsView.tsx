@@ -14,7 +14,8 @@ import {
   Image as ImageIcon,
   UserCheck,
   FileText,
-  Trash2
+  Trash2,
+  RotateCcw
 } from 'lucide-react';
 
 interface Option1IncidentsViewProps {
@@ -23,6 +24,8 @@ interface Option1IncidentsViewProps {
   questions: Question[];
   onAddIncident: (incident: IncidentRecord) => void;
   onDeleteIncident?: (incidentId: string) => void;
+  onRestoreIncident?: (incidentId: string) => void;
+  onPermanentDeleteIncident?: (incidentId: string) => void;
   onUpdateStatus: (id: string, status: 'Đã duyệt' | 'Từ chối') => void;
   isManager: boolean;
   onOpenIncidentModal: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham') => void;
@@ -38,6 +41,8 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
   questions,
   onAddIncident,
   onDeleteIncident,
+  onRestoreIncident,
+  onPermanentDeleteIncident,
   onUpdateStatus,
   isManager,
   onOpenIncidentModal,
@@ -64,15 +69,16 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
   const activeHRHead = getActiveHRHead(staffList);
 
   // Privacy & Access Scoping:
-  // - Admin, Trưởng phòng, HR Head: view all tickets across company
-  // - Quản lý / Lead: view self tickets + tickets of direct team subordinates in their department/line
-  // - Regular staff: view ONLY tickets where they are recipient (target) OR creator (reporter)
   const userIncidents = incidents.filter(item => canUserViewIncident(currentUser, item, staffList));
+  const activeIncidents = userIncidents.filter(item => !item.isDeleted);
+  const deletedIncidents = userIncidents.filter(item => Boolean(item.isDeleted));
 
-  const mySubmittedIncidents = userIncidents.filter(i => i.reporterId === currentUser?.id);
-  const myReceivedIncidents = userIncidents.filter(i => i.targetId === currentUser?.id);
+  const mySubmittedIncidents = activeIncidents.filter(i => i.reporterId === currentUser?.id);
+  const myReceivedIncidents = activeIncidents.filter(i => i.targetId === currentUser?.id);
 
-  const filteredIncidents = userIncidents.filter((item) => {
+  const baseListToFilter = filterType === 'trash' ? deletedIncidents : activeIncidents;
+
+  const filteredIncidents = baseListToFilter.filter((item) => {
     if (filterType === 'my_submitted') {
       return item.reporterId === currentUser?.id;
     }
@@ -114,7 +120,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
         <div>
           <div className="flex items-center gap-2">
             <Trophy className="w-5 h-5 text-emerald-600" />
-            <h2 className="text-xl font-bold text-slate-900">Nhật Ký Phản Hồi ({userIncidents.length})</h2>
+            <h2 className="text-xl font-bold text-slate-900">Nhật Ký Phản Hồi ({activeIncidents.length})</h2>
           </div>
           <p className="text-xs text-slate-500 mt-1">
             Ghi nhận khen thưởng, biên bản vi phạm & kháng nghị 48h (Hỗ trợ xem lại phiếu bạn nhận và phiếu bạn đã lập)
@@ -188,7 +194,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Tất cả ({userIncidents.length})
+            Tất cả ({activeIncidents.length})
           </button>
           <button
             onClick={() => setFilterType('ghi_nhan')}
@@ -198,7 +204,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Ghi Nhận (+{userIncidents.filter(i => i.type === 'ghi_nhan').length})
+            Ghi Nhận (+{activeIncidents.filter(i => i.type === 'ghi_nhan').length})
           </button>
           <button
             onClick={() => setFilterType('vi_pham')}
@@ -208,7 +214,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Lập Biên Bản ({userIncidents.filter(i => i.type === 'vi_pham').length})
+            Lập Biên Bản ({activeIncidents.filter(i => i.type === 'vi_pham').length})
           </button>
           <button
             onClick={() => setFilterType('khang_nghi')}
@@ -218,8 +224,26 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Kháng Nghị 48h ({userIncidents.filter(i => i.status === 'Đang kháng nghị' || !!i.appealReason).length})
+            Kháng Nghị 48h ({activeIncidents.filter(i => i.status === 'Đang kháng nghị' || !!i.appealReason).length})
           </button>
+
+          {/* Admin Trash Bin Filter Tab */}
+          {isAdminUser && (
+            <button
+              onClick={() => setFilterType('trash')}
+              className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 whitespace-nowrap ${
+                filterType === 'trash'
+                  ? 'bg-rose-700 text-white border-rose-700 shadow-sm'
+                  : 'bg-rose-50 text-rose-800 border-rose-200 hover:bg-rose-100'
+              }`}
+            >
+              <Trash2 className="w-3.5 h-3.5" />
+              <span>Thùng Rác</span>
+              <span className="bg-rose-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-extrabold">
+                {deletedIncidents.length}
+              </span>
+            </button>
+          )}
         </div>
       </div>
 
@@ -324,48 +348,87 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                     {incident.reporterId && <span className="text-slate-400 font-mono ml-1">({incident.reporterId})</span>}
                   </span>
 
-                  {canAppeal && (
-                    <button
-                      onClick={() => setSelectedIncidentForAppeal(incident)}
-                      className="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold border border-amber-200/60 transition-all"
-                    >
-                      Gửi Kháng Nghị 48h
-                    </button>
-                  )}
-
-                  {/* HR Manager Resolve Buttons */}
-                  {isHRManager && incident.status === 'Đang kháng nghị' && (
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => onResolveAppeal(incident.id, true)}
-                        className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all shadow-sm"
-                      >
-                        Chấp Nhận Kháng Nghị (Hủy Phiếu)
-                      </button>
-                      <button
-                        onClick={() => onResolveAppeal(incident.id, false)}
-                        className="px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-all shadow-sm"
-                      >
-                        Bác Kháng Nghị (Giữ Nguyên)
-                      </button>
+                  {/* TRASH BIN ACTIONS FOR ADMIN */}
+                  {incident.isDeleted ? (
+                    <div className="flex items-center gap-2 ml-auto">
+                      {onRestoreIncident && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`↺ Admin xác nhận: Khôi phục phiếu [${incident.id}] "${incident.title}" từ Thùng Rác về hệ thống?`)) {
+                              onRestoreIncident(incident.id);
+                            }
+                          }}
+                          className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1 active:scale-95"
+                          title="Khôi phục phiếu này về danh sách chính và cộng/trừ lại điểm"
+                        >
+                          <RotateCcw className="w-3.5 h-3.5" />
+                          <span>Khôi phục phiếu</span>
+                        </button>
+                      )}
+                      {(onPermanentDeleteIncident || onDeleteIncident) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`⚠️ XÁC NHẬN: Bạn có chắc chắn muốn XÓA VĨNH VIỄN phiếu [${incident.id}] "${incident.title}"? Thao tác này KHÔNG THỂ KHÔI PHỤC!`)) {
+                              if (onPermanentDeleteIncident) onPermanentDeleteIncident(incident.id);
+                              else if (onDeleteIncident) onDeleteIncident(incident.id);
+                            }
+                          }}
+                          className="px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1 active:scale-95"
+                          title="Xóa vĩnh viễn khỏi cơ sở dữ liệu"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Xóa vĩnh viễn</span>
+                        </button>
+                      )}
                     </div>
-                  )}
+                  ) : (
+                    <>
+                      {canAppeal && (
+                        <button
+                          onClick={() => setSelectedIncidentForAppeal(incident)}
+                          className="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold border border-amber-200/60 transition-all"
+                        >
+                          Gửi Kháng Nghị 48h
+                        </button>
+                      )}
 
-                  {/* Admin Delete Action Button */}
-                  {isAdminUser && onDeleteIncident && (
-                    <button
-                      type="button"
-                      onClick={() => {
-                        if (window.confirm(`⚠️ Admin xác nhận: Bạn có chắc chắn muốn XÓA VĨNH VIỄN phiếu [${incident.id}] "${incident.title}"?`)) {
-                          onDeleteIncident(incident.id);
-                        }
-                      }}
-                      className="px-3 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 transition-all flex items-center gap-1 active:scale-95 ml-auto"
-                      title="Quyền Admin: Xóa vĩnh viễn phiếu này khỏi hệ thống"
-                    >
-                      <Trash2 className="w-3.5 h-3.5" />
-                      <span>Xóa phiếu (Admin)</span>
-                    </button>
+                      {/* HR Manager Resolve Buttons */}
+                      {isHRManager && incident.status === 'Đang kháng nghị' && (
+                        <div className="flex items-center gap-2">
+                          <button
+                            onClick={() => onResolveAppeal(incident.id, true)}
+                            className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all shadow-sm"
+                          >
+                            Chấp Nhận Kháng Nghị (Hủy Phiếu)
+                          </button>
+                          <button
+                            onClick={() => onResolveAppeal(incident.id, false)}
+                            className="px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-all shadow-sm"
+                          >
+                            Bác Kháng Nghị (Giữ Nguyên)
+                          </button>
+                        </div>
+                      )}
+
+                      {/* Admin Soft-Delete Action Button */}
+                      {isAdminUser && onDeleteIncident && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            if (window.confirm(`⚠️ Admin xác nhận: Chuyển phiếu [${incident.id}] "${incident.title}" vào Thùng Rác? (Có thể khôi phục lại sau)`)) {
+                              onDeleteIncident(incident.id);
+                            }
+                          }}
+                          className="px-3 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 transition-all flex items-center gap-1 active:scale-95 ml-auto"
+                          title="Quyền Admin: Chuyển phiếu vào Thùng Rác"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                          <span>Chuyển vào Thùng Rác</span>
+                        </button>
+                      )}
+                    </>
                   )}
                 </div>
               </div>

@@ -62,6 +62,8 @@ interface Option1LayoutProps {
   onDeleteQuestion?: (questionId: string) => void;
   onAddIncident: (incident: IncidentRecord) => void;
   onDeleteIncident?: (incidentId: string) => void;
+  onRestoreIncident?: (incidentId: string) => void;
+  onPermanentDeleteIncident?: (incidentId: string) => void;
   onUpdateStatus: (id: string, status: 'Đã duyệt' | 'Từ chối') => void;
   onAppealIncident: (incidentId: string, reason: string) => void;
   onResolveAppeal: (incidentId: string, approved: boolean) => void;
@@ -93,6 +95,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   onDeleteQuestion,
   onAddIncident,
   onDeleteIncident,
+  onRestoreIncident,
+  onPermanentDeleteIncident,
   onUpdateStatus,
   onAppealIncident,
   onResolveAppeal,
@@ -128,10 +132,10 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     if (!currentUser) return 0;
     const isUpperManager = currentUser.isAdmin || currentUser.id === 'ADMIN' || isHRHeadRole(currentUser) || isDeptHeadOrAboveRole(currentUser);
     if (isUpperManager) {
-      return incidents.filter(i => canUserViewIncident(currentUser, i, staffList)).length;
+      return incidents.filter(i => !i.isDeleted && canUserViewIncident(currentUser, i, staffList)).length;
     }
     // Subordinates below Trưởng phòng: show count of received tickets
-    return incidents.filter(i => i.targetId === currentUser.id).length;
+    return incidents.filter(i => !i.isDeleted && i.targetId === currentUser.id).length;
   }, [currentUser, incidents, staffList]);
 
   const navItems = [
@@ -379,6 +383,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             questions={questions}
             onAddIncident={onAddIncident}
             onDeleteIncident={onDeleteIncident}
+            onRestoreIncident={onRestoreIncident}
+            onPermanentDeleteIncident={onPermanentDeleteIncident}
             onUpdateStatus={onUpdateStatus}
             isManager={isManager}
             onOpenIncidentModal={onOpenIncidentModal}

@@ -112,6 +112,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
   // Filter incidents for selected reporting period (last 3 months)
   const periodIncidents = useMemo(() => {
     return incidents.filter(inc => {
+      if (inc.isDeleted) return false;
       const [yStr, mStr] = selectedPeriodKey.split('-');
       const patternSlash = `${mStr}/${yStr}`; // e.g. "09/2026"
       const patternDash = `${yStr}-${mStr}`;  // e.g. "2026-09"

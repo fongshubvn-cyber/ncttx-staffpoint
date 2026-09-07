@@ -84,6 +84,9 @@ export interface IncidentRecord {
   appealDate?: string;
   appealStatus?: 'none' | 'pending' | 'approved' | 'rejected';
   imageUrl?: string;
+  isDeleted?: boolean;
+  deletedAt?: string;
+  deletedBy?: string;
 }
 
 export interface DepartmentLine {

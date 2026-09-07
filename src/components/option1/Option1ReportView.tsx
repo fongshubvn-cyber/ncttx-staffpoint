@@ -46,7 +46,7 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
   }, []);
 
   const selectedStaff = staffList.find(s => s.id === selectedStaffId) || staffList[0];
-  const staffIncidents = selectedStaff ? incidents.filter(i => i.targetId === selectedStaff.id) : [];
+  const staffIncidents = selectedStaff ? incidents.filter(i => !i.isDeleted && i.targetId === selectedStaff.id) : [];
 
   const handlePrint = () => {
     window.print();
