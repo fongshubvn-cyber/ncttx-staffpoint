@@ -44,6 +44,7 @@ export interface Staff {
   salaryTier: number; // Bậc cách làm việc (1 đến 5)
   jobLevel: string; // Tập sự, Nhân viên, Lead, Trưởng phòng, Founder, CEO...
   isManager?: boolean;
+  isAdmin?: boolean;
   password?: string;
   mustChangePassword?: boolean;
 }

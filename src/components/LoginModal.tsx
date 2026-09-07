@@ -105,8 +105,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       positionCategory: staff.positionCategory,
       department: staff.department,
       jobLevel: staff.jobLevel,
-      isManager: !!staff.isManager || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager'].includes(staff.jobLevel),
-      isAdmin: false,
+      isManager: !!staff.isManager || !!staff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager'].includes(staff.jobLevel),
+      isAdmin: !!staff.isAdmin || staff.jobLevel === 'Admin' || staff.id.trim().toUpperCase() === 'ADMIN',
       mustChangePassword: currentPass === '123456',
     };
 

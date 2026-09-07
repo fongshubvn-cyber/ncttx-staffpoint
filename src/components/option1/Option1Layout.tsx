@@ -52,6 +52,7 @@ interface Option1LayoutProps {
   onOpenLoginModal: () => void;
   onLogout: () => void;
   onAddStaff: (staff: Staff) => void;
+  onUpdateStaff?: (staff: Staff) => void;
   onAddQuestion: (question: Question) => void;
   onDeleteQuestion?: (questionId: string) => void;
   onAddIncident: (incident: IncidentRecord) => void;
@@ -79,6 +80,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   onOpenLoginModal,
   onLogout,
   onAddStaff,
+  onUpdateStaff,
   onAddQuestion,
   onDeleteQuestion,
   onAddIncident,
@@ -337,6 +339,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             staffList={staffList}
             lines={lines}
             onAddStaff={onAddStaff}
+            onUpdateStaff={onUpdateStaff}
             isManager={isManager}
             params={params}
             currentUser={currentUser}

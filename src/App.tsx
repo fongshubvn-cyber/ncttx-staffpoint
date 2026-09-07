@@ -457,6 +457,29 @@ export function App() {
     });
   };
 
+  // Handler: Update existing staff member / toggle co-admin role
+  const handleUpdateStaff = (updatedStaff: Staff) => {
+    setStaffList(prev => {
+      const updated = prev.map(s => s.id === updatedStaff.id ? updatedStaff : s);
+      localStorage.setItem('ncttx_staff_list', JSON.stringify(updated));
+      saveToCloud('staff_list', updated);
+      return updated;
+    });
+
+    // If updating the currently logged-in user, immediately update currentUser session state
+    if (currentUser && currentUser.id === updatedStaff.id) {
+      setCurrentUser(prev => prev ? {
+        ...prev,
+        name: updatedStaff.name,
+        role: updatedStaff.role,
+        department: updatedStaff.department,
+        jobLevel: updatedStaff.jobLevel,
+        isManager: !!updatedStaff.isManager || !!updatedStaff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager'].includes(updatedStaff.jobLevel),
+        isAdmin: !!updatedStaff.isAdmin || updatedStaff.jobLevel === 'Admin' || updatedStaff.id.trim().toUpperCase() === 'ADMIN',
+      } : null);
+    }
+  };
+
   // Handler: Add new question
   const handleAddQuestion = (newQuestion: Question) => {
     setQuestions(prev => {
@@ -530,6 +553,7 @@ export function App() {
           onOpenLoginModal={() => setShowLoginModal(true)}
           onLogout={() => setCurrentUser(null)}
           onAddStaff={handleAddStaff}
+          onUpdateStaff={handleUpdateStaff}
           onAddQuestion={handleAddQuestion}
           onDeleteQuestion={handleDeleteQuestion}
           onAddIncident={handleAddIncident}
@@ -656,6 +680,7 @@ export function App() {
               staffList={staffList}
               lines={lines}
               onAddStaff={handleAddStaff}
+              onUpdateStaff={handleUpdateStaff}
               isManager={isManager}
               params={params}
               currentUser={currentUser}
