@@ -110,13 +110,25 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     return () => unsub();
   }, []);
 
+  const [configSubTab, setConfigSubTab] = useState<'questions' | 'baseline'>('questions');
+  const [analyticsSubTab, setAnalyticsSubTab] = useState<'report' | 'guide'>('report');
+
+  useEffect(() => {
+    if (activeTab === 'questions' || activeTab === 'baseline') {
+      setConfigSubTab(activeTab);
+    }
+    if (activeTab === 'report' || activeTab === 'guide') {
+      setAnalyticsSubTab(activeTab);
+    }
+  }, [activeTab]);
+
   const visibleIncidentsBadgeCount = React.useMemo(() => {
     if (!currentUser) return 0;
     const isUpperManager = currentUser.isAdmin || currentUser.id === 'ADMIN' || isHRHeadRole(currentUser) || isDeptHeadOrAboveRole(currentUser);
     if (isUpperManager) {
       return incidents.filter(i => canUserViewIncident(currentUser, i, staffList)).length;
     }
-    // Subordinates below Trưởng phòng: show count of received tickets (vi phạm or ghi nhận received)
+    // Subordinates below Trưởng phòng: show count of received tickets
     return incidents.filter(i => i.targetId === currentUser.id).length;
   }, [currentUser, incidents, staffList]);
 
@@ -124,10 +136,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     { id: 'summary', label: 'Tổng Quan', icon: LayoutDashboard },
     { id: 'staff', label: 'Nhân Sự', icon: Users },
     { id: 'incidents', label: 'Phản Hồi', icon: Trophy, badge: visibleIncidentsBadgeCount > 0 ? visibleIncidentsBadgeCount : undefined },
-    { id: 'questions', label: 'Tiêu Chí', icon: Layers },
-    { id: 'baseline', label: 'Tham Số', icon: Sliders },
-    { id: 'report', label: 'Báo Cáo', icon: BarChart3 },
-    { id: 'guide', label: 'Hướng Dẫn', icon: HelpCircle },
+    { id: 'config', label: 'Cấu Hình', icon: Sliders },
+    { id: 'analytics', label: 'Báo Cáo & Hướng Dẫn', icon: BarChart3 },
   ];
 
   return (
@@ -187,7 +197,10 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           <nav className="hidden md:flex items-center gap-1 bg-slate-200/50 backdrop-blur-md p-1.5 rounded-2xl border border-white/80 shadow-inner">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
+              const isActive = 
+                activeTab === item.id ||
+                (item.id === 'config' && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline')) ||
+                (item.id === 'analytics' && (activeTab === 'analytics' || activeTab === 'report' || activeTab === 'guide'));
               return (
                 <button
                   key={item.id}
@@ -289,7 +302,10 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           <div className="grid grid-cols-2 gap-2">
             {navItems.map((item) => {
               const Icon = item.icon;
-              const isActive = activeTab === item.id;
+              const isActive = 
+                activeTab === item.id ||
+                (item.id === 'config' && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline')) ||
+                (item.id === 'analytics' && (activeTab === 'analytics' || activeTab === 'report' || activeTab === 'guide'));
               return (
                 <button
                   key={item.id}
@@ -370,39 +386,111 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           />
         )}
 
-        {activeTab === 'questions' && (
-          <Option1QuestionsView
-            questions={questions}
-            lines={lines}
-            onAddQuestion={onAddQuestion}
-            onDeleteQuestion={onDeleteQuestion}
-            isManager={isManager}
-            currentUser={currentUser}
-          />
+        {/* CONSOLIDATED TAB 1: Cấu Hình (Tiêu Chí & Tham Số) */}
+        {(activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline') && (
+          <div className="space-y-6">
+            {/* Glass Sub-tab Switcher Bar */}
+            <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-2 max-w-md">
+              <button
+                type="button"
+                onClick={() => setConfigSubTab('questions')}
+                className={`flex-1 py-2 px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  configSubTab === 'questions'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Layers className="w-4 h-4" />
+                <span>Tiêu Chí Đánh Giá</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => setConfigSubTab('baseline')}
+                className={`flex-1 py-2 px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  configSubTab === 'baseline'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Sliders className="w-4 h-4" />
+                <span>Tham Số System</span>
+              </button>
+            </div>
+
+            {/* Sub-tab 1 Content: Tiêu Chí */}
+            {configSubTab === 'questions' && (
+              <Option1QuestionsView
+                questions={questions}
+                lines={lines}
+                onAddQuestion={onAddQuestion}
+                onDeleteQuestion={onDeleteQuestion}
+                isManager={isManager}
+                currentUser={currentUser}
+              />
+            )}
+
+            {/* Sub-tab 2 Content: Tham Số */}
+            {configSubTab === 'baseline' && (
+              <BaselineView
+                baselinePoints={baselinePoints}
+                params={params}
+                onUpdateParams={onUpdateParams || (() => {})}
+                currentUser={currentUser}
+              />
+            )}
+          </div>
         )}
 
-        {activeTab === 'baseline' && (
-          <BaselineView
-            baselinePoints={baselinePoints}
-            params={params}
-            onUpdateParams={onUpdateParams || (() => {})}
-            currentUser={currentUser}
-          />
-        )}
+        {/* CONSOLIDATED TAB 2: Báo Cáo & Hướng Dẫn */}
+        {(activeTab === 'analytics' || activeTab === 'report' || activeTab === 'guide') && (
+          <div className="space-y-6">
+            {/* Glass Sub-tab Switcher Bar */}
+            <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-2 max-w-md">
+              <button
+                type="button"
+                onClick={() => setAnalyticsSubTab('report')}
+                className={`flex-1 py-2 px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  analyticsSubTab === 'report'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <BarChart3 className="w-4 h-4" />
+                <span>Báo Cáo Phân Tích</span>
+              </button>
 
-        {activeTab === 'report' && (
-          <Option1ReportView
-            staffList={staffList}
-            incidents={incidents}
-            lines={lines}
-            params={params}
-            currentUser={currentUser}
-            questions={questions}
-          />
-        )}
+              <button
+                type="button"
+                onClick={() => setAnalyticsSubTab('guide')}
+                className={`flex-1 py-2 px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                  analyticsSubTab === 'guide'
+                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <HelpCircle className="w-4 h-4" />
+                <span>Hướng Dẫn Sử Dụng</span>
+              </button>
+            </div>
 
-        {activeTab === 'guide' && (
-          <GuideView />
+            {/* Sub-tab 1 Content: Báo Cáo */}
+            {analyticsSubTab === 'report' && (
+              <Option1ReportView
+                staffList={staffList}
+                incidents={incidents}
+                lines={lines}
+                params={params}
+                currentUser={currentUser}
+                questions={questions}
+              />
+            )}
+
+            {/* Sub-tab 2 Content: Hướng Dẫn */}
+            {analyticsSubTab === 'guide' && (
+              <GuideView />
+            )}
+          </div>
         )}
       </main>
 
