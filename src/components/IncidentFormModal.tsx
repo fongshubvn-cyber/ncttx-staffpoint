@@ -130,7 +130,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
       // Must match Target Staff's specific Department Line!
       return q.lineId === targetStaff?.line || q.groupCode.startsWith('B') || q.groupCode.startsWith('C') || q.groupCode.startsWith('N') || q.groupCode.startsWith('HC') || q.groupCode.startsWith('PC');
     } else if (criteriaScope === 'Management') {
-      return q.groupCode.startsWith('Q') || q.scope.includes('Trưởng') || q.scope.includes('Quản lý');
+      return q.groupCode.startsWith('Q') || (q.scope && (q.scope.includes('Trưởng') || q.scope.includes('Quản lý')));
     }
     return true;
   });

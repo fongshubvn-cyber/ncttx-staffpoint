@@ -527,6 +527,23 @@ export function App() {
     });
   };
 
+  // Handler: Update existing question
+  const handleUpdateQuestion = (updatedQuestion: Question) => {
+    setQuestions(prev => {
+      const updated = prev.map(q => q.id === updatedQuestion.id ? updatedQuestion : q);
+      localStorage.setItem('ncttx_questions', JSON.stringify(updated));
+      saveToCloud('questions', updated);
+      return updated;
+    });
+  };
+
+  // Handler: Update system parameters
+  const handleUpdateParams = (newParams: ParameterConfig) => {
+    setParams(newParams);
+    localStorage.setItem('ncttx_params', JSON.stringify(newParams));
+    saveToCloud('params', newParams);
+  };
+
   // IF NOT LOGGED IN: DISPLAY ONLY THE STANDALONE LOGIN GATE!
   if (!currentUser) {
     return (
@@ -556,7 +573,7 @@ export function App() {
         lines={lines}
         params={params}
         baselinePoints={baselinePoints}
-        onUpdateParams={(newParams) => setParams(newParams)}
+        onUpdateParams={handleUpdateParams}
         currentUser={currentUser}
         isManager={isManager}
         onOpenIncidentModal={handleOpenIncidentModal}
@@ -567,6 +584,7 @@ export function App() {
         onDeleteStaff={handleDeleteStaff}
         onUpdatePassword={handleUpdatePassword}
         onAddQuestion={handleAddQuestion}
+        onUpdateQuestion={handleUpdateQuestion}
         onDeleteQuestion={handleDeleteQuestion}
         onAddIncident={handleAddIncident}
         onDeleteIncident={handleDeleteIncident}

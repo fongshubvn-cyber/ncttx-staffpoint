@@ -51,15 +51,15 @@ export interface Staff {
 
 export interface Question {
   id: string; // Mã câu (VH1.1, VH2.1, TC1.1...)
-  category: 'Chung' | 'Phòng ban' | 'Chuyên môn' | 'Quản lý' | string;
+  category: 'Chung' | 'Phòng ban' | 'Chuyên môn' | 'Quản lý' | 'Ranh giới' | string;
   lineId?: string; // ID tuyến (Thương mại & Dịch vụ, Pha chế...)
   groupCode: string; // VH1, VH2...
   groupName: string; // ONE VOICE, OUTCOME...
   text: string; // Câu hỏi
-  scope: string; // Phạm vi áp dụng
-  measurementType: 'vi phạm' | 'ghi nhận' | 'thang 0-5' | 'đạt/chưa đạt';
-  defaultPoints: number; // 5 cho vi phạm, 0 cho ghi nhận, 5 cho mặc định
-  active: boolean;
+  scope?: string; // Phạm vi áp dụng
+  measurementType?: 'vi phạm' | 'ghi nhận' | 'thang 0-5' | 'đạt/chưa đạt' | string;
+  defaultPoints?: number; // 5 cho vi phạm, 0 cho ghi nhận, 5 cho mặc định
+  active?: boolean;
   tierRequirement?: string; // Bậc trong ngạch / Ngưỡng áp dụng
 }
 

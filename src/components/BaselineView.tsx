@@ -25,6 +25,19 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
   const [vioBoundary, setVioBoundary] = useState(params.vioBoundaryPoints ?? -1.5);
   const [appsScriptUrl, setAppsScriptUrl] = useState(params.googleAppsScriptUrl || '');
 
+  // Weight State
+  const [wGenNoMgmt, setWGenNoMgmt] = useState(params.weightGeneralNoMgmt ?? 0.3);
+  const [wTechNoMgmt, setWTechNoMgmt] = useState(params.weightTechNoMgmt ?? 0.7);
+  const [wGenWithMgmt, setWGenWithMgmt] = useState(params.weightGeneralWithMgmt ?? 0.25);
+  const [wMgmtWithMgmt, setWMgmtWithMgmt] = useState(params.weightMgmtWithMgmt ?? 0.35);
+  const [wTechWithMgmt, setWTechWithMgmt] = useState(params.weightTechWithMgmt ?? 0.4);
+
+  // Salary Tier Threshold State
+  const [t5, setT5] = useState(params.tier5Threshold ?? 0.85);
+  const [t4, setT4] = useState(params.tier4Threshold ?? 0.70);
+  const [t3, setT3] = useState(params.tier3Threshold ?? 0.55);
+  const [t2, setT2] = useState(params.tier2Threshold ?? 0.40);
+
   const handleSavePoints = () => {
     if (!onUpdateParams) return;
     onUpdateParams({
@@ -37,9 +50,18 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
       vioMajorPoints: vioMajor,
       vioBoundaryPoints: vioBoundary,
       googleAppsScriptUrl: appsScriptUrl.trim(),
+      weightGeneralNoMgmt: wGenNoMgmt,
+      weightTechNoMgmt: wTechNoMgmt,
+      weightGeneralWithMgmt: wGenWithMgmt,
+      weightMgmtWithMgmt: wMgmtWithMgmt,
+      weightTechWithMgmt: wTechWithMgmt,
+      tier5Threshold: t5,
+      tier4Threshold: t4,
+      tier3Threshold: t3,
+      tier2Threshold: t2,
     });
     setIsEditing(false);
-    alert('Đã lưu tham số hệ thống & Google Apps Script Webhook URL thành công!');
+    alert('Đã lưu toàn bộ tham số hệ thống & công thức thành công!');
   };
 
   return (
@@ -270,31 +292,106 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
         </div>
 
         <div className="space-y-2 text-xs">
-          <div className="p-3 rounded-2xl bg-[#EDEAE3]/50 border border-slate-200 space-y-1">
+          <div className="p-3 rounded-2xl bg-[#EDEAE3]/50 border border-slate-200 space-y-2">
             <p className="font-bold text-[#1B4332]">1. Không ngạch quản lý:</p>
-            <div className="flex justify-between text-slate-700">
+            <div className="flex items-center justify-between text-slate-700">
               <span>Văn hóa chung:</span>
-              <strong className="text-[#2D6A4F] font-bold">{(params.weightGeneralNoMgmt * 100).toFixed(0)}%</strong>
+              {isEditing ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    step="5"
+                    min="0"
+                    max="100"
+                    value={Math.round(wGenNoMgmt * 100)}
+                    onChange={(e) => setWGenNoMgmt(Number(e.target.value) / 100)}
+                    className="w-16 p-1 bg-white border border-emerald-300 rounded font-mono font-bold text-center text-[#2D6A4F]"
+                  />
+                  <span>%</span>
+                </div>
+              ) : (
+                <strong className="text-[#2D6A4F] font-bold">{(params.weightGeneralNoMgmt * 100).toFixed(0)}%</strong>
+              )}
             </div>
-            <div className="flex justify-between text-slate-700">
+            <div className="flex items-center justify-between text-slate-700">
               <span>Ngạch chuyên môn:</span>
-              <strong className="text-[#2D6A4F] font-bold">{(params.weightTechNoMgmt * 100).toFixed(0)}%</strong>
+              {isEditing ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    step="5"
+                    min="0"
+                    max="100"
+                    value={Math.round(wTechNoMgmt * 100)}
+                    onChange={(e) => setWTechNoMgmt(Number(e.target.value) / 100)}
+                    className="w-16 p-1 bg-white border border-emerald-300 rounded font-mono font-bold text-center text-[#2D6A4F]"
+                  />
+                  <span>%</span>
+                </div>
+              ) : (
+                <strong className="text-[#2D6A4F] font-bold">{(params.weightTechNoMgmt * 100).toFixed(0)}%</strong>
+              )}
             </div>
           </div>
 
-          <div className="p-3 rounded-2xl bg-[#EDEAE3]/50 border border-slate-200 space-y-1">
+          <div className="p-3 rounded-2xl bg-[#EDEAE3]/50 border border-slate-200 space-y-2">
             <p className="font-bold text-[#1B4332]">2. Có ngạch quản lý:</p>
-            <div className="flex justify-between text-slate-700">
+            <div className="flex items-center justify-between text-slate-700">
               <span>Văn hóa chung:</span>
-              <strong className="text-[#2D6A4F] font-bold">{(params.weightGeneralWithMgmt * 100).toFixed(0)}%</strong>
+              {isEditing ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    step="5"
+                    min="0"
+                    max="100"
+                    value={Math.round(wGenWithMgmt * 100)}
+                    onChange={(e) => setWGenWithMgmt(Number(e.target.value) / 100)}
+                    className="w-16 p-1 bg-white border border-emerald-300 rounded font-mono font-bold text-center text-[#2D6A4F]"
+                  />
+                  <span>%</span>
+                </div>
+              ) : (
+                <strong className="text-[#2D6A4F] font-bold">{(params.weightGeneralWithMgmt * 100).toFixed(0)}%</strong>
+              )}
             </div>
-            <div className="flex justify-between text-slate-700">
+            <div className="flex items-center justify-between text-slate-700">
               <span>Ngạch quản lý:</span>
-              <strong className="text-[#2D6A4F] font-bold">{(params.weightMgmtWithMgmt * 100).toFixed(0)}%</strong>
+              {isEditing ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    step="5"
+                    min="0"
+                    max="100"
+                    value={Math.round(wMgmtWithMgmt * 100)}
+                    onChange={(e) => setWMgmtWithMgmt(Number(e.target.value) / 100)}
+                    className="w-16 p-1 bg-white border border-emerald-300 rounded font-mono font-bold text-center text-[#2D6A4F]"
+                  />
+                  <span>%</span>
+                </div>
+              ) : (
+                <strong className="text-[#2D6A4F] font-bold">{(params.weightMgmtWithMgmt * 100).toFixed(0)}%</strong>
+              )}
             </div>
-            <div className="flex justify-between text-slate-700">
+            <div className="flex items-center justify-between text-slate-700">
               <span>Ngạch chuyên môn:</span>
-              <strong className="text-[#2D6A4F] font-bold">{(params.weightTechWithMgmt * 100).toFixed(0)}%</strong>
+              {isEditing ? (
+                <div className="flex items-center gap-1">
+                  <input
+                    type="number"
+                    step="5"
+                    min="0"
+                    max="100"
+                    value={Math.round(wTechWithMgmt * 100)}
+                    onChange={(e) => setWTechWithMgmt(Number(e.target.value) / 100)}
+                    className="w-16 p-1 bg-white border border-emerald-300 rounded font-mono font-bold text-center text-[#2D6A4F]"
+                  />
+                  <span>%</span>
+                </div>
+              ) : (
+                <strong className="text-[#2D6A4F] font-bold">{(params.weightTechWithMgmt * 100).toFixed(0)}%</strong>
+              )}
             </div>
           </div>
         </div>
@@ -308,25 +405,97 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
         </div>
 
         <div className="space-y-1.5 text-xs">
-          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex justify-between">
+          <div className="p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 flex items-center justify-between">
             <span className="font-bold text-[#1B4332]">Bậc 5 (Xuất sắc):</span>
-            <span className="font-bold text-[#2D6A4F]">&ge; 85%</span>
+            {isEditing ? (
+              <div className="flex items-center gap-1 font-bold text-[#2D6A4F]">
+                <span>&ge;</span>
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="100"
+                  value={Math.round(t5 * 100)}
+                  onChange={(e) => setT5(Number(e.target.value) / 100)}
+                  className="w-14 p-1 bg-white border border-emerald-300 rounded font-mono font-bold text-center"
+                />
+                <span>%</span>
+              </div>
+            ) : (
+              <span className="font-bold text-[#2D6A4F]">&ge; {Math.round((params.tier5Threshold ?? 0.85) * 100)}%</span>
+            )}
           </div>
-          <div className="p-2.5 rounded-xl bg-sky-50 border border-sky-200 flex justify-between">
+
+          <div className="p-2.5 rounded-xl bg-sky-50 border border-sky-200 flex items-center justify-between">
             <span className="font-bold text-sky-900">Bậc 4 (Đạt chuẩn):</span>
-            <span className="font-bold text-sky-800">70% - 85%</span>
+            {isEditing ? (
+              <div className="flex items-center gap-1 font-bold text-sky-800">
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="100"
+                  value={Math.round(t4 * 100)}
+                  onChange={(e) => setT4(Number(e.target.value) / 100)}
+                  className="w-14 p-1 bg-white border border-sky-300 rounded font-mono font-bold text-center"
+                />
+                <span>% - {Math.round(t5 * 100)}%</span>
+              </div>
+            ) : (
+              <span className="font-bold text-sky-800">{Math.round((params.tier4Threshold ?? 0.70) * 100)}% - {Math.round((params.tier5Threshold ?? 0.85) * 100)}%</span>
+            )}
           </div>
-          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex justify-between">
+
+          <div className="p-2.5 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between">
             <span className="font-bold text-slate-800">Bậc 3 (Khá):</span>
-            <span className="font-bold text-slate-700">55% - 70%</span>
+            {isEditing ? (
+              <div className="flex items-center gap-1 font-bold text-slate-700">
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="100"
+                  value={Math.round(t3 * 100)}
+                  onChange={(e) => setT3(Number(e.target.value) / 100)}
+                  className="w-14 p-1 bg-white border border-slate-300 rounded font-mono font-bold text-center"
+                />
+                <span>% - {Math.round(t4 * 100)}%</span>
+              </div>
+            ) : (
+              <span className="font-bold text-slate-700">{Math.round((params.tier3Threshold ?? 0.55) * 100)}% - {Math.round((params.tier4Threshold ?? 0.70) * 100)}%</span>
+            )}
           </div>
-          <div className="p-2.5 rounded-xl bg-orange-50 border border-orange-200 flex justify-between">
+
+          <div className="p-2.5 rounded-xl bg-orange-50 border border-orange-200 flex items-center justify-between">
             <span className="font-bold text-orange-900">Bậc 2 (Cần cố gắng):</span>
-            <span className="font-bold text-orange-800">40% - 55%</span>
+            {isEditing ? (
+              <div className="flex items-center gap-1 font-bold text-orange-800">
+                <input
+                  type="number"
+                  step="1"
+                  min="0"
+                  max="100"
+                  value={Math.round(t2 * 100)}
+                  onChange={(e) => setT2(Number(e.target.value) / 100)}
+                  className="w-14 p-1 bg-white border border-orange-300 rounded font-mono font-bold text-center"
+                />
+                <span>% - {Math.round(t3 * 100)}%</span>
+              </div>
+            ) : (
+              <span className="font-bold text-orange-800">{Math.round((params.tier2Threshold ?? 0.40) * 100)}% - {Math.round((params.tier3Threshold ?? 0.55) * 100)}%</span>
+            )}
           </div>
-          <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 flex justify-between">
+
+          <div className="p-2.5 rounded-xl bg-rose-50 border border-rose-200 flex items-center justify-between">
             <span className="font-bold text-rose-900">Bậc 1 (Chưa đạt):</span>
-            <span className="font-bold text-rose-800">&lt; 40%</span>
+            {isEditing ? (
+              <div className="flex items-center gap-1 font-bold text-rose-800">
+                <span>&lt;</span>
+                <span className="font-mono font-bold">{Math.round(t2 * 100)}%</span>
+              </div>
+            ) : (
+              <span className="font-bold text-rose-800">&lt; {Math.round((params.tier2Threshold ?? 0.40) * 100)}%</span>
+            )}
           </div>
         </div>
       </div>
