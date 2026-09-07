@@ -24,7 +24,7 @@ import {
   Trash2
 } from 'lucide-react';
 
-import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole } from '../utils/calculator';
+import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident } from '../utils/calculator';
 
 interface IncidentsViewProps {
   incidents: IncidentRecord[];
@@ -76,12 +76,10 @@ export const IncidentsView: React.FC<IncidentsViewProps> = ({
   const activeHRHeadName = activeHRHead ? activeHRHead.name : 'Trưởng phòng Nhân sự';
 
   // Privacy Scoping:
-  // - Admin, HR Head, Managers & Dept Heads: view all tickets across company
-  // - Regular Staff: view tickets where they are reporter (submitted) or target (received)
-  const userIncidents = incidents.filter(item => {
-    if (isManagerOrDeptHead) return true;
-    return item.reporterId === currentUser?.id || item.targetId === currentUser?.id;
-  });
+  // - Admin, Trưởng phòng, HR Head: view all tickets across company
+  // - Quản lý / Lead: view self tickets + tickets of direct team subordinates in their department/line
+  // - Regular Staff: view ONLY tickets where they are reporter (submitted) or target (received)
+  const userIncidents = incidents.filter(item => canUserViewIncident(currentUser, item, staffList));
 
   // Filter specific lists for counts & tabs
   const mySubmittedIncidents = userIncidents.filter(i => i.reporterId === currentUser?.id);

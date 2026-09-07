@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Staff, IncidentRecord, Question, ParameterConfig, AuthUser } from '../types';
-import { getSalaryTierBadge, isHRHeadRole, get3RecentPeriods } from '../utils/calculator';
+import { getSalaryTierBadge, isHRHeadRole, get3RecentPeriods, getVisibleStaffListForUser } from '../utils/calculator';
 import { 
   Sparkles, 
   User, 
@@ -40,19 +40,14 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   const [selectedPeriodKey, setSelectedPeriodKey] = useState<string>(recentPeriods[0].key);
   const currentPeriodObj = recentPeriods.find(p => p.key === selectedPeriodKey) || recentPeriods[0];
 
-  const visibleStaffList = (isHRManager 
-    ? staffList 
-    : staffList.filter(s => s.id === currentUser?.id)
-  ).slice().sort((a, b) => {
+  const visibleStaffList = getVisibleStaffListForUser(currentUser, staffList).slice().sort((a, b) => {
     const numA = parseInt(a.id.replace(/\D/g, ''), 10);
     const numB = parseInt(b.id.replace(/\D/g, ''), 10);
     return numA - numB;
   });
 
   const [selectedStaffId, setSelectedStaffId] = useState<string>(
-    isHRManager 
-      ? (staffList[0]?.id || '')
-      : (currentUser?.id || staffList[0]?.id || '')
+    visibleStaffList[0]?.id || currentUser?.id || ''
   );
 
   useEffect(() => {
@@ -165,12 +160,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         </div>
       </div>
 
-      {/* Current Staff Switcher Bar (VISIBLE TO ADMIN & HR HEAD) */}
-      {isHRManager && (
+      {/* Current Staff Switcher Bar (VISIBLE TO ADMIN, HR & LEADS) */}
+      {visibleStaffList.length > 1 && (
         <div className="mobile-card p-3 flex items-center justify-between border border-[#1B4332]/10 bg-white">
           <div className="flex items-center space-x-2 text-xs">
             <User className="w-4 h-4 text-[#2D6A4F]" />
-            <span className="font-bold text-[#2D3748]">Xem nhân sự toàn công ty (Admin & HR):</span>
+            <span className="font-bold text-[#2D3748]">Chọn nhân sự trong phạm vi quản lý:</span>
           </div>
 
           <select

@@ -6,7 +6,8 @@ import {
   calculateSalaryTier, 
   isManagementRole,
   isHRHeadRole, 
-  get3RecentPeriods 
+  get3RecentPeriods,
+  getVisibleStaffListForUser
 } from '../../utils/calculator';
 import { 
   Sparkles, 
@@ -46,19 +47,14 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
   const [selectedPeriodKey, setSelectedPeriodKey] = useState<string>(recentPeriods[0].key);
   const currentPeriodObj = recentPeriods.find(p => p.key === selectedPeriodKey) || recentPeriods[0];
 
-  const visibleStaffList = (isHRManager 
-    ? staffList 
-    : staffList.filter(s => s.id === currentUser?.id)
-  ).slice().sort((a, b) => {
+  const visibleStaffList = getVisibleStaffListForUser(currentUser, staffList).slice().sort((a, b) => {
     const numA = parseInt(a.id.replace(/\D/g, ''), 10);
     const numB = parseInt(b.id.replace(/\D/g, ''), 10);
     return numA - numB;
   });
 
   const [selectedStaffId, setSelectedStaffId] = useState<string>(
-    isHRManager 
-      ? (staffList[0]?.id || '')
-      : (currentUser?.id || staffList[0]?.id || '')
+    visibleStaffList[0]?.id || currentUser?.id || ''
   );
 
   const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);

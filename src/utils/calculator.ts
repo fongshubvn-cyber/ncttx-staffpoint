@@ -166,4 +166,115 @@ export function get3RecentPeriods(): ReportingPeriod[] {
   return list;
 }
 
+/**
+ * Permission Check: Can user view a specific incident ticket?
+ * - Trưởng phòng / HR Head / C-Level / Admin: sees ALL tickets across company
+ * - Quản lý / Lead / Trưởng ca: sees self tickets + tickets of direct subordinates in their department/line
+ * - Regular Staff (Nhân sự thường): sees ONLY tickets where they are target or reporter
+ */
+export function canUserViewIncident(
+  user: { id?: string; isAdmin?: boolean; isManager?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined,
+  incident: { reporterId?: string; targetId?: string },
+  staffList: Staff[]
+): boolean {
+  if (!user) return true;
+
+  const cleanUserId = (user.id || '').trim().toUpperCase();
+  const cleanReporterId = (incident.reporterId || '').trim().toUpperCase();
+  const cleanTargetId = (incident.targetId || '').trim().toUpperCase();
+
+  // 1. Direct involvement (User is target OR reporter)
+  if (cleanUserId === cleanReporterId || cleanUserId === cleanTargetId) {
+    return true;
+  }
+
+  // 2. Admin, Founder, C-Level, Trưởng phòng, HR Head (Upper Management)
+  if (user.isAdmin || cleanUserId === 'ADMIN') return true;
+
+  const roleLower = (user.role || '').toLowerCase();
+  const levelLower = (user.jobLevel || '').toLowerCase();
+
+  const isUpperMgmt = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin'].some(
+    kw => levelLower.includes(kw) || roleLower.includes(kw)
+  );
+  if (isUpperMgmt) return true;
+
+  // 3. Quản lý / Lead / Trưởng ca / Cửa hàng trưởng (Direct Team Lead)
+  const isTeamLead = ['lead', 'trưởng ca', 'cửa hàng trưởng', 'quản lý', 'manager'].some(
+    kw => levelLower.includes(kw) || roleLower.includes(kw)
+  ) || Boolean(user.isManager);
+
+  if (isTeamLead) {
+    const userDept = (user.department || '').trim().toLowerCase();
+
+    // Check target staff member (subordinate receiving ticket)
+    const targetStaff = staffList.find(s => s.id.trim().toUpperCase() === cleanTargetId);
+    if (targetStaff) {
+      const targetDept = (targetStaff.department || '').trim().toLowerCase();
+      const targetLine = (targetStaff.line || '').trim().toLowerCase();
+
+      if (userDept && (userDept === targetDept || userDept === targetLine)) {
+        return true;
+      }
+    }
+
+    // Check reporter staff member (subordinate submitting ticket)
+    const reporterStaff = staffList.find(s => s.id.trim().toUpperCase() === cleanReporterId);
+    if (reporterStaff) {
+      const reporterDept = (reporterStaff.department || '').trim().toLowerCase();
+      const reporterLine = (reporterStaff.line || '').trim().toLowerCase();
+
+      if (userDept && (userDept === reporterDept || userDept === reporterLine)) {
+        return true;
+      }
+    }
+  }
+
+  // 4. Regular Staff (Nhân sự thường): False if not target/reporter
+  return false;
+}
+
+/**
+ * Permission Check: Returns staff list visible to user
+ * - Trưởng phòng / HR Head / C-Level / Admin: all staff
+ * - Quản lý / Lead: self + staff in same department/line
+ * - Regular Staff: self only
+ */
+export function getVisibleStaffListForUser(
+  user: { id?: string; isAdmin?: boolean; isManager?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined,
+  staffList: Staff[]
+): Staff[] {
+  if (!user) return staffList;
+
+  if (user.isAdmin || (user.id || '').trim().toUpperCase() === 'ADMIN') return staffList;
+
+  const roleLower = (user.role || '').toLowerCase();
+  const levelLower = (user.jobLevel || '').toLowerCase();
+
+  const isUpperMgmt = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin'].some(
+    kw => levelLower.includes(kw) || roleLower.includes(kw)
+  );
+  if (isUpperMgmt) return staffList;
+
+  const isTeamLead = ['lead', 'trưởng ca', 'cửa hàng trưởng', 'quản lý', 'manager'].some(
+    kw => levelLower.includes(kw) || roleLower.includes(kw)
+  ) || Boolean(user.isManager);
+
+  if (isTeamLead) {
+    const userDept = (user.department || '').trim().toLowerCase();
+    const cleanUserId = (user.id || '').trim().toUpperCase();
+
+    return staffList.filter(s => {
+      if (s.id.trim().toUpperCase() === cleanUserId) return true;
+      const sDept = (s.department || '').trim().toLowerCase();
+      const sLine = (s.line || '').trim().toLowerCase();
+      return userDept && (userDept === sDept || userDept === sLine);
+    });
+  }
+
+  // Regular Staff: self only
+  const cleanUserId = (user.id || '').trim().toUpperCase();
+  return staffList.filter(s => s.id.trim().toUpperCase() === cleanUserId);
+}
+
 

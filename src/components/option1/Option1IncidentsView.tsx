@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IncidentRecord, Staff, Question, AuthUser } from '../../types';
-import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole } from '../../utils/calculator';
+import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident } from '../../utils/calculator';
 import { 
   Trophy, 
   Plus, 
@@ -64,13 +64,10 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
   const activeHRHead = getActiveHRHead(staffList);
 
   // Privacy & Access Scoping:
-  // Managers / Dept Heads / HR / Admin see all tickets across company.
-  // Regular staff see tickets where they are the recipient (target) OR creator (reporter).
-  const userIncidents = incidents.filter(item => {
-    if (isManagerOrDeptHead) return true;
-    if (!currentUser) return true;
-    return item.reporterId === currentUser?.id || item.targetId === currentUser?.id;
-  });
+  // - Admin, Trưởng phòng, HR Head: view all tickets across company
+  // - Quản lý / Lead: view self tickets + tickets of direct team subordinates in their department/line
+  // - Regular staff: view ONLY tickets where they are recipient (target) OR creator (reporter)
+  const userIncidents = incidents.filter(item => canUserViewIncident(currentUser, item, staffList));
 
   const mySubmittedIncidents = userIncidents.filter(i => i.reporterId === currentUser?.id);
   const myReceivedIncidents = userIncidents.filter(i => i.targetId === currentUser?.id);
