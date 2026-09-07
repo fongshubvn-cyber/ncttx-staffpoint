@@ -20,7 +20,8 @@ import {
   ShieldCheck,
   CheckCircle2,
   XCircle,
-  Send
+  Send,
+  Trash2
 } from 'lucide-react';
 
 import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole } from '../utils/calculator';
@@ -30,6 +31,7 @@ interface IncidentsViewProps {
   staffList: Staff[];
   questions: Question[];
   onAddIncident: (incident: IncidentRecord) => void;
+  onDeleteIncident?: (incidentId: string) => void;
   onUpdateStatus: (id: string, status: 'Đã duyệt' | 'Từ chối') => void;
   isManager: boolean;
   onOpenIncidentModal: () => void;
@@ -44,6 +46,7 @@ export const IncidentsView: React.FC<IncidentsViewProps> = ({
   staffList,
   questions,
   onAddIncident,
+  onDeleteIncident,
   onUpdateStatus,
   isManager,
   onOpenIncidentModal,
@@ -67,7 +70,8 @@ export const IncidentsView: React.FC<IncidentsViewProps> = ({
   const [appealReason, setAppealReason] = useState<string>('');
 
   const isHRManager = isHRHeadRole(currentUser);
-  const isManagerOrDeptHead = isManager || isDeptHeadOrAboveRole(currentUser) || isHRManager;
+  const isAdminUser = !!(currentUser?.isAdmin || currentUser?.id === 'ADMIN' || currentUser?.jobLevel === 'Admin');
+  const isManagerOrDeptHead = isManager || isDeptHeadOrAboveRole(currentUser) || isHRManager || isAdminUser;
   const activeHRHead = getActiveHRHead(staffList);
   const activeHRHeadName = activeHRHead ? activeHRHead.name : 'Trưởng phòng Nhân sự';
 
@@ -565,6 +569,23 @@ export const IncidentsView: React.FC<IncidentsViewProps> = ({
                       </button>
                     </div>
                   )
+                )}
+
+                {/* Admin Delete Action Button */}
+                {isAdminUser && onDeleteIncident && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (window.confirm(`⚠️ Admin xác nhận: Bạn có chắc chắn muốn XÓA VĨNH VIỄN phiếu [${incident.id}] "${incident.title}"?`)) {
+                        onDeleteIncident(incident.id);
+                      }
+                    }}
+                    className="px-3 py-1.5 rounded-full bg-rose-50 hover:bg-rose-100 text-rose-700 text-[11px] font-bold border border-rose-200 transition-all flex items-center space-x-1 active:scale-95 ml-auto"
+                    title="Quyền Admin: Xóa vĩnh viễn phiếu này khỏi hệ thống"
+                  >
+                    <Trash2 className="w-3.5 h-3.5" />
+                    <span>Xóa phiếu (Admin)</span>
+                  </button>
                 )}
               </div>
             </div>

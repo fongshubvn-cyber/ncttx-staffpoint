@@ -55,6 +55,7 @@ interface Option1LayoutProps {
   onAddQuestion: (question: Question) => void;
   onDeleteQuestion?: (questionId: string) => void;
   onAddIncident: (incident: IncidentRecord) => void;
+  onDeleteIncident?: (incidentId: string) => void;
   onUpdateStatus: (id: string, status: 'Đã duyệt' | 'Từ chối') => void;
   onAppealIncident: (incidentId: string, reason: string) => void;
   onResolveAppeal: (incidentId: string, approved: boolean) => void;
@@ -81,6 +82,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   onAddQuestion,
   onDeleteQuestion,
   onAddIncident,
+  onDeleteIncident,
   onUpdateStatus,
   onAppealIncident,
   onResolveAppeal,
@@ -348,6 +350,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             staffList={staffList}
             questions={questions}
             onAddIncident={onAddIncident}
+            onDeleteIncident={onDeleteIncident}
             onUpdateStatus={onUpdateStatus}
             isManager={isManager}
             onOpenIncidentModal={onOpenIncidentModal}

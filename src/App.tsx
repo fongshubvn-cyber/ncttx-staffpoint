@@ -278,6 +278,20 @@ export function App() {
     }
   };
 
+  // Handler: Admin deletes an incident record
+  const handleDeleteIncident = (incidentId: string) => {
+    setIncidents(prev => {
+      const targetInc = prev.find(i => i.id === incidentId);
+      if (targetInc && (targetInc.status === 'Đã duyệt' || targetInc.type === 'vi_pham')) {
+        refundIncidentScoreImpact(targetInc);
+      }
+      const updated = prev.filter(i => i.id !== incidentId);
+      localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
+      saveToCloud('incidents', updated);
+      return updated;
+    });
+  };
+
   // Handler: Staff sends 48h appeal for a violation
   const handleAppealIncident = (incidentId: string, reason: string) => {
     setIncidents(prev => {
@@ -519,6 +533,7 @@ export function App() {
           onAddQuestion={handleAddQuestion}
           onDeleteQuestion={handleDeleteQuestion}
           onAddIncident={handleAddIncident}
+          onDeleteIncident={handleDeleteIncident}
           onUpdateStatus={handleUpdateIncidentStatus}
           onAppealIncident={handleAppealIncident}
           onResolveAppeal={handleResolveAppeal}
@@ -624,6 +639,7 @@ export function App() {
               staffList={staffList}
               questions={questions}
               onAddIncident={handleAddIncident}
+              onDeleteIncident={handleDeleteIncident}
               onUpdateStatus={handleUpdateIncidentStatus}
               isManager={isManager}
               onOpenIncidentModal={() => handleOpenIncidentModal()}
