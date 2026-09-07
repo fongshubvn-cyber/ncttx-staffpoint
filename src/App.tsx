@@ -105,31 +105,84 @@ export function App() {
   // Track which collections have completed initial Cloud load
   const isCloudLoadedRef = React.useRef<Record<string, boolean>>({});
 
+  // Helper: Smart merge cloud array with local storage array by 'id'
+  const mergeArraysById = <T extends { id: string }>(cloudArr: T[], localArr: T[]): T[] => {
+    const map = new Map<string, T>();
+    (localArr || []).forEach(item => {
+      if (item && item.id) map.set(item.id, item);
+    });
+    (cloudArr || []).forEach(item => {
+      if (item && item.id) map.set(item.id, item);
+    });
+    return Array.from(map.values());
+  };
+
   // FIREBASE REALTIME CLOUD SYNC
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
 
-    const unsubStaff = subscribeToCollection('staff_list', (data) => {
+    const unsubStaff = subscribeToCollection('staff_list', (cloudData) => {
       isCloudLoadedRef.current['staff_list'] = true;
-      if (Array.isArray(data) && data.length > 0) {
-        setStaffList(data);
-        localStorage.setItem('ncttx_staff_list', JSON.stringify(data));
+      if (Array.isArray(cloudData) && cloudData.length > 0) {
+        let localData: Staff[] = [];
+        try {
+          const saved = localStorage.getItem('ncttx_staff_list');
+          if (saved) localData = JSON.parse(saved);
+        } catch (e) {}
+
+        const merged = mergeArraysById(cloudData, localData);
+        setStaffList(merged);
+        localStorage.setItem('ncttx_staff_list', JSON.stringify(merged));
+
+        if (merged.length > cloudData.length) {
+          saveToCloud('staff_list', merged);
+        }
       }
     }, initialStaffList);
 
-    const unsubIncidents = subscribeToCollection('incidents', (data) => {
+    const unsubIncidents = subscribeToCollection('incidents', (cloudData) => {
       isCloudLoadedRef.current['incidents'] = true;
-      if (Array.isArray(data)) {
-        setIncidents(data);
-        localStorage.setItem('ncttx_incidents', JSON.stringify(data));
+      if (Array.isArray(cloudData)) {
+        let localData: IncidentRecord[] = [];
+        try {
+          const saved = localStorage.getItem('ncttx_incidents');
+          if (saved) localData = JSON.parse(saved);
+        } catch (e) {}
+
+        const merged = mergeArraysById(cloudData, localData);
+        merged.sort((a, b) => {
+          if (a.date && b.date && a.date !== b.date) {
+            return b.date.localeCompare(a.date);
+          }
+          return (b.id || '').localeCompare(a.id || '');
+        });
+
+        setIncidents(merged);
+        localStorage.setItem('ncttx_incidents', JSON.stringify(merged));
+
+        if (merged.length > cloudData.length) {
+          console.log(`[Auto-repair Cloud Sync] Syncing ${merged.length - cloudData.length} local incidents to Cloud...`);
+          saveToCloud('incidents', merged);
+        }
       }
     }, initialIncidents);
 
-    const unsubQuestions = subscribeToCollection('questions', (data) => {
+    const unsubQuestions = subscribeToCollection('questions', (cloudData) => {
       isCloudLoadedRef.current['questions'] = true;
-      if (Array.isArray(data) && data.length > 0) {
-        setQuestions(data);
-        localStorage.setItem('ncttx_questions', JSON.stringify(data));
+      if (Array.isArray(cloudData) && cloudData.length > 0) {
+        let localData: Question[] = [];
+        try {
+          const saved = localStorage.getItem('ncttx_questions');
+          if (saved) localData = JSON.parse(saved);
+        } catch (e) {}
+
+        const merged = mergeArraysById(cloudData, localData);
+        setQuestions(merged);
+        localStorage.setItem('ncttx_questions', JSON.stringify(merged));
+
+        if (merged.length > cloudData.length) {
+          saveToCloud('questions', merged);
+        }
       }
     }, initialQuestions);
 

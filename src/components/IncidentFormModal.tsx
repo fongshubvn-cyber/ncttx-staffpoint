@@ -171,7 +171,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     const realtimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} ${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
     const newRecord: IncidentRecord = {
-      id: `INC-2026-${String(Date.now()).slice(-4)}`,
+      id: `INC-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
       type,
       reporterId,
       reporterName: reporter ? reporter.name : reporterId,
