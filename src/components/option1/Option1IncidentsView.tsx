@@ -198,7 +198,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Tuyên Dương (+{userIncidents.filter(i => i.type === 'ghi_nhan').length})
+            Ghi Nhận (+{userIncidents.filter(i => i.type === 'ghi_nhan').length})
           </button>
           <button
             onClick={() => setFilterType('vi_pham')}
@@ -208,7 +208,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                 : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
             }`}
           >
-            Vi Phạm ({userIncidents.filter(i => i.type === 'vi_pham').length})
+            Lập Biên Bản ({userIncidents.filter(i => i.type === 'vi_pham').length})
           </button>
           <button
             onClick={() => setFilterType('khang_nghi')}
@@ -259,7 +259,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                         <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
                           isRecognition ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
                         }`}>
-                          {isRecognition ? 'Tuyên Dương' : 'Vi Phạm'}
+                          {isRecognition ? 'Ghi Nhận' : 'Lập Biên Bản'}
                         </span>
                         <span className="text-xs font-semibold text-slate-900">
                           Đối tượng: <strong>{staff ? `${staff.name} (${staff.id})` : incident.targetId}</strong>

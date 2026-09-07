@@ -341,7 +341,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                     : 'bg-slate-50 text-slate-600 border-slate-200'
                 }`}
               >
-                <span>🌟 KHEN THƯỞNG</span>
+                <span>🌟 GHI NHẬN</span>
               </button>
 
               <button
@@ -353,7 +353,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                     : 'bg-slate-50 text-slate-600 border-slate-200'
                 }`}
               >
-                <span>📢 NHẮC NHỜ VI PHẠM</span>
+                <span>📢 LẬP BIÊN BẢN</span>
               </button>
             </div>
           </div>
@@ -545,7 +545,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 type === 'vi_pham' ? 'bg-[#DD6B20] hover:bg-[#c05621]' : 'bg-[#2D6A4F] hover:bg-[#1B4332]'
               }`}
             >
-              {type === 'vi_pham' ? '📢 Lập Biên Bản Nhắc Nhở Vi Phạm' : '🌟 Lập Phiếu Ghi Nhận Khen Thưởng'}
+              {type === 'vi_pham' ? '📢 Lập Biên Bản Vi Phạm' : '🌟 Lập Phiếu Ghi Nhận'}
             </button>
           </div>
 

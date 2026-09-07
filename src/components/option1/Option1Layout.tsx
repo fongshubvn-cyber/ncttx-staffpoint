@@ -36,6 +36,7 @@ import {
   X
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
+import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole } from '../../utils/calculator';
 
 interface Option1LayoutProps {
   activeTab: string;
@@ -109,10 +110,20 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     return () => unsub();
   }, []);
 
+  const visibleIncidentsBadgeCount = React.useMemo(() => {
+    if (!currentUser) return 0;
+    const isUpperManager = currentUser.isAdmin || currentUser.id === 'ADMIN' || isHRHeadRole(currentUser) || isDeptHeadOrAboveRole(currentUser);
+    if (isUpperManager) {
+      return incidents.filter(i => canUserViewIncident(currentUser, i, staffList)).length;
+    }
+    // Subordinates below Trưởng phòng: show count of received tickets (vi phạm or ghi nhận received)
+    return incidents.filter(i => i.targetId === currentUser.id).length;
+  }, [currentUser, incidents, staffList]);
+
   const navItems = [
     { id: 'summary', label: 'Tổng Quan', icon: LayoutDashboard },
     { id: 'staff', label: 'Nhân Sự', icon: Users },
-    { id: 'incidents', label: 'Phản Hồi', icon: Trophy, badge: incidents.length > 0 ? incidents.length : undefined },
+    { id: 'incidents', label: 'Phản Hồi', icon: Trophy, badge: visibleIncidentsBadgeCount > 0 ? visibleIncidentsBadgeCount : undefined },
     { id: 'questions', label: 'Tiêu Chí', icon: Layers },
     { id: 'baseline', label: 'Tham Số', icon: Sliders },
     { id: 'report', label: 'Báo Cáo', icon: BarChart3 },
