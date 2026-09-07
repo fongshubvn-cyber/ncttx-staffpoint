@@ -241,10 +241,47 @@ export function canUserViewIncident(
 }
 
 /**
+ * Determines rank hierarchy level for staff scoping:
+ * Level 4: Admin, HR Head, Founder, CEO, C-Level (Full Company Visibility)
+ * Level 3: Quản lý, Trưởng phòng (Non-HR Department Manager)
+ * Level 2: Lead, Trưởng ca, Cửa hàng trưởng (Line Lead / Team Lead)
+ * Level 1: Regular Staff (Nhân sự thường)
+ */
+export function getStaffRank(staff: { id?: string; isAdmin?: boolean; isManager?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined): number {
+  if (!staff) return 1;
+  const cleanId = (staff.id || '').trim().toUpperCase();
+  if (staff.isAdmin || cleanId === 'ADMIN' || isHRHeadRole(staff)) {
+    return 4;
+  }
+
+  const roleLower = (staff.role || '').toLowerCase();
+  const levelLower = (staff.jobLevel || '').toLowerCase();
+
+  const isLevel4 = ['founder', 'ceo', 'c-level', 'c suite', 'chủ tịch'].some(
+    kw => levelLower.includes(kw) || roleLower.includes(kw)
+  );
+  if (isLevel4) return 4;
+
+  const isLevel3 = ['trưởng phòng', 'quản lý', 'manager', 'head of'].some(
+    kw => levelLower.includes(kw) || roleLower.includes(kw)
+  );
+  if (isLevel3) return 3;
+
+  const isLevel2 = ['lead', 'trưởng ca', 'cửa hàng trưởng'].some(
+    kw => levelLower.includes(kw) || roleLower.includes(kw)
+  ) || Boolean(staff.isManager);
+  if (isLevel2) return 2;
+
+  return 1;
+}
+
+/**
  * Permission Check: Returns staff list visible to user
- * - Trưởng phòng / HR Head / C-Level / Admin: all staff
- * - Quản lý / Lead: self + DIRECT SUBORDINATES (non-management staff in same department/line)
- * - Regular Staff: self only
+ * Scoping rule: Quản lý > Lead > Nhân sự
+ * - Level 4 (Admin / HR Head / Top Leadership): sees ALL staff across the company
+ * - Level 3 (Quản lý / Trưởng phòng): sees self + subordinate Leads (Level 2) and Staff (Level 1) in their department/line
+ * - Level 2 (Lead / Trưởng ca): sees self + subordinate Regular Staff (Level 1) in their department/line
+ * - Level 1 (Nhân sự thường): sees self only
  */
 export function getVisibleStaffListForUser(
   user: { id?: string; isAdmin?: boolean; isManager?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined,
@@ -252,45 +289,43 @@ export function getVisibleStaffListForUser(
 ): Staff[] {
   if (!user) return staffList;
 
-  if (user.isAdmin || (user.id || '').trim().toUpperCase() === 'ADMIN') return staffList;
-
-  const roleLower = (user.role || '').toLowerCase();
-  const levelLower = (user.jobLevel || '').toLowerCase();
-
-  const isUpperMgmt = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin'].some(
-    kw => levelLower.includes(kw) || roleLower.includes(kw)
-  );
-  if (isUpperMgmt) return staffList;
-
-  const isTeamLead = ['lead', 'trưởng ca', 'cửa hàng trưởng', 'quản lý', 'manager'].some(
-    kw => levelLower.includes(kw) || roleLower.includes(kw)
-  ) || Boolean(user.isManager);
-
-  if (isTeamLead) {
-    const userDept = (user.department || '').trim().toLowerCase();
-    const cleanUserId = (user.id || '').trim().toUpperCase();
-
-    return staffList.filter(s => {
-      if (s.id.trim().toUpperCase() === cleanUserId) return true;
-
-      // Exclude superiors/managers from Lead's subordinate list
-      const sRoleLower = (s.role || '').toLowerCase();
-      const sLevelLower = (s.jobLevel || '').toLowerCase();
-      const isSuperiorOrManager = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin', 'quản lý', 'manager', 'lead', 'cửa hàng trưởng', 'trưởng ca'].some(
-        kw => sLevelLower.includes(kw) || sRoleLower.includes(kw)
-      ) || Boolean(s.isManager);
-
-      if (isSuperiorOrManager) return false;
-
-      const sDept = (s.department || '').trim().toLowerCase();
-      const sLine = (s.line || '').trim().toLowerCase();
-      return userDept && (userDept === sDept || userDept === sLine);
-    });
+  const userRank = getStaffRank(user);
+  if (userRank >= 4) {
+    return staffList;
   }
 
-  // Regular Staff: self only
   const cleanUserId = (user.id || '').trim().toUpperCase();
-  return staffList.filter(s => s.id.trim().toUpperCase() === cleanUserId);
+  const userStaff = staffList.find(s => s.id.trim().toUpperCase() === cleanUserId);
+
+  const cleanText = (str: string) => str.toLowerCase().replace(/[^\w\sàáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]/gi, '').trim();
+
+  const userDept = cleanText(userStaff?.department || user.department || '');
+  const userLine = cleanText(userStaff?.line || '');
+
+  return staffList.filter(s => {
+    const sId = s.id.trim().toUpperCase();
+    if (sId === cleanUserId) return true; // Always see self
+
+    const sRank = getStaffRank(s);
+
+    // Rule: User can ONLY see staff with STRICTLY LOWER rank than themselves (subordinates)
+    if (sRank >= userRank) {
+      return false;
+    }
+
+    // Must be in the user's department or line
+    const sDept = cleanText(s.department || '');
+    const sLine = cleanText(s.line || '');
+
+    const isMatch = Boolean(
+      (userDept && sDept && (sDept.includes(userDept) || userDept.includes(sDept))) ||
+      (userLine && sLine && (sLine.includes(userLine) || userLine.includes(sLine))) ||
+      (userDept && sLine && (sLine.includes(userDept) || userDept.includes(sLine))) ||
+      (userLine && sDept && (sDept.includes(userLine) || userLine.includes(sDept)))
+    );
+
+    return isMatch;
+  });
 }
 
 

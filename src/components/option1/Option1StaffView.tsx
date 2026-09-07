@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Staff, DepartmentLine, ParameterConfig, AuthUser, SpeechType } from '../../types';
-import { getSalaryTierBadge, calculateTotalScoreForStaff, calculateSalaryTier } from '../../utils/calculator';
+import { getSalaryTierBadge, calculateTotalScoreForStaff, calculateSalaryTier, getVisibleStaffListForUser } from '../../utils/calculator';
 import { 
   Users, 
   Search, 
@@ -52,7 +52,9 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
   const [newRole, setNewRole] = useState('Thành viên');
   const [speechCap, setSpeechCap] = useState<SpeechType>('Người nói');
 
-  const filteredStaff = staffList.filter((s) => {
+  const visibleStaff = getVisibleStaffListForUser(currentUser, staffList);
+
+  const filteredStaff = visibleStaff.filter((s) => {
     const matchesSearch = s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
                           s.id.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesLine = selectedLine === 'all' || s.line === selectedLine;

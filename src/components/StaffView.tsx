@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Staff, DepartmentLine, ParameterConfig, AuthUser } from '../types';
-import { getSalaryTierBadge, calculateSalaryTier, calculateTotalScore } from '../utils/calculator';
+import { getSalaryTierBadge, calculateSalaryTier, calculateTotalScore, getVisibleStaffListForUser } from '../utils/calculator';
 import { 
   Users, 
   Search, 
@@ -140,10 +140,8 @@ export const StaffView: React.FC<StaffViewProps> = ({
     setIsNewAdmin(false);
   };
 
-  // Privacy Scoping: Non-admin users only see their own staff profile
-  const userStaffList = currentUser?.isAdmin
-    ? staffList
-    : staffList.filter(s => s.id === currentUser?.id);
+  // Privacy Scoping: Scoped by rank hierarchy (Admin > Quản lý > Lead > Nhân sự)
+  const userStaffList = getVisibleStaffListForUser(currentUser, staffList);
 
   const filteredStaff = userStaffList.filter((staff) => {
     if (selectedLine !== 'all' && staff.line !== selectedLine) return false;
