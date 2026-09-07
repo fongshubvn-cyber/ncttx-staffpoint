@@ -79,9 +79,9 @@ export const IncidentsView: React.FC<IncidentsViewProps> = ({
   // - Admin, Trưởng phòng, HR Head: view all tickets across company
   // - Quản lý / Lead: view self tickets + tickets of direct team subordinates in their department/line
   // - Regular Staff: view ONLY tickets where they are reporter (submitted) or target (received)
-  const userIncidents = incidents.filter(item => canUserViewIncident(currentUser, item, staffList));
+  const userIncidents = incidents.filter(item => !item.isPurged && canUserViewIncident(currentUser, item, staffList));
   const activeIncidents = userIncidents.filter(item => !item.isDeleted);
-  const deletedIncidents = userIncidents.filter(item => Boolean(item.isDeleted));
+  const deletedIncidents = userIncidents.filter(item => Boolean(item.isDeleted) && !item.isPurged);
 
   // Filter specific lists for counts & tabs
   const mySubmittedIncidents = activeIncidents.filter(i => i.reporterId === currentUser?.id);

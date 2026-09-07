@@ -69,9 +69,9 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
   const activeHRHead = getActiveHRHead(staffList);
 
   // Privacy & Access Scoping:
-  const userIncidents = incidents.filter(item => canUserViewIncident(currentUser, item, staffList));
+  const userIncidents = incidents.filter(item => !item.isPurged && canUserViewIncident(currentUser, item, staffList));
   const activeIncidents = userIncidents.filter(item => !item.isDeleted);
-  const deletedIncidents = userIncidents.filter(item => Boolean(item.isDeleted));
+  const deletedIncidents = userIncidents.filter(item => Boolean(item.isDeleted) && !item.isPurged);
 
   const mySubmittedIncidents = activeIncidents.filter(i => i.reporterId === currentUser?.id);
   const myReceivedIncidents = activeIncidents.filter(i => i.targetId === currentUser?.id);

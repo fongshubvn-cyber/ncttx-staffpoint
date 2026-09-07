@@ -99,7 +99,7 @@ export const saveToCloud = async (docName: string, data: any) => {
   if (!isFirebaseConfigured()) return;
   try {
     const docRef = doc(db, 'ncttx_data', docName);
-    await setDoc(docRef, { payload: data, updatedAt: new Date().toISOString() }, { merge: true });
+    await setDoc(docRef, { payload: data, updatedAt: new Date().toISOString() });
     updateCloudState('connected', null);
   } catch (error: any) {
     console.error(`Lỗi ghi dữ liệu Cloud Firestore (${docName}):`, error);

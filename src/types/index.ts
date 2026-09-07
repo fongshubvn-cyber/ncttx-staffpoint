@@ -87,6 +87,7 @@ export interface IncidentRecord {
   isDeleted?: boolean;
   deletedAt?: string;
   deletedBy?: string;
+  isPurged?: boolean;
 }
 
 export interface DepartmentLine {

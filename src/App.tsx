@@ -106,13 +106,24 @@ export function App() {
   const isCloudLoadedRef = React.useRef<Record<string, boolean>>({});
 
   // Helper: Smart merge cloud array with local storage array by 'id'
-  const mergeArraysById = <T extends { id: string }>(cloudArr: T[], localArr: T[]): T[] => {
+  const mergeArraysById = <T extends { id: string; isDeleted?: boolean; isPurged?: boolean }>(cloudArr: T[], localArr: T[]): T[] => {
     const map = new Map<string, T>();
     (localArr || []).forEach(item => {
       if (item && item.id) map.set(item.id, item);
     });
     (cloudArr || []).forEach(item => {
-      if (item && item.id) map.set(item.id, item);
+      if (item && item.id) {
+        const existing = map.get(item.id);
+        if (existing) {
+          map.set(item.id, {
+            ...item,
+            isDeleted: item.isDeleted !== undefined ? item.isDeleted : existing.isDeleted,
+            isPurged: item.isPurged !== undefined ? item.isPurged : existing.isPurged,
+          });
+        } else {
+          map.set(item.id, item);
+        }
+      }
     });
     return Array.from(map.values());
   };
@@ -329,10 +340,20 @@ export function App() {
   const handlePermanentDeleteIncident = (incidentId: string) => {
     setIncidents(prev => {
       const targetInc = prev.find(i => i.id === incidentId);
-      if (targetInc && !targetInc.isDeleted && (targetInc.status === 'Đã duyệt' || targetInc.type === 'vi_pham')) {
+      if (targetInc && !targetInc.isDeleted && !targetInc.isPurged && (targetInc.status === 'Đã duyệt' || targetInc.type === 'vi_pham')) {
         refundIncidentScoreImpact(targetInc);
       }
-      const updated = prev.filter(i => i.id !== incidentId);
+      const updated = prev.map(i => {
+        if (i.id === incidentId) {
+          return {
+            ...i,
+            isDeleted: true,
+            isPurged: true,
+            deletedAt: new Date().toISOString(),
+          };
+        }
+        return i;
+      });
       localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
       saveToCloud('incidents', updated);
       return updated;
