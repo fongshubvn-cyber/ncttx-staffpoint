@@ -1,12 +1,11 @@
 import React, { useState } from 'react';
+import logoImg from '../assets/logo.png';
 import { AuthUser, Staff } from '../types';
 import { 
-  Lock, 
   User, 
   KeyRound, 
   ShieldAlert, 
   CheckCircle2, 
-  Sparkles, 
   LogOut, 
   ArrowRight, 
   ShieldCheck, 
@@ -26,8 +25,6 @@ interface LoginModalProps {
   userPasswords: Record<string, string>;
   onUpdatePassword: (userId: string, newPass: string) => void;
   isStandalone?: boolean;
-  uiOption?: 'default' | 'option1';
-  onSelectUiOption?: (option: 'default' | 'option1') => void;
 }
 
 export const LoginModal: React.FC<LoginModalProps> = ({
@@ -181,241 +178,214 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-gradient-to-br from-[#1B4332] via-[#2D6A4F] to-[#0F281E] selection:bg-emerald-500 selection:text-white">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-6 overflow-y-auto bg-[#FAF9F5] selection:bg-[#1B4332] selection:text-white">
       
-      {/* Decorative Background Lighting Effects */}
-      <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none animate-pulse" />
-      <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-teal-400/15 rounded-full blur-3xl pointer-events-none" />
+      {/* Background Soft Organic Radial Light */}
+      <div className="absolute inset-0 bg-gradient-to-b from-[#1B4332]/5 via-transparent to-[#1B4332]/10 pointer-events-none" />
 
-      {/* Main Login Card */}
-      <div className="relative w-full max-w-md bg-white/95 backdrop-blur-2xl rounded-3xl shadow-[0_20px_60px_-15px_rgba(0,0,0,0.4)] border border-white/60 overflow-hidden transform transition-all my-auto">
+      {/* Main Login Card - Simple, Clean & Modern */}
+      <div className="relative w-full max-w-sm bg-white rounded-3xl shadow-xl border border-emerald-900/10 p-6 sm:p-8 overflow-hidden transform transition-all my-auto">
         
         {/* Close Button (if non-standalone modal) */}
         {!isStandalone && (
           <button
             onClick={onClose}
-            className="absolute top-4 right-4 z-10 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 p-2 rounded-full transition-all"
+            className="absolute top-4 right-4 z-10 text-slate-400 hover:text-slate-700 bg-slate-100 hover:bg-slate-200 w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold transition-all"
             title="Đóng"
           >
             ✕
           </button>
         )}
 
-        {/* Top Brand Banner */}
-        <div className="bg-gradient-to-b from-[#1B4332] to-[#2D6A4F] text-white pt-8 pb-7 px-6 text-center relative border-b border-emerald-600/30">
-          
-          {/* Logo Badge Container */}
-          <div className="relative inline-block mb-3">
-            <div className="absolute -inset-1 bg-gradient-to-r from-emerald-400 to-teal-300 rounded-3xl blur-md opacity-40 group-hover:opacity-100 transition duration-1000 group-hover:duration-200"></div>
-            <img 
-              src="/logo.png" 
-              alt="Nhà Của Thời Thanh Xuân Logo" 
-              className="relative w-28 h-28 object-contain rounded-2xl bg-white p-2.5 shadow-xl mx-auto border border-emerald-100 transform hover:scale-105 transition-all duration-300" 
-            />
-          </div>
-          
-          <h2 className="text-xl sm:text-2xl font-black tracking-tight text-white font-heading">
-            THỜI THANH XUÂN
+        {/* Clean Logo Banner Header */}
+        <div className="text-center mb-6">
+          <img 
+            src={logoImg} 
+            alt="Nhà Của Thời Thanh Xuân Logo" 
+            className="w-32 sm:w-36 h-auto object-contain mx-auto mb-3" 
+          />
+          <h2 className="text-lg sm:text-xl font-extrabold text-[#1B4332] tracking-tight">
+            Ghi Nhận Phản Hồi Nhân Sự
           </h2>
-          
-          <p className="text-xs text-emerald-100 font-semibold mt-1 tracking-wide uppercase">
-            Hệ Thống Ghi Nhận Phản Hồi Nhân Sự
+          <p className="text-xs text-slate-500 font-medium mt-0.5">
+            Nhà Của Thời Thanh Xuân
           </p>
+        </div>
 
-          <div className="inline-block mt-2.5 px-3 py-1 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-[11px] text-emerald-200 font-medium">
-            StaffPoint v3.0
+        {/* SUCCESS ALERT */}
+        {changeSuccessMsg && (
+          <div className="mb-4 p-3 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-bold flex items-center space-x-2 animate-pulse">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
+            <span>{changeSuccessMsg}</span>
           </div>
-        </div>
+        )}
 
-        {/* Modal Body Form */}
-        <div className="p-6 sm:p-7 space-y-5">
+        {/* ERROR ALERT */}
+        {errorMsg && (
+          <div className="mb-4 p-3 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs font-bold flex items-start space-x-2">
+            <ShieldAlert className="w-4 h-4 text-rose-600 shrink-0 mt-0.5" />
+            <span className="leading-snug">{errorMsg}</span>
+          </div>
+        )}
 
-          {/* SUCCESS ALERT */}
-          {changeSuccessMsg && (
-            <div className="p-3.5 bg-emerald-50 border border-emerald-200 rounded-2xl text-emerald-800 text-xs font-bold flex items-center space-x-2.5 animate-bounce">
-              <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
-              <span>{changeSuccessMsg}</span>
+        {/* CASE 1: Forced Password Change Step */}
+        {isChangingPasswordStep ? (
+          <form onSubmit={handleChangePasswordSubmit} className="space-y-4">
+            <div className="bg-amber-50 border border-amber-200 p-3.5 rounded-2xl text-xs text-amber-900 leading-relaxed font-medium">
+              🔒 Vui lòng cập nhật mật khẩu mới cho tài khoản <strong>[{pendingUser?.id}] {pendingUser?.name}</strong>.
             </div>
-          )}
 
-          {/* ERROR ALERT */}
-          {errorMsg && (
-            <div className="p-3.5 bg-rose-50 border border-rose-200 rounded-2xl text-rose-800 text-xs font-bold flex items-start space-x-2.5 shadow-sm">
-              <ShieldAlert className="w-5 h-5 text-rose-600 shrink-0 mt-0.5" />
-              <span className="leading-snug">{errorMsg}</span>
-            </div>
-          )}
-
-          {/* CASE 1: Forced Password Change Step */}
-          {isChangingPasswordStep ? (
-            <form onSubmit={handleChangePasswordSubmit} className="space-y-4">
-              <div className="bg-amber-50 border border-amber-200 p-4 rounded-2xl text-xs text-amber-900 leading-relaxed font-medium shadow-sm">
-                🔒 Tài khoản <strong>[{pendingUser?.id}] {pendingUser?.name}</strong> đang dùng mật khẩu mặc định. Vui lòng tạo mật khẩu mới để bảo mật dữ liệu!
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Mật khẩu mới</label>
-                <div className="relative">
-                  <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
-                  <input
-                    type={showNewPassword ? "text" : "password"}
-                    required
-                    placeholder="Tối thiểu 6 ký tự"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] transition-all"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowNewPassword(!showNewPassword)}
-                    className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600"
-                  >
-                    {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold text-slate-700 mb-1.5">Xác nhận mật khẩu mới</label>
-                <div className="relative">
-                  <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
-                  <input
-                    type={showNewPassword ? "text" : "password"}
-                    required
-                    placeholder="Xác nhận lại mật khẩu mới"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] transition-all"
-                  />
-                </div>
-              </div>
-
-              <div className="pt-2">
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Mật khẩu mới</label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  required
+                  placeholder="Tối thiểu 6 ký tự"
+                  value={newPassword}
+                  onChange={(e) => setNewPassword(e.target.value)}
+                  className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1B4332] transition-all"
+                />
                 <button
-                  type="submit"
-                  className="w-full py-3.5 rounded-2xl bg-[#2D6A4F] hover:bg-[#1B4332] text-white font-extrabold text-xs shadow-lg shadow-emerald-900/20 flex items-center justify-center space-x-2 active:scale-95 transition-all"
+                  type="button"
+                  onClick={() => setShowNewPassword(!showNewPassword)}
+                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600"
                 >
-                  <Sparkles className="w-4 h-4 text-amber-300" />
-                  <span>Cập Nhật Mật Khẩu & Đăng Nhập</span>
-                </button>
-              </div>
-            </form>
-          ) : currentUser && !isStandalone ? (
-            /* CASE 2: Already Logged In Profile Card */
-            <div className="space-y-4 text-center">
-              <div className="p-4 bg-emerald-50/80 border border-emerald-200 rounded-2xl text-left space-y-2.5 shadow-sm">
-                <div className="flex items-center space-x-2 text-[#1B4332]">
-                  <ShieldCheck className="w-5 h-5 text-[#2D6A4F]" />
-                  <span className="text-xs font-extrabold uppercase tracking-wider">Tài khoản đang hoạt động</span>
-                </div>
-
-                <div className="pt-1">
-                  <div className="text-lg font-black text-[#1B4332]">{currentUser.name}</div>
-                  <div className="text-xs text-slate-600 font-bold mt-0.5">Mã NV: <span className="font-mono text-emerald-800">{currentUser.id}</span></div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-emerald-200/60">
-                  <div className="flex items-center space-x-1.5 text-slate-600">
-                    <Briefcase className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span className="truncate font-medium">{currentUser.role}</span>
-                  </div>
-                  <div className="flex items-center space-x-1.5 text-slate-600">
-                    <Building className="w-3.5 h-3.5 text-emerald-600 shrink-0" />
-                    <span className="truncate font-medium">{currentUser.department}</span>
-                  </div>
-                </div>
-              </div>
-
-              <div className="flex space-x-2 pt-1">
-                <button
-                  onClick={() => {
-                    setIsChangingPasswordStep(true);
-                    setPendingUser(currentUser);
-                  }}
-                  className="flex-1 py-3 rounded-2xl bg-amber-50 text-[#DD6B20] border border-amber-200 text-xs font-extrabold hover:bg-amber-100 flex items-center justify-center space-x-1.5 transition-all"
-                >
-                  <KeyRound className="w-4 h-4" />
-                  <span>Đổi mật khẩu</span>
-                </button>
-                <button
-                  onClick={onLogout}
-                  className="flex-1 py-3 rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-extrabold hover:bg-rose-100 flex items-center justify-center space-x-1.5 transition-all"
-                >
-                  <LogOut className="w-4 h-4" />
-                  <span>Đăng xuất</span>
+                  {showNewPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
             </div>
-          ) : (
-            /* CASE 3: Clean Single Login Form */
-            <form onSubmit={handleSubmitLogin} className="space-y-4">
-              
-              {/* User ID Input */}
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  Mã Số Nhân Viên / Mã Admin
-                </label>
-                <div className="relative">
-                  <User className="w-4.5 h-4.5 absolute left-3.5 top-3.5 text-slate-400" />
-                  <input
-                    type="text"
-                    required
-                    placeholder="VD: TTX005, TTX030, ADMIN..."
-                    value={idInput}
-                    onChange={(e) => setIdInput(e.target.value)}
-                    className="w-full pl-10 pr-4 py-3 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent font-mono uppercase tracking-wide transition-all shadow-inner"
-                  />
+
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Xác nhận mật khẩu mới</label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                <input
+                  type={showNewPassword ? "text" : "password"}
+                  required
+                  placeholder="Xác nhận mật khẩu"
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
+                  className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1B4332] transition-all"
+                />
+              </div>
+            </div>
+
+            <div className="pt-2">
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-2xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-extrabold text-xs shadow-md flex items-center justify-center space-x-2 transition-all active:scale-95"
+              >
+                <span>Cập Nhật & Đăng Nhập</span>
+              </button>
+            </div>
+          </form>
+        ) : currentUser && !isStandalone ? (
+          /* CASE 2: Already Logged In Profile Card */
+          <div className="space-y-4 text-center">
+            <div className="p-4 bg-emerald-50/70 border border-emerald-200/80 rounded-2xl text-left space-y-2">
+              <div className="flex items-center space-x-1.5 text-[#1B4332]">
+                <ShieldCheck className="w-4 h-4 text-[#1B4332]" />
+                <span className="text-xs font-bold uppercase tracking-wider">Đã đăng nhập</span>
+              </div>
+              <div className="text-base font-extrabold text-[#1B4332] pt-1">{currentUser.name}</div>
+              <div className="text-xs text-slate-600 font-semibold">Mã NV: <span className="font-mono text-emerald-800">{currentUser.id}</span></div>
+              <div className="flex items-center gap-4 text-xs text-slate-600 font-medium pt-1 border-t border-emerald-200/60">
+                <div className="flex items-center gap-1">
+                  <Briefcase className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>{currentUser.role}</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Building className="w-3.5 h-3.5 text-emerald-700" />
+                  <span>{currentUser.department}</span>
                 </div>
               </div>
+            </div>
 
-              {/* Password Input */}
-              <div>
-                <label className="block text-xs font-extrabold text-slate-700 mb-1.5 uppercase tracking-wider">
-                  Mật khẩu
-                </label>
-                <div className="relative">
-                  <KeyRound className="w-4.5 h-4.5 absolute left-3.5 top-3.5 text-slate-400" />
-                  <input
-                    type={showPassword ? "text" : "password"}
-                    required
-                    placeholder="Nhập mật khẩu truy cập"
-                    value={passwordInput}
-                    onChange={(e) => setPasswordInput(e.target.value)}
-                    className="w-full pl-10 pr-10 py-3 bg-slate-50/80 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#2D6A4F] focus:border-transparent transition-all shadow-inner"
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 transition-colors"
-                  >
-                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
-                  </button>
-                </div>
+            <div className="flex space-x-2 pt-1">
+              <button
+                onClick={() => {
+                  setIsChangingPasswordStep(true);
+                  setPendingUser(currentUser);
+                }}
+                className="flex-1 py-2.5 rounded-2xl bg-amber-50 text-amber-800 border border-amber-200 text-xs font-bold hover:bg-amber-100 flex items-center justify-center space-x-1 transition-all"
+              >
+                <span>Đổi mật khẩu</span>
+              </button>
+              <button
+                onClick={onLogout}
+                className="flex-1 py-2.5 rounded-2xl bg-rose-50 text-rose-700 border border-rose-200 text-xs font-bold hover:bg-rose-100 flex items-center justify-center space-x-1 transition-all"
+              >
+                <LogOut className="w-3.5 h-3.5" />
+                <span>Đăng xuất</span>
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* CASE 3: Clean & Simple Direct Login Form */
+          <form onSubmit={handleSubmitLogin} className="space-y-4">
+            
+            {/* User ID Input */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Mã số nhân viên / Admin
+              </label>
+              <div className="relative">
+                <User className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                <input
+                  type="text"
+                  required
+                  placeholder="VD: TTX005, ADMIN..."
+                  value={idInput}
+                  onChange={(e) => setIdInput(e.target.value)}
+                  className="w-full pl-10 pr-3 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1B4332] font-mono uppercase transition-all"
+                />
               </div>
+            </div>
 
-              {/* Submit Button */}
-              <div className="pt-2">
+            {/* Password Input with Eye Toggle */}
+            <div>
+              <label className="block text-xs font-bold text-slate-700 mb-1">
+                Mật khẩu
+              </label>
+              <div className="relative">
+                <KeyRound className="w-4 h-4 absolute left-3.5 top-3.5 text-slate-400" />
+                <input
+                  type={showPassword ? "text" : "password"}
+                  required
+                  placeholder="Nhập mật khẩu"
+                  value={passwordInput}
+                  onChange={(e) => setPasswordInput(e.target.value)}
+                  className="w-full pl-10 pr-10 py-3 bg-slate-50 border border-slate-200 rounded-2xl text-xs font-bold text-slate-800 focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#1B4332] transition-all"
+                />
                 <button
-                  type="submit"
-                  className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-[#2D6A4F] via-[#1B4332] to-[#2D6A4F] hover:from-[#1B4332] hover:to-[#1B4332] text-white font-black text-xs uppercase tracking-wider shadow-lg shadow-emerald-900/25 flex items-center justify-center space-x-2 active:scale-[0.98] transition-all duration-200 cursor-pointer"
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  className="absolute right-3.5 top-3.5 text-slate-400 hover:text-slate-600 transition-colors"
                 >
-                  <span>Đăng Nhập Hệ Thống</span>
-                  <ArrowRight className="w-4 h-4 text-emerald-300" />
+                  {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
 
-              <div className="text-center pt-1">
-                <p className="text-[11px] text-slate-400 font-medium italic">
-                  Liên hệ Admin hệ thống nếu quên mã nhân viên hoặc mật khẩu.
-                </p>
-              </div>
+            {/* Submit Button */}
+            <div className="pt-2">
+              <button
+                type="submit"
+                className="w-full py-3.5 rounded-2xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-extrabold text-xs tracking-wide shadow-md flex items-center justify-center space-x-2 active:scale-95 transition-all cursor-pointer"
+              >
+                <span>Đăng Nhập</span>
+                <ArrowRight className="w-4 h-4 text-emerald-300" />
+              </button>
+            </div>
 
-            </form>
-          )}
+          </form>
+        )}
 
-        </div>
       </div>
     </div>
   );
 };
+
 

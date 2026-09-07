@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import logoImg from '../../assets/logo.png';
 import { 
   Staff, 
   IncidentRecord, 
@@ -128,7 +129,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           {/* Brand Logo & Cloud Status Badge */}
           <div className="flex items-center gap-3">
             <img 
-              src="/logo.png" 
+              src={logoImg} 
               alt="Nhà Của Thời Thanh Xuân Logo" 
               className="w-10 h-10 object-contain rounded-2xl bg-white p-1 shadow-md ring-2 ring-emerald-500/20 shrink-0 border border-emerald-100" 
             />
