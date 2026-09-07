@@ -21,6 +21,8 @@ interface StaffViewProps {
   lines: DepartmentLine[];
   onAddStaff: (staff: Staff) => void;
   onUpdateStaff?: (staff: Staff) => void;
+  onDeleteStaff?: (staffId: string) => void;
+  onUpdatePassword?: (userId: string, newPass: string) => void;
   isManager: boolean;
   params: ParameterConfig;
   currentUser: AuthUser | null;
@@ -32,6 +34,8 @@ export const StaffView: React.FC<StaffViewProps> = ({
   lines,
   onAddStaff,
   onUpdateStaff,
+  onDeleteStaff,
+  onUpdatePassword,
   isManager,
   params,
   currentUser,
@@ -41,6 +45,9 @@ export const StaffView: React.FC<StaffViewProps> = ({
   const [selectedLine, setSelectedLine] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [selectedStaff, setSelectedStaff] = useState<Staff | null>(null);
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
+  const [editNewPass, setEditNewPass] = useState('');
 
   // Compute visible lines: Admin sees ALL lines, non-admin sees ONLY their department line
   const visibleLines = React.useMemo(() => {
@@ -236,6 +243,12 @@ export const StaffView: React.FC<StaffViewProps> = ({
                       <span>Co-Admin</span>
                     </span>
                   )}
+                  {staff.status === 'Đã khoá' && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-rose-100 text-rose-800 border border-rose-300 flex items-center space-x-1">
+                      <Lock className="w-3 h-3 text-rose-700" />
+                      <span>Đã khoá</span>
+                    </span>
+                  )}
                 </div>
 
                 <h3 className="text-sm font-bold font-heading text-[#1B4332] truncate">{staff.name}</h3>
@@ -386,6 +399,63 @@ export const StaffView: React.FC<StaffViewProps> = ({
                   <span>📢 Lập biên bản vi phạm</span>
                 </button>
               </div>
+
+              {/* Advanced Admin Management Controls: Edit, Lock/Unlock & Remove */}
+              {currentUser?.isAdmin && (
+                <div className="pt-3 border-t border-slate-200 space-y-2">
+                  <div className="flex items-center justify-between gap-2">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setEditingStaff({ ...selectedStaff });
+                        setEditNewPass('');
+                        setShowEditModal(true);
+                      }}
+                      className="flex-1 py-2.5 px-3 rounded-2xl bg-slate-800 hover:bg-slate-900 text-white font-bold text-xs flex items-center justify-center space-x-1 shadow-md transition-all active:scale-95 cursor-pointer"
+                    >
+                      <span>✏️ Sửa Chi Tiết</span>
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const isLocked = selectedStaff.status === 'Đã khoá';
+                        const newStatus = isLocked ? 'Chính thức' : 'Đã khoá';
+                        const confirmMsg = isLocked
+                          ? `Bạn có muốn MỞ KHOÁ TÀI KHOẢN cho nhân sự "${selectedStaff.name}" (${selectedStaff.id})?`
+                          : `⚠️ CẢNH BÁO: Bạn có muốn KHOÁ TÀI KHOẢN nhân sự "${selectedStaff.name}" (${selectedStaff.id})?\nNhân sự này sẽ KHÔNG THỂ ĐĂNG NHẬP vào ứng dụng nữa!`;
+                        if (window.confirm(confirmMsg)) {
+                          const updated: Staff = { ...selectedStaff, status: newStatus };
+                          setSelectedStaff(updated);
+                          onUpdateStaff?.(updated);
+                        }
+                      }}
+                      className={`flex-1 py-2.5 px-3 rounded-2xl font-bold text-xs flex items-center justify-center space-x-1 shadow-md transition-all active:scale-95 cursor-pointer ${
+                        selectedStaff.status === 'Đã khoá'
+                          ? 'bg-emerald-600 hover:bg-emerald-700 text-white'
+                          : 'bg-rose-600 hover:bg-rose-700 text-white'
+                      }`}
+                    >
+                      <span>{selectedStaff.status === 'Đã khoá' ? '🔓 Mở Khoá Tài Khoản' : '🔒 Khoá Tài Khoản'}</span>
+                    </button>
+                  </div>
+
+                  {onDeleteStaff && (
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (window.confirm(`🚨 CẢNH BÁO NGUY HIỂM: Bạn có chắc chắn muốn XÓA NHÂN SỰ "${selectedStaff.name}" (${selectedStaff.id}) hoàn toàn khỏi hệ thống không? Hành động này không thể hoàn tác!`)) {
+                          onDeleteStaff(selectedStaff.id);
+                          setSelectedStaff(null);
+                        }
+                      }}
+                      className="w-full py-2 px-3 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-700 font-bold text-xs flex items-center justify-center space-x-1 border border-rose-200/80 transition-all active:scale-95 cursor-pointer"
+                    >
+                      <span>🗑️ Loại Bỏ Nhân Sự Khỏi Hệ Thống</span>
+                    </button>
+                  )}
+                </div>
+              )}
             </div>
 
             <button
@@ -526,6 +596,226 @@ export const StaffView: React.FC<StaffViewProps> = ({
               >
                 Tạo Nhân Sự & Mật Khẩu ✨
               </button>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Admin Full Edit Staff Sheet */}
+      {showEditModal && editingStaff && (
+        <div className="bottom-sheet animate-fadeIn">
+          <div className="bottom-sheet-content space-y-3 text-xs max-h-[85vh] overflow-y-auto">
+            <div className="flex items-center justify-between border-b border-slate-100 pb-2">
+              <div>
+                <h2 className="text-base font-bold font-heading text-[#1B4332]">Chỉnh Sửa Chi Tiết Nhân Sự ✏️</h2>
+                <p className="text-[10px] text-slate-500 font-medium">Toàn quyền Admin: cập nhật họ tên, vị trí, điểm số & khoá tài khoản</p>
+              </div>
+              <button onClick={() => setShowEditModal(false)} className="text-slate-400 text-lg font-bold">
+                ✕
+              </button>
+            </div>
+
+            <form
+              onSubmit={(e) => {
+                e.preventDefault();
+                const totalSc = calculateTotalScore(
+                  editingStaff.generalScore,
+                  editingStaff.techScore,
+                  editingStaff.mgmtScore,
+                  params
+                );
+                const salaryT = calculateSalaryTier(totalSc, params);
+
+                const updatedStaff: Staff = {
+                  ...editingStaff,
+                  totalScore: totalSc,
+                  salaryTier: salaryT,
+                  isManager: editingStaff.isManager || editingStaff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel),
+                };
+
+                if (editNewPass.trim() && onUpdatePassword) {
+                  onUpdatePassword(editingStaff.id, editNewPass.trim());
+                }
+
+                onUpdateStaff?.(updatedStaff);
+                setSelectedStaff(updatedStaff);
+                setShowEditModal(false);
+                setEditingStaff(null);
+                setEditNewPass('');
+              }}
+              className="space-y-3"
+            >
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Mã Nhân Viên</label>
+                  <input
+                    type="text"
+                    disabled
+                    value={editingStaff.id}
+                    className="w-full p-2.5 bg-slate-100 border border-slate-200 rounded-xl text-slate-500 font-mono font-bold cursor-not-allowed"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Trạng thái Tài khoản</label>
+                  <select
+                    value={editingStaff.status}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, status: e.target.value })}
+                    className={`w-full p-2.5 border rounded-xl font-bold ${
+                      editingStaff.status === 'Đã khoá'
+                        ? 'bg-rose-50 border-rose-300 text-rose-700'
+                        : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+                    }`}
+                  >
+                    <option value="Chính thức">Chính thức (Hoạt động)</option>
+                    <option value="Đã khoá">Đã khoá (Chặn đăng nhập)</option>
+                    <option value="Thử việc">Thử việc</option>
+                    <option value="Tạm nghỉ">Tạm nghỉ</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-600 font-bold mb-1">Họ tên nhân sự *</label>
+                <input
+                  type="text"
+                  required
+                  value={editingStaff.name}
+                  onChange={(e) => setEditingStaff({ ...editingStaff, name: e.target.value })}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Phòng Ban *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingStaff.department}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, department: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Tuyến / Ngạch</label>
+                  <select
+                    value={editingStaff.line}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, line: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium"
+                  >
+                    {lines.map((l) => (
+                      <option key={l.id} value={l.name}>
+                        {l.name}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Chức vụ / Vị trí *</label>
+                  <input
+                    type="text"
+                    required
+                    value={editingStaff.role}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, role: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748]"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Cấp bậc công việc</label>
+                  <select
+                    value={editingStaff.jobLevel}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, jobLevel: e.target.value })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium"
+                  >
+                    <option value="Nhân viên">Nhân viên</option>
+                    <option value="Lead">Team Lead</option>
+                    <option value="Quản lý">Quản lý</option>
+                    <option value="Trưởng phòng">Trưởng phòng</option>
+                    <option value="C-Level">C-Level</option>
+                    <option value="Founder">Founder</option>
+                    <option value="Admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Điểm Văn Hóa (0-5.0)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    value={editingStaff.generalScore}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, generalScore: parseFloat(e.target.value) || 0 })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-bold"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-slate-600 font-bold mb-1">Điểm Chuyên Môn (0-5.0)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    value={editingStaff.techScore}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, techScore: parseFloat(e.target.value) || 0 })}
+                    className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-bold"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-slate-600 font-bold mb-1">Đặt lại mật khẩu đăng nhập (bỏ trống nếu không đổi)</label>
+                <div className="relative">
+                  <Lock className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
+                  <input
+                    type="text"
+                    placeholder="Mật khẩu mới (ví dụ: 123456)..."
+                    value={editNewPass}
+                    onChange={(e) => setEditNewPass(e.target.value)}
+                    className="w-full pl-9 pr-3 py-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-mono font-bold"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 space-y-1">
+                <label className="flex items-center space-x-2 cursor-pointer font-bold text-xs text-amber-900">
+                  <input
+                    type="checkbox"
+                    checked={!!editingStaff.isAdmin}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, isAdmin: e.target.checked })}
+                    className="w-4 h-4 text-amber-600 rounded cursor-pointer"
+                  />
+                  <span className="flex items-center space-x-1">
+                    <ShieldCheck className="w-4 h-4 text-amber-700" />
+                    <span>Trao Quyền Quản Trị Viên (Co-Admin)</span>
+                  </span>
+                </label>
+              </div>
+
+              <div className="flex gap-2 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  className="flex-1 py-3 rounded-2xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold text-xs"
+                >
+                  Hủy
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 rounded-2xl bg-[#2D6A4F] hover:bg-[#1B4332] text-white font-bold font-heading text-xs shadow-md"
+                >
+                  Lưu Thay Đổi ✨
+                </button>
+              </div>
             </form>
           </div>
         </div>

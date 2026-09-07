@@ -183,56 +183,60 @@ export function canUserViewIncident(
   const cleanReporterId = (incident.reporterId || '').trim().toUpperCase();
   const cleanTargetId = (incident.targetId || '').trim().toUpperCase();
 
-  // 1. Direct involvement (User is target OR reporter) -> Always allowed to see own ticket
+  // 1. Direct involvement (User is target OR reporter) -> Always viewable
   if (cleanUserId === cleanReporterId || cleanUserId === cleanTargetId) {
     return true;
   }
 
-  // 2. Admin, Founder, C-Level, Trưởng phòng, HR Head (Upper Management) -> Sees all company tickets
-  if (user.isAdmin || cleanUserId === 'ADMIN') return true;
+  // 2. ONLY System Admin and HR Head (Trưởng phòng Nhân sự) can view tickets of ALL staff across the company
+  if (user.isAdmin || cleanUserId === 'ADMIN' || isHRHeadRole(user)) {
+    return true;
+  }
 
+  // 3. Other Department Heads / Managers / Leads of specific lines -> ONLY see tickets within their own line/department
   const roleLower = (user.role || '').toLowerCase();
   const levelLower = (user.jobLevel || '').toLowerCase();
+  const userDept = (user.department || '').trim().toLowerCase();
 
-  const isUpperMgmt = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin'].some(
-    kw => levelLower.includes(kw) || roleLower.includes(kw)
-  );
-  if (isUpperMgmt) return true;
-
-  // 3. Quản lý / Lead / Trưởng ca / Cửa hàng trưởng (Direct Team Lead)
-  const isTeamLead = ['lead', 'trưởng ca', 'cửa hàng trưởng', 'quản lý', 'manager'].some(
+  const isManagerOrLead = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin', 'quản lý', 'manager', 'lead', 'cửa hàng trưởng', 'trưởng ca'].some(
     kw => levelLower.includes(kw) || roleLower.includes(kw)
   ) || Boolean(user.isManager);
 
-  if (isTeamLead) {
-    const userDept = (user.department || '').trim().toLowerCase();
-
-    // Check target staff member
+  if (isManagerOrLead) {
     const targetStaff = staffList.find(s => s.id.trim().toUpperCase() === cleanTargetId);
+    const reporterStaff = staffList.find(s => s.id.trim().toUpperCase() === cleanReporterId);
+
+    // Exclude tickets targeting superiors/upper management unless directly involved
     if (targetStaff) {
-      // Exclude tickets written about superiors/managers!
       const targetRoleLower = (targetStaff.role || '').toLowerCase();
       const targetLevelLower = (targetStaff.jobLevel || '').toLowerCase();
-
-      const isTargetSuperiorOrManager = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin', 'quản lý', 'manager', 'lead', 'cửa hàng trưởng', 'trưởng ca'].some(
+      const isTargetSuperior = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin'].some(
         kw => targetLevelLower.includes(kw) || targetRoleLower.includes(kw)
-      ) || Boolean(targetStaff.isManager);
-
-      // If target staff is a superior/manager, Lead cannot view it unless directly involved (handled in step 1)
-      if (isTargetSuperiorOrManager) {
+      );
+      if (isTargetSuperior) {
         return false;
       }
+    }
 
-      const targetDept = (targetStaff.department || '').trim().toLowerCase();
-      const targetLine = (targetStaff.line || '').trim().toLowerCase();
+    const isMatch = (s: Staff | undefined) => {
+      if (!s || !userDept) return false;
+      const sDept = (s.department || '').trim().toLowerCase();
+      const sLine = (s.line || '').trim().toLowerCase();
+      return (
+        sDept === userDept || sLine === userDept ||
+        (userDept.length > 2 && sDept.includes(userDept)) ||
+        (userDept.length > 2 && sLine.includes(userDept)) ||
+        (sDept.length > 2 && userDept.includes(sDept)) ||
+        (sLine.length > 2 && userDept.includes(sLine))
+      );
+    };
 
-      if (userDept && (userDept === targetDept || userDept === targetLine)) {
-        return true;
-      }
+    if (isMatch(targetStaff) || isMatch(reporterStaff)) {
+      return true;
     }
   }
 
-  // 4. Regular Staff (Nhân sự thường): False if not target/reporter
+  // 4. Regular staff: False
   return false;
 }
 

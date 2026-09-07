@@ -92,6 +92,11 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       return;
     }
 
+    if (staff.status === 'Đã khoá' || staff.status === 'Ngưng hoạt động') {
+      setErrorMsg(`⛔ Tài khoản "${staff.name}" (${staff.id}) đã bị khoá bởi Admin hệ thống. Vui lòng liên hệ Admin!`);
+      return;
+    }
+
     const currentPass = userPasswords[staff.id] || userPasswords[cleanId] || '123456';
     if (passwordInput !== currentPass) {
       setErrorMsg('Mật khẩu không chính xác!');

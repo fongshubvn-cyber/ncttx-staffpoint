@@ -480,6 +480,16 @@ export function App() {
     }
   };
 
+  // Handler: Delete staff member
+  const handleDeleteStaff = (staffId: string) => {
+    setStaffList(prev => {
+      const updated = prev.filter(s => s.id !== staffId);
+      localStorage.setItem('ncttx_staff_list', JSON.stringify(updated));
+      saveToCloud('staff_list', updated);
+      return updated;
+    });
+  };
+
   // Handler: Add new question
   const handleAddQuestion = (newQuestion: Question) => {
     setQuestions(prev => {
@@ -554,6 +564,8 @@ export function App() {
           onLogout={() => setCurrentUser(null)}
           onAddStaff={handleAddStaff}
           onUpdateStaff={handleUpdateStaff}
+          onDeleteStaff={handleDeleteStaff}
+          onUpdatePassword={handleUpdatePassword}
           onAddQuestion={handleAddQuestion}
           onDeleteQuestion={handleDeleteQuestion}
           onAddIncident={handleAddIncident}
@@ -681,6 +693,8 @@ export function App() {
               lines={lines}
               onAddStaff={handleAddStaff}
               onUpdateStaff={handleUpdateStaff}
+              onDeleteStaff={handleDeleteStaff}
+              onUpdatePassword={handleUpdatePassword}
               isManager={isManager}
               params={params}
               currentUser={currentUser}
