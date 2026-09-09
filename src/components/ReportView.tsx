@@ -777,8 +777,8 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <span>Tổng Phiếu</span>
               <Award className="w-3.5 h-3.5 text-purple-600" />
             </div>
-            <p className="text-lg sm:text-xl font-black text-purple-900">{incidents.length} phiếu</p>
-            <p className="text-[9px] text-slate-500 font-medium">🌟 {incidents.filter(i=>i.type==='ghi_nhan').length} | 📢 {incidents.filter(i=>i.type==='vi_pham').length}</p>
+            <p className="text-lg sm:text-xl font-black text-purple-900">{incidents.filter(i => !i.isDeleted).length} phiếu</p>
+            <p className="text-[9px] text-slate-500 font-medium">🌟 {incidents.filter(i => !i.isDeleted && i.type==='ghi_nhan').length} | 📢 {incidents.filter(i => !i.isDeleted && i.type==='vi_pham').length}</p>
           </div>
         </div>
 
