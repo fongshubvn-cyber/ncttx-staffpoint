@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Staff, Question, DepartmentLine, IncidentRecord, IncidentType, SeverityLevel, ParameterConfig, AuthUser } from '../types';
 import { isManagementRole } from '../utils/calculator';
-import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck } from 'lucide-react';
+import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X } from 'lucide-react';
 
 interface IncidentFormModalProps {
   show: boolean;
@@ -133,6 +133,19 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
       return q.groupCode.startsWith('Q') || (q.scope && (q.scope.includes('Trưởng') || q.scope.includes('Quản lý')));
     }
     return true;
+  });
+
+  const [searchCriteriaTerm, setSearchCriteriaTerm] = useState<string>('');
+
+  const filteredAvailableQuestions = availableQuestions.filter(q => {
+    if (!searchCriteriaTerm) return true;
+    const term = searchCriteriaTerm.toLowerCase().trim();
+    return (
+      q.id.toLowerCase().includes(term) ||
+      q.groupCode.toLowerCase().includes(term) ||
+      (q.groupName && q.groupName.toLowerCase().includes(term)) ||
+      q.text.toLowerCase().includes(term)
+    );
   });
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -468,23 +481,90 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
             )}
           </div>
 
-          {/* 5. Select Question */}
-          <div>
-            <label className="block text-slate-700 font-extrabold font-heading mb-1">
-              5. Chọn Tiêu Chí Cụ Thể
-            </label>
+          {/* 5. Select Question with Quick Search */}
+          <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+              <label className="block text-slate-700 font-extrabold font-heading">
+                5. Tìm & Chọn Tiêu Chí Cụ Thể
+              </label>
+              <span className="text-[10px] text-[#2D6A4F] font-bold">
+                Tìm thấy {filteredAvailableQuestions.length} tiêu chí
+              </span>
+            </div>
+
+            {/* Quick Search Input Field */}
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#2D6A4F]" />
+              <input
+                type="text"
+                placeholder="🔍 Nhập mã (VH1, TC1...) hoặc từ khóa tiêu chí để tìm nhanh..."
+                value={searchCriteriaTerm}
+                onChange={(e) => setSearchCriteriaTerm(e.target.value)}
+                className="w-full pl-9 pr-8 py-2.5 bg-[#EDEAE3]/70 border border-emerald-900/20 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#2D6A4F] font-medium"
+              />
+              {searchCriteriaTerm && (
+                <button
+                  type="button"
+                  onClick={() => setSearchCriteriaTerm('')}
+                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 font-bold p-1"
+                >
+                  ✕
+                </button>
+              )}
+            </div>
+
+            {/* Dropdown Select */}
             <select
               value={questionId}
               onChange={(e) => handleSelectQuestion(e.target.value)}
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium focus:outline-none focus:border-[#2D6A4F]"
             >
-              <option value="">-- Chọn tiêu chí cụ thể (Tùy chọn) --</option>
-              {availableQuestions.map((q) => (
+              <option value="">-- Chọn tiêu chí từ danh sách dropdown --</option>
+              {filteredAvailableQuestions.map((q) => (
                 <option key={q.id} value={q.id}>
                   [{q.id}] {q.groupCode}: {q.text}
                 </option>
               ))}
             </select>
+
+            {/* Quick Clickable Suggestions List */}
+            {searchCriteriaTerm && filteredAvailableQuestions.length > 0 && (
+              <div className="space-y-1 max-h-44 overflow-y-auto p-2 bg-emerald-50/80 rounded-xl border border-emerald-200">
+                <span className="text-[10px] text-[#1B4332] font-black uppercase tracking-wider block mb-1">
+                  🎯 Đề xuất kết quả tìm kiếm nhanh:
+                </span>
+                {filteredAvailableQuestions.slice(0, 6).map((q) => (
+                  <button
+                    key={q.id}
+                    type="button"
+                    onClick={() => {
+                      handleSelectQuestion(q.id);
+                      setSearchCriteriaTerm('');
+                    }}
+                    className={`w-full text-left p-2 rounded-xl text-xs transition-all flex items-start justify-between gap-2 cursor-pointer ${
+                      questionId === q.id 
+                        ? 'bg-[#2D6A4F] text-white font-bold shadow-sm' 
+                        : 'bg-white hover:bg-emerald-100/70 text-slate-800 border border-emerald-100'
+                    }`}
+                  >
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-1.5">
+                        <span className={`font-mono text-[10px] font-black px-1.5 py-0.2 rounded ${
+                          questionId === q.id ? 'bg-white/20 text-white' : 'bg-emerald-100 text-[#1B4332]'
+                        }`}>
+                          {q.id}
+                        </span>
+                        {q.groupCode && (
+                          <span className="text-[10px] opacity-75">[{q.groupCode}]</span>
+                        )}
+                      </div>
+                      <p className="text-[11px] leading-snug font-medium line-clamp-2 mt-0.5">{q.text}</p>
+                    </div>
+                    {questionId === q.id && <Check className="w-4 h-4 shrink-0 text-emerald-300 mt-0.5" />}
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {/* 6. Detailed Description & Violation Details */}

@@ -1,6 +1,7 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Staff, IncidentRecord, DepartmentLine, ParameterConfig, AuthUser, Question } from '../types';
 import { exportReportToGoogleSheet, exportBatchMonthlyToGoogleSheet } from '../utils/exportDrive';
+import { getStaffCriteriaBreakdown, getTrackScoreDetails } from '../utils/reportHelper';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -24,7 +25,9 @@ import {
   FileDown,
   Search,
   Check,
-  Scale
+  Scale,
+  BookOpen,
+  Layers
 } from 'lucide-react';
 
 interface ReportViewProps {
@@ -142,6 +145,16 @@ export const ReportView: React.FC<ReportViewProps> = ({
     return staffIncidents.filter(i => i.type === 'ghi_nhan');
   }, [staffIncidents]);
 
+  const criteriaBreakdown = useMemo(() => {
+    if (!targetStaff) return null;
+    return getStaffCriteriaBreakdown(targetStaff, questions, lines, staffIncidents);
+  }, [targetStaff, questions, lines, staffIncidents]);
+
+  const trackInfo = useMemo(() => {
+    if (!targetStaff) return null;
+    return getTrackScoreDetails(targetStaff, params);
+  }, [targetStaff, params]);
+
   // Global Filtered Incidents across whole company for selected reporting period
   const filteredAllIncidents = useMemo(() => {
     return periodIncidents.filter(i => {
@@ -194,7 +207,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
     setIsExportingSheet(true);
     try {
       const targetIncidents = incidents.filter(i => i.targetId === targetStaff.id);
-      await exportReportToGoogleSheet(targetStaff, selectedPeriodKey, targetIncidents, params);
+      await exportReportToGoogleSheet(targetStaff, selectedPeriodKey, targetIncidents, params, questions, lines);
     } catch (err) {
       console.error(err);
     } finally {
@@ -419,6 +432,103 @@ export const ReportView: React.FC<ReportViewProps> = ({
               </div>
             </div>
           </div>
+
+          {/* NEW: DETAILED SCORE BREAKDOWN FOR EVERY GROUP UNDER GENERAL & SPECIFIC TRACKS (DANH SÁCH MỤC CHUNG -> CHI TIẾT MỤC) */}
+          {criteriaBreakdown && (
+            <div className="space-y-4 pt-2">
+              {/* Common Groups Breakdown (Mục chung -> Chi tiết mục) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                  <h4 className="text-xs font-black font-heading text-[#1B4332] flex items-center space-x-1.5">
+                    <ShieldCheck className="w-4 h-4 text-[#2D6A4F]" />
+                    <span>Chi Tiết Ngạch Văn Hóa Chung (Mục chung ➔ Chi tiết mục)</span>
+                  </h4>
+                  <span className="text-[10px] font-bold text-[#2D6A4F] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Áp dụng 100% NV
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {criteriaBreakdown.commonGroups.map(g => (
+                    <div key={g.groupCode} className="p-3 bg-white rounded-xl border border-slate-200 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-mono text-[10px] font-black text-[#1B4332] bg-emerald-100 px-2 py-0.5 rounded border border-emerald-300">
+                            {g.groupCode}
+                          </span>
+                          <strong className="text-xs font-black text-slate-900">{g.groupName}</strong>
+                        </div>
+                        <span className="text-xs font-black text-[#2D6A4F] font-mono bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
+                          {g.achievedScore.toFixed(2)} / 5.0đ
+                        </span>
+                      </div>
+
+                      {/* Child Sub-items List (Chi tiết mục) */}
+                      <div className="pl-4 pt-1 space-y-1 border-t border-slate-100 text-[11px]">
+                        {g.items.map(item => (
+                          <div key={item.id} className="flex items-center justify-between text-slate-700 py-0.5">
+                            <span className="flex items-center space-x-1">
+                              <span className="font-mono text-[9px] font-bold text-slate-500">{item.id}:</span>
+                              <span>{item.text}</span>
+                            </span>
+                            <span className="font-mono font-bold text-[#1B4332] shrink-0 pl-2">
+                              {item.effectiveScore.toFixed(2)}đ
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Dept Specific Groups Breakdown (Mục chung -> Chi tiết mục) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between border-b border-slate-200 pb-1.5">
+                  <h4 className="text-xs font-black font-heading text-[#1B4332] flex items-center space-x-1.5">
+                    <Building2 className="w-4 h-4 text-[#2D6A4F]" />
+                    <span>Chi Tiết Ngạch Chuyên Môn [{targetStaff.line}] (Mục chung ➔ Chi tiết mục)</span>
+                  </h4>
+                  <span className="text-[10px] font-bold text-[#2D6A4F] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                    Ngạch riêng phòng ban
+                  </span>
+                </div>
+
+                <div className="space-y-2">
+                  {criteriaBreakdown.deptGroups.map(g => (
+                    <div key={g.groupCode} className="p-3 bg-white rounded-xl border border-slate-200 space-y-1.5">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center space-x-2">
+                          <span className="font-mono text-[10px] font-black text-teal-900 bg-teal-100 px-2 py-0.5 rounded border border-teal-300">
+                            {g.groupCode}
+                          </span>
+                          <strong className="text-xs font-black text-slate-900">{g.groupName}</strong>
+                        </div>
+                        <span className="text-xs font-black text-teal-800 font-mono bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
+                          {g.achievedScore.toFixed(2)} / 5.0đ
+                        </span>
+                      </div>
+
+                      {/* Child Sub-items List (Chi tiết mục) */}
+                      <div className="pl-4 pt-1 space-y-1 border-t border-slate-100 text-[11px]">
+                        {g.items.map(item => (
+                          <div key={item.id} className="flex items-center justify-between text-slate-700 py-0.5">
+                            <span className="flex items-center space-x-1">
+                              <span className="font-mono text-[9px] font-bold text-slate-500">{item.id}:</span>
+                              <span>{item.text}</span>
+                            </span>
+                            <span className="font-mono font-bold text-teal-900 shrink-0 pl-2">
+                              {item.effectiveScore.toFixed(2)}đ
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
 
           {/* Individual Violations Section (Hiển thị CHI TIẾT ĐẦY ĐỦ LỖI VI PHẠM) */}
           <div className="space-y-2.5 pt-1">
