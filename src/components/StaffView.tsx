@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { Staff, DepartmentLine, ParameterConfig, AuthUser } from '../types';
 import { getSalaryTierBadge, calculateSalaryTier, calculateTotalScore, getVisibleStaffListForUser } from '../utils/calculator';
 import { 
@@ -48,6 +48,24 @@ export const StaffView: React.FC<StaffViewProps> = ({
   const [showEditModal, setShowEditModal] = useState(false);
   const [editingStaff, setEditingStaff] = useState<Staff | null>(null);
   const [editNewPass, setEditNewPass] = useState('');
+
+  const departmentOptions = useMemo(() => {
+    const defaultDepts = [
+      'Kế Toán',
+      'Thương mại & Dịch vụ',
+      'Sản xuất',
+      'Pha chế',
+      'Bếp Bánh',
+      'Kho & Đóng gói',
+      'Bảo vệ',
+      'C Suite Level (C-Level)',
+      'Founder'
+    ];
+    const currentDepts = staffList.map(s => s.department).filter(Boolean);
+    const lineDepts = lines.map(l => l.name);
+    const set = new Set([...defaultDepts, ...lineDepts, ...currentDepts]);
+    return Array.from(set).sort();
+  }, [staffList, lines]);
 
   // Compute visible lines: Admin sees ALL lines, non-admin sees ONLY their department line
   const visibleLines = React.useMemo(() => {
@@ -220,6 +238,14 @@ export const StaffView: React.FC<StaffViewProps> = ({
         {filteredStaff.map((staff) => {
           const isDeaf = staff.speechCapability === 'Người điếc/ khiếm thính';
 
+          const roleLower = (staff.role || '').toLowerCase();
+          const levelLower = (staff.jobLevel || '').toLowerCase();
+          const posLower = (staff.positionCategory || '').toLowerCase();
+
+          const isHead = levelLower === 'trưởng phòng' || roleLower.includes('trưởng phòng') || posLower.includes('head');
+          const isLead = !isHead && (levelLower === 'lead' || roleLower.includes('lead') || posLower.includes('lead'));
+          const isManagerRole = !isHead && !isLead && (levelLower === 'quản lý' || levelLower === 'manager' || roleLower.includes('quản lý') || posLower.includes('manager'));
+
           return (
             <div
               key={staff.id}
@@ -227,10 +253,25 @@ export const StaffView: React.FC<StaffViewProps> = ({
               className="mobile-card p-4 border border-slate-100 active:scale-[0.99] transition-all flex items-center justify-between gap-3 cursor-pointer hover:border-emerald-300"
             >
               <div className="space-y-1 min-w-0">
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center space-x-2 flex-wrap gap-y-1">
                   <span className="font-mono text-[10px] font-bold text-[#1B4332] bg-[#EDEAE3] px-2 py-0.5 rounded-full">
                     {staff.id}
                   </span>
+                  {isHead && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-orange-500 to-amber-500 text-white shadow-sm flex items-center space-x-1 border border-orange-600">
+                      <span>👑 Trưởng phòng</span>
+                    </span>
+                  )}
+                  {isLead && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-blue-600 to-indigo-600 text-white shadow-sm flex items-center space-x-1 border border-blue-700">
+                      <span>🎯 Lead</span>
+                    </span>
+                  )}
+                  {isManagerRole && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-gradient-to-r from-pink-500 to-rose-500 text-white shadow-sm flex items-center space-x-1 border border-pink-600">
+                      <span>👔 Quản lý</span>
+                    </span>
+                  )}
                   <span className="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-[#1B4332] text-[#52B788] flex items-center space-x-1">
                     <Star className="w-3 h-3 text-[#52B788] fill-[#52B788]" />
                     <span>Bậc {staff.salaryTier}</span>
@@ -687,13 +728,15 @@ export const StaffView: React.FC<StaffViewProps> = ({
               <div className="grid grid-cols-2 gap-2">
                 <div>
                   <label className="block text-slate-600 font-bold mb-1">Phòng Ban *</label>
-                  <input
-                    type="text"
-                    required
-                    value={editingStaff.department}
+                  <select
+                    value={editingStaff.department || departmentOptions[0] || 'Kế Toán'}
                     onChange={(e) => setEditingStaff({ ...editingStaff, department: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium"
-                  />
+                  >
+                    {departmentOptions.map((dept) => (
+                      <option key={dept} value={dept}>{dept}</option>
+                    ))}
+                  </select>
                 </div>
 
                 <div>

@@ -244,6 +244,47 @@ export function App() {
     }
   }, [currentUser]);
 
+  // Ensure Kế Toán line exists and TTX005 is set to Trưởng phòng Kế toán
+  useEffect(() => {
+    setLines(prev => {
+      if (!prev.some(l => l.name === 'Kế Toán' || l.id === 'KE_TOAN')) {
+        const keToanLine: DepartmentLine = {
+          id: 'KE_TOAN',
+          name: 'Kế Toán',
+          status: '✅ đủ nội dung',
+          applyTrack: 'chuyên môn + quản lý',
+          scopeDescription: 'Quản lý tài chính, hạch toán kế toán, bảng lương và cơ cấu thu nhập tổ chức.',
+          criteriaType: '20 nhóm tiêu chí quản lý & kế toán',
+          levels: 'CM Nhân viên tới Chuyên gia · QL Trưởng phòng Kế toán',
+          hasSalesPoint: false,
+          matrixSheetName: '📐 Kế Toán',
+          questionCount: 15,
+        };
+        return [keToanLine, ...prev];
+      }
+      return prev;
+    });
+
+    setStaffList(prev => prev.map(s => {
+      let item = { ...s };
+      if (item.department === 'Kế toán chức năng & Thuế' || item.department === 'Kế toán chức năng' || item.department === 'KẾ TOÁN CHỨC NĂNG & THUẾ') {
+        item.department = 'Kế Toán';
+      }
+      if (item.id === 'TTX005') {
+        item = {
+          ...item,
+          role: 'Trưởng phòng Kế toán',
+          positionCategory: 'Head of Accounting',
+          department: 'Kế Toán',
+          line: 'Kế Toán',
+          jobLevel: 'Trưởng phòng',
+          isManager: true,
+        };
+      }
+      return item;
+    }));
+  }, []);
+
   useEffect(() => {
     localStorage.setItem('ncttx_user_passwords', JSON.stringify(userPasswords));
   }, [userPasswords]);
