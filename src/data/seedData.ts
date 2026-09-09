@@ -4953,4 +4953,5 @@ export const defaultParameters: ParameterConfig = {
   vioModeratePoints: -0.5,
   vioMajorPoints: -1.0,
   vioBoundaryPoints: -1.5,
+  notebookLmUrl: 'https://notebooklm.google.com',
 };

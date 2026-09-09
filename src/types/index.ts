@@ -134,4 +134,5 @@ export interface ParameterConfig {
   vioMajorPoints?: number;    // -1.0 (Vi phạm Nghiêm trọng)
   vioBoundaryPoints?: number; // -1.5 (Vi phạm Ranh giới đỏ ⚠️)
   googleAppsScriptUrl?: string; // Webhook URL từ Google Apps Script
+  notebookLmUrl?: string; // Đường dẫn kết nối Trợ lý AI NotebookLM của công ty
 }

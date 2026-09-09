@@ -24,6 +24,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
   const [vioMajor, setVioMajor] = useState(params.vioMajorPoints ?? -1.0);
   const [vioBoundary, setVioBoundary] = useState(params.vioBoundaryPoints ?? -1.5);
   const [appsScriptUrl, setAppsScriptUrl] = useState(params.googleAppsScriptUrl || '');
+  const [notebookLmUrl, setNotebookLmUrl] = useState(params.notebookLmUrl || 'https://notebooklm.google.com');
 
   // Weight State
   const [wGenNoMgmt, setWGenNoMgmt] = useState(params.weightGeneralNoMgmt ?? 0.3);
@@ -50,6 +51,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
       vioMajorPoints: vioMajor,
       vioBoundaryPoints: vioBoundary,
       googleAppsScriptUrl: appsScriptUrl.trim(),
+      notebookLmUrl: notebookLmUrl.trim(),
       weightGeneralNoMgmt: wGenNoMgmt,
       weightTechNoMgmt: wTechNoMgmt,
       weightGeneralWithMgmt: wGenWithMgmt,
@@ -255,6 +257,27 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
           ) : (
             <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 truncate">
               {params.googleAppsScriptUrl ? params.googleAppsScriptUrl : <span className="text-slate-400 font-sans italic">Chưa dán URL Google Apps Script (Sẽ tự động tải file CSV/Excel về máy khi bấm xuất)</span>}
+            </div>
+          )}
+        </div>
+
+        {/* NotebookLM AI Lookup URL Config */}
+        <div className="pt-2 border-t border-slate-100 space-y-1.5">
+          <label className="block text-xs font-bold text-[#1B4332] flex items-center justify-between">
+            <span>🤖 Google NotebookLM URL (Sổ tay AI Tra Cứu Quy Định & Lỗi Vi Phạm):</span>
+            <span className="text-[10px] text-emerald-700 font-bold">Sticky Button bên trái</span>
+          </label>
+          {isEditing ? (
+            <input
+              type="text"
+              placeholder="Dán link NotebookLM của công ty (VD: https://notebooklm.google.com/notebook/...)"
+              value={notebookLmUrl}
+              onChange={(e) => setNotebookLmUrl(e.target.value)}
+              className="w-full p-2 bg-slate-50 border border-emerald-300 rounded-xl text-xs text-[#2D3748] font-mono focus:outline-none focus:border-[#2D6A4F]"
+            />
+          ) : (
+            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 truncate">
+              {params.notebookLmUrl ? params.notebookLmUrl : <span className="text-slate-400 font-sans italic">https://notebooklm.google.com</span>}
             </div>
           )}
         </div>
