@@ -39,7 +39,8 @@ import {
   BookOpen,
   ExternalLink,
   User,
-  Key
+  Key,
+  RotateCw
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole } from '../../utils/calculator';
@@ -65,6 +66,8 @@ interface Option1LayoutProps {
   onDeleteStaff?: (staffId: string) => void;
   onUpdatePassword?: (userId: string, newPass: string) => void;
   onResetAllPasswords?: () => void;
+  onRefreshCloud?: () => void;
+  isRefreshingCloud?: boolean;
   onAddQuestion: (question: Question) => void;
   onUpdateQuestion?: (question: Question) => void;
   onDeleteQuestion?: (questionId: string) => void;
@@ -100,6 +103,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   onDeleteStaff,
   onUpdatePassword,
   onResetAllPasswords,
+  onRefreshCloud,
+  isRefreshingCloud = false,
   onAddQuestion,
   onUpdateQuestion,
   onDeleteQuestion,
@@ -205,6 +210,20 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                     </>
                   )}
                 </div>
+
+                {/* Manual Cloud Refresh Button */}
+                {onRefreshCloud && (
+                  <button
+                    type="button"
+                    onClick={onRefreshCloud}
+                    disabled={isRefreshingCloud}
+                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
+                    title="Bấm để tải lại toàn bộ dữ liệu chuẩn mới nhất từ Firebase Cloud Firestore"
+                  >
+                    <RotateCw className={`w-3 h-3 text-emerald-600 ${isRefreshingCloud ? 'animate-spin' : ''}`} />
+                    <span>Làm Mới Cloud</span>
+                  </button>
+                )}
               </div>
               <p className="text-[10px] text-slate-400 font-medium hidden sm:block">
                 Nhà Của Thời Thanh Xuân
@@ -353,6 +372,20 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             })}
           </div>
 
+          {onRefreshCloud && (
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                onRefreshCloud();
+              }}
+              disabled={isRefreshingCloud}
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-md shadow-emerald-600/20"
+            >
+              <RotateCw className={`w-4 h-4 ${isRefreshingCloud ? 'animate-spin' : ''}`} />
+              <span>Làm Mới Dữ Liệu Cloud</span>
+            </button>
+          )}
+
           {currentUser?.isAdmin && (
             <button
               onClick={() => {
@@ -392,6 +425,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             onOpenIncidentModal={onOpenIncidentModal}
             isManager={isManager}
             currentUser={currentUser}
+            onRefreshCloud={onRefreshCloud}
+            isRefreshingCloud={isRefreshingCloud}
           />
         )}
 

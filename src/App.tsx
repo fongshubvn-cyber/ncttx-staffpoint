@@ -31,13 +31,14 @@ import {
   initialBaselinePoints, 
   defaultParameters 
 } from './data/seedData';
-import { isFirebaseConfigured, subscribeToCollection, saveToCloud } from './config/firebase';
+import { isFirebaseConfigured, subscribeToCollection, saveToCloud, fetchDocFromCloud } from './config/firebase';
 import { isDeptHeadOrAboveRole } from './utils/calculator';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('summary'); // Default: Trang Tổng hợp
   const [isManager, setIsManager] = useState<boolean>(true);
   const [isMobileFrame, setIsMobileFrame] = useState<boolean>(true);
+  const [isRefreshingCloud, setIsRefreshingCloud] = useState<boolean>(false);
   const [showGlobalIncidentModal, setShowGlobalIncidentModal] = useState<boolean>(false);
   const [incidentModalTargetId, setIncidentModalTargetId] = useState<string | undefined>(undefined);
   const [incidentModalType, setIncidentModalType] = useState<IncidentType | undefined>(undefined);
@@ -105,25 +106,6 @@ export function App() {
   // Track which collections have completed initial Cloud load
   const isCloudLoadedRef = React.useRef<Record<string, boolean>>({});
 
-  // Helper: Smart merge cloud array with local storage array by 'id'
-  const mergeArraysById = <T extends { id: string; isDeleted?: boolean; isPurged?: boolean }>(cloudArr: T[], localArr: T[]): T[] => {
-    const map = new Map<string, T>();
-    (localArr || []).forEach(item => {
-      if (item && item.id) map.set(item.id, item);
-    });
-    (cloudArr || []).forEach(item => {
-      if (item && item.id) {
-        const existing = map.get(item.id);
-        map.set(item.id, {
-          ...item,
-          isDeleted: item.isDeleted !== undefined ? item.isDeleted : existing?.isDeleted,
-          isPurged: item.isPurged !== undefined ? item.isPurged : existing?.isPurged,
-        });
-      }
-    });
-    return Array.from(map.values());
-  };
-
   // FIREBASE REALTIME CLOUD SYNC
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
@@ -131,65 +113,30 @@ export function App() {
     const unsubStaff = subscribeToCollection('staff_list', (cloudData) => {
       isCloudLoadedRef.current['staff_list'] = true;
       if (Array.isArray(cloudData) && cloudData.length > 0) {
-        let localData: Staff[] = [];
-        try {
-          const saved = localStorage.getItem('ncttx_staff_list');
-          if (saved) localData = JSON.parse(saved);
-        } catch (e) {}
-
-        const merged = mergeArraysById(cloudData, localData);
-        setStaffList(merged);
-        localStorage.setItem('ncttx_staff_list', JSON.stringify(merged));
-
-        if (merged.length > cloudData.length) {
-          saveToCloud('staff_list', merged);
-        }
+        setStaffList(cloudData);
+        localStorage.setItem('ncttx_staff_list', JSON.stringify(cloudData));
       }
     }, initialStaffList);
 
     const unsubIncidents = subscribeToCollection('incidents', (cloudData) => {
       isCloudLoadedRef.current['incidents'] = true;
       if (Array.isArray(cloudData)) {
-        let localData: IncidentRecord[] = [];
-        try {
-          const saved = localStorage.getItem('ncttx_incidents');
-          if (saved) localData = JSON.parse(saved);
-        } catch (e) {}
-
-        const merged = mergeArraysById(cloudData, localData);
-        merged.sort((a, b) => {
+        const sorted = [...cloudData].sort((a, b) => {
           if (a.date && b.date && a.date !== b.date) {
             return b.date.localeCompare(a.date);
           }
           return (b.id || '').localeCompare(a.id || '');
         });
-
-        setIncidents(merged);
-        localStorage.setItem('ncttx_incidents', JSON.stringify(merged));
-
-        if (merged.length > cloudData.length) {
-          console.log(`[Auto-repair Cloud Sync] Syncing ${merged.length - cloudData.length} local incidents to Cloud...`);
-          saveToCloud('incidents', merged);
-        }
+        setIncidents(sorted);
+        localStorage.setItem('ncttx_incidents', JSON.stringify(sorted));
       }
     }, initialIncidents);
 
     const unsubQuestions = subscribeToCollection('questions', (cloudData) => {
       isCloudLoadedRef.current['questions'] = true;
       if (Array.isArray(cloudData) && cloudData.length > 0) {
-        let localData: Question[] = [];
-        try {
-          const saved = localStorage.getItem('ncttx_questions');
-          if (saved) localData = JSON.parse(saved);
-        } catch (e) {}
-
-        const merged = mergeArraysById(cloudData, localData);
-        setQuestions(merged);
-        localStorage.setItem('ncttx_questions', JSON.stringify(merged));
-
-        if (merged.length > cloudData.length) {
-          saveToCloud('questions', merged);
-        }
+        setQuestions(cloudData);
+        localStorage.setItem('ncttx_questions', JSON.stringify(cloudData));
       }
     }, initialQuestions);
 
@@ -424,6 +371,55 @@ export function App() {
       }
       return updated;
     });
+  };
+
+  // Handler: Manual Refresh All Cloud Data directly from Firestore
+  const handleRefreshCloudData = async () => {
+    setIsRefreshingCloud(true);
+    try {
+      const [staffData, incidentData, questionData, paramData, passwordData] = await Promise.all([
+        fetchDocFromCloud('staff_list'),
+        fetchDocFromCloud('incidents'),
+        fetchDocFromCloud('questions'),
+        fetchDocFromCloud('params'),
+        fetchDocFromCloud('user_passwords'),
+      ]);
+
+      if (Array.isArray(staffData) && staffData.length > 0) {
+        setStaffList(staffData);
+        localStorage.setItem('ncttx_staff_list', JSON.stringify(staffData));
+      }
+
+      if (Array.isArray(incidentData)) {
+        const sorted = [...incidentData].sort((a, b) => {
+          if (a.date && b.date && a.date !== b.date) {
+            return b.date.localeCompare(a.date);
+          }
+          return (b.id || '').localeCompare(a.id || '');
+        });
+        setIncidents(sorted);
+        localStorage.setItem('ncttx_incidents', JSON.stringify(sorted));
+      }
+
+      if (Array.isArray(questionData) && questionData.length > 0) {
+        setQuestions(questionData);
+        localStorage.setItem('ncttx_questions', JSON.stringify(questionData));
+      }
+
+      if (paramData && typeof paramData === 'object') {
+        setParams(prev => ({ ...prev, ...paramData }));
+        localStorage.setItem('ncttx_params', JSON.stringify(paramData));
+      }
+
+      if (passwordData && typeof passwordData === 'object') {
+        setUserPasswords(prev => ({ ...prev, ...passwordData }));
+        localStorage.setItem('ncttx_user_passwords', JSON.stringify(passwordData));
+      }
+    } catch (err) {
+      console.error('Lỗi khi tải dữ liệu Cloud:', err);
+    } finally {
+      setIsRefreshingCloud(false);
+    }
   };
 
   // Handler: Add new incident record (accessible to any account)
@@ -815,6 +811,8 @@ export function App() {
         onUpdateStatus={handleUpdateIncidentStatus}
         onAppealIncident={handleAppealIncident}
         onResolveAppeal={handleResolveAppeal}
+        onRefreshCloud={handleRefreshCloudData}
+        isRefreshingCloud={isRefreshingCloud}
       />
 
       <IncidentFormModal

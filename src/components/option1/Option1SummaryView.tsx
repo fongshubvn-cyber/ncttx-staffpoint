@@ -20,7 +20,8 @@ import {
   ChevronDown,
   Search,
   Check,
-  Plus
+  Plus,
+  RotateCw
 } from 'lucide-react';
 
 interface Option1SummaryViewProps {
@@ -31,6 +32,8 @@ interface Option1SummaryViewProps {
   onOpenIncidentModal: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham') => void;
   isManager: boolean;
   currentUser: AuthUser | null;
+  onRefreshCloud?: () => void;
+  isRefreshingCloud?: boolean;
 }
 
 export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
@@ -41,6 +44,8 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
   onOpenIncidentModal,
   isManager,
   currentUser,
+  onRefreshCloud,
+  isRefreshingCloud = false,
 }) => {
   const isHRManager = isHRHeadRole(currentUser);
   const recentPeriods = get3RecentPeriods();
@@ -362,9 +367,23 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                 Các sự kiện khen thưởng và vi phạm đã ghi nhận trong hệ thống
               </p>
             </div>
-            <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
-              {staffIncidents.length} sự kiện
-            </span>
+            <div className="flex items-center gap-2 shrink-0">
+              {onRefreshCloud && (
+                <button
+                  type="button"
+                  onClick={onRefreshCloud}
+                  disabled={isRefreshingCloud}
+                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all border border-slate-200 flex items-center gap-1.5 active:scale-95 disabled:opacity-50 cursor-pointer"
+                  title="Kéo dữ liệu mới nhất từ Firebase Cloud"
+                >
+                  <RotateCw className={`w-3.5 h-3.5 text-emerald-700 ${isRefreshingCloud ? 'animate-spin' : ''}`} />
+                  <span>Làm Mới Cloud</span>
+                </button>
+              )}
+              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
+                {staffIncidents.length} sự kiện
+              </span>
+            </div>
           </div>
 
           {staffIncidents.length === 0 ? (

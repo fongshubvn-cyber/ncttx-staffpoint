@@ -3,7 +3,8 @@ import {
   getFirestore, 
   doc, 
   onSnapshot, 
-  setDoc
+  setDoc,
+  getDoc
 } from 'firebase/firestore';
 
 // ----------------------------------------------------------------------
@@ -93,6 +94,27 @@ export const subscribeToCollection = (
 };
 
 /**
+ * Tải trực tiếp dữ liệu mới nhất từ Firestore Cloud (Refresh Cloud Data)
+ */
+export const fetchDocFromCloud = async (docName: string) => {
+  if (!isFirebaseConfigured()) return null;
+  try {
+    const docRef = doc(db, 'ncttx_data', docName);
+    const snapshot = await getDoc(docRef);
+    if (snapshot.exists()) {
+      const data = snapshot.data();
+      if (data && data.payload) {
+        return data.payload;
+      }
+    }
+    return null;
+  } catch (error) {
+    console.error(`Lỗi tải trực tiếp từ Cloud (${docName}):`, error);
+    return null;
+  }
+};
+
+/**
  * Gửi dữ liệu cập nhật lên Firestore
  */
 export const saveToCloud = async (docName: string, data: any) => {
@@ -112,3 +134,4 @@ export const saveToCloud = async (docName: string, data: any) => {
     }
   }
 };
+
