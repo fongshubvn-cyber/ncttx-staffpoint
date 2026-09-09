@@ -114,15 +114,11 @@ export function App() {
     (cloudArr || []).forEach(item => {
       if (item && item.id) {
         const existing = map.get(item.id);
-        if (existing) {
-          map.set(item.id, {
-            ...item,
-            isDeleted: item.isDeleted !== undefined ? item.isDeleted : existing.isDeleted,
-            isPurged: item.isPurged !== undefined ? item.isPurged : existing.isPurged,
-          });
-        } else {
-          map.set(item.id, item);
-        }
+        map.set(item.id, {
+          ...item,
+          isDeleted: item.isDeleted !== undefined ? item.isDeleted : existing?.isDeleted,
+          isPurged: item.isPurged !== undefined ? item.isPurged : existing?.isPurged,
+        });
       }
     });
     return Array.from(map.values());
@@ -289,6 +285,89 @@ export function App() {
     localStorage.setItem('ncttx_user_passwords', JSON.stringify(userPasswords));
   }, [userPasswords]);
 
+  // Reference for BroadcastChannel cross-tab realtime synchronization
+  const syncChannelRef = React.useRef<BroadcastChannel | null>(null);
+
+  // Initialize BroadcastChannel & Storage Event Listener for Cross-Tab / Cross-Account Realtime Sync
+  useEffect(() => {
+    if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+      const channel = new BroadcastChannel('ncttx_realtime_sync_channel');
+      syncChannelRef.current = channel;
+
+      channel.onmessage = (event) => {
+        const { type, payload } = event.data || {};
+        if (!payload) return;
+
+        if (type === 'INCIDENTS_UPDATED' && Array.isArray(payload)) {
+          setIncidents(payload);
+        } else if (type === 'STAFF_UPDATED' && Array.isArray(payload)) {
+          setStaffList(payload);
+        } else if (type === 'QUESTIONS_UPDATED' && Array.isArray(payload)) {
+          setQuestions(payload);
+        } else if (type === 'LINES_UPDATED' && Array.isArray(payload)) {
+          setLines(payload);
+        } else if (type === 'PARAMS_UPDATED') {
+          setParams(payload);
+        }
+      };
+    }
+
+    const handleStorageChange = (e: StorageEvent) => {
+      if (!e.newValue) return;
+      try {
+        if (e.key === 'ncttx_incidents') {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) setIncidents(parsed);
+        } else if (e.key === 'ncttx_staff_list') {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) setStaffList(parsed);
+        } else if (e.key === 'ncttx_questions') {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) setQuestions(parsed);
+        } else if (e.key === 'ncttx_lines') {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) setLines(parsed);
+        } else if (e.key === 'ncttx_params') {
+          const parsed = JSON.parse(e.newValue);
+          if (parsed) setParams(parsed);
+        }
+      } catch (err) {}
+    };
+
+    window.addEventListener('storage', handleStorageChange);
+
+    return () => {
+      if (syncChannelRef.current) {
+        syncChannelRef.current.close();
+      }
+      window.removeEventListener('storage', handleStorageChange);
+    };
+  }, []);
+
+  // Helper: Persist and broadcast realtime data sync across all tabs/users & Cloud
+  const notifySync = (key: string, payload: any) => {
+    const storageKey = `ncttx_${key}`;
+    localStorage.setItem(storageKey, JSON.stringify(payload));
+
+    if (syncChannelRef.current) {
+      const typeMap: Record<string, string> = {
+        incidents: 'INCIDENTS_UPDATED',
+        staff_list: 'STAFF_UPDATED',
+        questions: 'QUESTIONS_UPDATED',
+        lines: 'LINES_UPDATED',
+        params: 'PARAMS_UPDATED',
+      };
+      if (typeMap[key]) {
+        syncChannelRef.current.postMessage({
+          type: typeMap[key],
+          payload,
+        });
+      }
+    }
+
+    saveToCloud(key, payload);
+  };
+
   // Sync state to local storage
   useEffect(() => {
     localStorage.setItem('ncttx_staff_list', JSON.stringify(staffList));
@@ -313,16 +392,45 @@ export function App() {
       const updated = { ...prev, [cleanId]: newPass };
       localStorage.setItem('ncttx_user_passwords', JSON.stringify(updated));
       saveToCloud('user_passwords', updated);
+      if (syncChannelRef.current) {
+        syncChannelRef.current.postMessage({
+          type: 'PASSWORDS_UPDATED',
+          payload: updated,
+        });
+      }
       return updated;
     });
   };
 
-  // Handler: Add new incident record
+  // Handler: Reset all staff passwords to default '123456' and force first-login change
+  const handleResetAllPasswords = () => {
+    setUserPasswords(prev => {
+      const updated: Record<string, string> = {};
+      staffList.forEach(s => {
+        if (s && s.id) {
+          updated[s.id.trim().toUpperCase()] = '123456';
+        }
+      });
+      // Keep Admin password intact if already customized, or default to '123456A!'
+      updated['ADMIN'] = prev['ADMIN'] || '123456A!';
+
+      localStorage.setItem('ncttx_user_passwords', JSON.stringify(updated));
+      saveToCloud('user_passwords', updated);
+      if (syncChannelRef.current) {
+        syncChannelRef.current.postMessage({
+          type: 'PASSWORDS_UPDATED',
+          payload: updated,
+        });
+      }
+      return updated;
+    });
+  };
+
+  // Handler: Add new incident record (accessible to any account)
   const handleAddIncident = (newIncident: IncidentRecord) => {
     setIncidents(prev => {
       const updated = [newIncident, ...prev];
-      localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
-      saveToCloud('incidents', updated);
+      notifySync('incidents', updated);
       return updated;
     });
     if (newIncident.status === 'Đã duyệt' || newIncident.type === 'vi_pham') {
@@ -330,8 +438,12 @@ export function App() {
     }
   };
 
-  // Handler: Admin soft-deletes an incident record (moves to Trash Bin)
+  // Handler: ONLY Admin soft-deletes an incident record (moves to Trash Bin)
   const handleDeleteIncident = (incidentId: string) => {
+    if (!currentUser?.isAdmin) {
+      alert("⚠️ Thao tác bị từ chối: Chỉ duy nhất tài khoản Admin mới có quyền xóa phiếu ghi nhận / biên bản!");
+      return;
+    }
     setIncidents(prev => {
       const targetInc = prev.find(i => i.id === incidentId);
       if (targetInc && !targetInc.isDeleted && (targetInc.status === 'Đã duyệt' || targetInc.type === 'vi_pham')) {
@@ -348,14 +460,17 @@ export function App() {
         }
         return i;
       });
-      localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
-      saveToCloud('incidents', updated);
+      notifySync('incidents', updated);
       return updated;
     });
   };
 
-  // Handler: Admin restores an incident record from Trash Bin
+  // Handler: ONLY Admin restores an incident record from Trash Bin
   const handleRestoreIncident = (incidentId: string) => {
+    if (!currentUser?.isAdmin) {
+      alert("⚠️ Thao tác bị từ chối: Chỉ duy nhất tài khoản Admin mới có quyền khôi phục phiếu!");
+      return;
+    }
     setIncidents(prev => {
       const targetInc = prev.find(i => i.id === incidentId);
       if (targetInc && targetInc.isDeleted && (targetInc.status === 'Đã duyệt' || targetInc.type === 'vi_pham')) {
@@ -371,14 +486,17 @@ export function App() {
         }
         return i;
       });
-      localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
-      saveToCloud('incidents', updated);
+      notifySync('incidents', updated);
       return updated;
     });
   };
 
-  // Handler: Admin permanently purges an incident record from Trash Bin
+  // Handler: ONLY Admin permanently purges an incident record from Trash Bin
   const handlePermanentDeleteIncident = (incidentId: string) => {
+    if (!currentUser?.isAdmin) {
+      alert("⚠️ Thao tác bị từ chối: Chỉ duy nhất tài khoản Admin mới có quyền xóa vĩnh viễn phiếu!");
+      return;
+    }
     setIncidents(prev => {
       const targetInc = prev.find(i => i.id === incidentId);
       if (targetInc && !targetInc.isDeleted && !targetInc.isPurged && (targetInc.status === 'Đã duyệt' || targetInc.type === 'vi_pham')) {
@@ -395,8 +513,7 @@ export function App() {
         }
         return i;
       });
-      localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
-      saveToCloud('incidents', updated);
+      notifySync('incidents', updated);
       return updated;
     });
   };
@@ -416,13 +533,12 @@ export function App() {
         }
         return inc;
       });
-      localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
-      saveToCloud('incidents', updated);
+      notifySync('incidents', updated);
       return updated;
     });
   };
 
-  // Handler: HR Head resolves 48h appeal
+  // Handler: HR Head / Admin resolves 48h appeal
   const handleResolveAppeal = (incidentId: string, approved: boolean) => {
     setIncidents(prev => {
       const updated = prev.map(inc => {
@@ -439,8 +555,7 @@ export function App() {
         }
         return inc;
       });
-      localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
-      saveToCloud('incidents', updated);
+      notifySync('incidents', updated);
       return updated;
     });
   };
@@ -488,8 +603,7 @@ export function App() {
         }
         return staff;
       });
-      localStorage.setItem('ncttx_staff_list', JSON.stringify(updated));
-      saveToCloud('staff_list', updated);
+      notifySync('staff_list', updated);
       return updated;
     });
   };
@@ -507,8 +621,7 @@ export function App() {
         }
         return inc;
       });
-      localStorage.setItem('ncttx_incidents', JSON.stringify(updatedList));
-      saveToCloud('incidents', updatedList);
+      notifySync('incidents', updatedList);
       return updatedList;
     });
   };
@@ -550,8 +663,7 @@ export function App() {
         }
         return staff;
       });
-      localStorage.setItem('ncttx_staff_list', JSON.stringify(updated));
-      saveToCloud('staff_list', updated);
+      notifySync('staff_list', updated);
       return updated;
     });
   };
@@ -560,8 +672,7 @@ export function App() {
   const handleAddStaff = (newStaff: Staff) => {
     setStaffList(prev => {
       const updated = [newStaff, ...prev];
-      localStorage.setItem('ncttx_staff_list', JSON.stringify(updated));
-      saveToCloud('staff_list', updated);
+      notifySync('staff_list', updated);
       return updated;
     });
   };
@@ -685,6 +796,7 @@ export function App() {
         onUpdateParams={handleUpdateParams}
         currentUser={currentUser}
         isManager={isManager}
+        userPasswords={userPasswords}
         onOpenIncidentModal={handleOpenIncidentModal}
         onOpenLoginModal={() => setShowLoginModal(true)}
         onLogout={() => setCurrentUser(null)}
@@ -692,6 +804,7 @@ export function App() {
         onUpdateStaff={handleUpdateStaff}
         onDeleteStaff={handleDeleteStaff}
         onUpdatePassword={handleUpdatePassword}
+        onResetAllPasswords={handleResetAllPasswords}
         onAddQuestion={handleAddQuestion}
         onUpdateQuestion={handleUpdateQuestion}
         onDeleteQuestion={handleDeleteQuestion}

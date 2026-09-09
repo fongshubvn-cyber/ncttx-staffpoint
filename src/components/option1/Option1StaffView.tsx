@@ -12,7 +12,8 @@ import {
   Building2,
   Layers,
   Grid,
-  ListFilter
+  ListFilter,
+  Key
 } from 'lucide-react';
 
 interface Option1StaffViewProps {
@@ -26,6 +27,7 @@ interface Option1StaffViewProps {
   params: ParameterConfig;
   currentUser: AuthUser | null;
   onOpenIncidentModal?: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham') => void;
+  onOpenAdminPasswordModal?: (targetId?: string) => void;
 }
 
 export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
@@ -39,6 +41,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
   params,
   currentUser,
   onOpenIncidentModal,
+  onOpenAdminPasswordModal,
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
@@ -320,13 +323,24 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
           </div>
 
           {currentUser?.isAdmin && (
-            <button
-              onClick={() => setShowAddModal(true)}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all whitespace-nowrap"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Thêm Nhân Sự Mới</span>
-            </button>
+            <div className="flex items-center gap-2">
+              {onOpenAdminPasswordModal && (
+                <button
+                  onClick={() => onOpenAdminPasswordModal()}
+                  className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md shadow-amber-500/20 transition-all whitespace-nowrap"
+                >
+                  <Key className="w-4 h-4" />
+                  <span>Quản Lý Mật Khẩu</span>
+                </button>
+              )}
+              <button
+                onClick={() => setShowAddModal(true)}
+                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all whitespace-nowrap"
+              >
+                <Plus className="w-4 h-4" />
+                <span>Thêm Nhân Sự Mới</span>
+              </button>
+            </div>
           )}
         </div>
       </div>
@@ -547,7 +561,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
 
               {/* Action buttons for admin */}
               {currentUser?.isAdmin && (
-                <div className="pt-2 flex gap-2">
+                <div className="pt-2 flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => {
                       setEditingStaff(selectedStaff);
@@ -556,8 +570,22 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                     }}
                     className="flex-1 py-2.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all text-center"
                   >
-                    ✏️ Chỉnh Sửa Thông Tin
+                    ✏️ Chỉnh Sửa
                   </button>
+                  {onOpenAdminPasswordModal && (
+                    <button
+                      onClick={() => {
+                        const targetId = selectedStaff.id;
+                        setSelectedStaff(null);
+                        onOpenAdminPasswordModal(targetId);
+                      }}
+                      className="px-3.5 py-2.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 font-bold border border-amber-300 transition-all text-center flex items-center justify-center gap-1"
+                      title="Đổi mật khẩu cho nhân sự này"
+                    >
+                      <Key className="w-4 h-4 text-amber-600" />
+                      <span>Đổi MK</span>
+                    </button>
+                  )}
                   {onDeleteStaff && (
                     <button
                       onClick={() => {

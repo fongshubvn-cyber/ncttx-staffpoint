@@ -18,6 +18,7 @@ import { Option1ReportView } from './Option1ReportView';
 import { BaselineView } from '../BaselineView';
 import { GuideView } from '../GuideView';
 import { AiChatModal } from '../AiChatModal';
+import { AdminPasswordModal } from '../AdminPasswordModal';
 
 import { 
   LayoutDashboard, 
@@ -37,7 +38,8 @@ import {
   X,
   BookOpen,
   ExternalLink,
-  User
+  User,
+  Key
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole } from '../../utils/calculator';
@@ -54,6 +56,7 @@ interface Option1LayoutProps {
   onUpdateParams?: (newParams: ParameterConfig) => void;
   currentUser: AuthUser | null;
   isManager: boolean;
+  userPasswords?: Record<string, string>;
   onOpenIncidentModal: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham') => void;
   onOpenLoginModal: () => void;
   onLogout: () => void;
@@ -61,6 +64,7 @@ interface Option1LayoutProps {
   onUpdateStaff?: (staff: Staff) => void;
   onDeleteStaff?: (staffId: string) => void;
   onUpdatePassword?: (userId: string, newPass: string) => void;
+  onResetAllPasswords?: () => void;
   onAddQuestion: (question: Question) => void;
   onUpdateQuestion?: (question: Question) => void;
   onDeleteQuestion?: (questionId: string) => void;
@@ -87,6 +91,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   onUpdateParams,
   currentUser,
   isManager,
+  userPasswords = {},
   onOpenIncidentModal,
   onOpenLoginModal,
   onLogout,
@@ -94,6 +99,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   onUpdateStaff,
   onDeleteStaff,
   onUpdatePassword,
+  onResetAllPasswords,
   onAddQuestion,
   onUpdateQuestion,
   onDeleteQuestion,
@@ -109,6 +115,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 }) => {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showNotebookLmModal, setShowNotebookLmModal] = useState(false);
+  const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
+  const [adminPasswordTargetId, setAdminPasswordTargetId] = useState<string | undefined>(undefined);
   const [cloudSyncInfo, setCloudSyncInfo] = useState<{ status: CloudSyncState; errorDetails: string | null }>({
     status: 'connecting',
     errorDetails: null
@@ -236,10 +244,22 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             })}
           </nav>
 
-          {/* Right Header Controls: Actions & Profile */}
           <div className="flex items-center gap-2">
+            {currentUser?.isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAdminPasswordTargetId(undefined);
+                  setShowAdminPasswordModal(true);
+                }}
+                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 border border-amber-500/30 text-xs font-bold transition-all duration-200 active:scale-95 shadow-xs whitespace-nowrap"
+                title="Quản lý & Đổi mật khẩu tất cả thành viên (Admin)"
+              >
+                <Key className="w-3.5 h-3.5 text-amber-700" />
+                <span>Đổi MK Admin</span>
+              </button>
+            )}
 
-            {/* Quick Action Button for Managers (Desktop) */}
             {isManager && (
               <button
                 onClick={() => onOpenIncidentModal()}
@@ -251,10 +271,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               </button>
             )}
 
-            {/* Compact Account Profile & Logout Controls */}
             {currentUser ? (
               <div className="flex items-center gap-1 bg-slate-200/50 backdrop-blur-md p-1 rounded-2xl border border-white/80 shadow-inner">
-                {/* Logo Account Button (Click to view info & change password) */}
                 <button
                   type="button"
                   onClick={onOpenLoginModal}
@@ -265,7 +283,6 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                   <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse"></span>
                 </button>
 
-                {/* Logout Icon Button */}
                 <button
                   type="button"
                   onClick={onLogout}
@@ -285,7 +302,6 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               </button>
             )}
 
-            {/* Mobile Menu Button */}
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
               className="md:hidden p-2 text-slate-600 hover:text-slate-900 rounded-2xl hover:bg-slate-200/50 transition-all"
@@ -297,7 +313,6 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
         </div>
       </header>
 
-      {/* Mobile Glass Menu Dropdown Modal */}
       {isMobileMenuOpen && (
         <div className="md:hidden fixed inset-x-3 top-20 z-50 backdrop-blur-2xl bg-white/90 border border-white/80 shadow-2xl rounded-3xl p-4 transition-all duration-300 animate-in fade-in slide-in-from-top-4">
           <div className="flex items-center justify-between border-b border-slate-200/60 pb-3 mb-3">
@@ -338,6 +353,20 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             })}
           </div>
 
+          {currentUser?.isAdmin && (
+            <button
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setAdminPasswordTargetId(undefined);
+                setShowAdminPasswordModal(true);
+              }}
+              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-amber-500 text-white font-bold text-xs shadow-md shadow-amber-500/20"
+            >
+              <Key className="w-4 h-4" />
+              <span>Quản Lý Mật Khẩu Tất Cả Thành Viên</span>
+            </button>
+          )}
+
           {isManager && (
             <button
               onClick={() => {
@@ -353,7 +382,6 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
         </div>
       )}
 
-      {/* Main Content View Container */}
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         {activeTab === 'summary' && (
           <Option1SummaryView
@@ -379,6 +407,10 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             params={params}
             currentUser={currentUser}
             onOpenIncidentModal={onOpenIncidentModal}
+            onOpenAdminPasswordModal={(targetId) => {
+              setAdminPasswordTargetId(targetId);
+              setShowAdminPasswordModal(true);
+            }}
           />
         )}
 
@@ -541,6 +573,18 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
         lines={lines}
         params={params}
         currentUser={currentUser}
+      />
+
+      {/* Admin Password Reset & Management Modal */}
+      <AdminPasswordModal
+        isOpen={showAdminPasswordModal}
+        onClose={() => setShowAdminPasswordModal(false)}
+        staffList={staffList}
+        userPasswords={userPasswords}
+        onUpdatePassword={onUpdatePassword || (() => {})}
+        onResetAllPasswords={onResetAllPasswords}
+        currentUser={currentUser}
+        initialSelectedStaffId={adminPasswordTargetId}
       />
     </div>
   );

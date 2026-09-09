@@ -630,7 +630,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                     </span>
 
                     {/* TRASH BIN ACTIONS FOR ADMIN */}
-                    {incident.isDeleted ? (
+                    {incident.isDeleted && isAdminUser ? (
                       <div className="flex items-center gap-2 ml-auto">
                         {onRestoreIncident && (
                           <button
