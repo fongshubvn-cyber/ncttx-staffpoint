@@ -344,14 +344,9 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
           </div>
 
           {/* Salary Tier Badge */}
-          <div className={`p-4 rounded-2xl border ${tier.bgClass} ${tier.textClass} flex items-center justify-between`}>
-            <div>
-              <span className="text-[11px] uppercase tracking-wider font-semibold opacity-80 block">Xếp Bậc Lương P2</span>
-              <span className="text-lg font-bold block">{tier.label}</span>
-            </div>
-            <div className="text-right">
-              <span className="text-[10px] opacity-75 block">Chu kỳ: {currentPeriodObj.label}</span>
-            </div>
+          <div className={`p-4 rounded-2xl border ${tier.bgClass} ${tier.textClass}`}>
+            <span className="text-[11px] uppercase tracking-wider font-semibold opacity-80 block">Xếp Bậc Lương P2</span>
+            <span className="text-lg font-bold block mt-0.5">{tier.label}</span>
           </div>
         </div>
 
