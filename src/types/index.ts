@@ -135,4 +135,18 @@ export interface ParameterConfig {
   vioBoundaryPoints?: number; // -1.5 (Vi phạm Ranh giới đỏ ⚠️)
   googleAppsScriptUrl?: string; // Webhook URL từ Google Apps Script
   notebookLmUrl?: string; // Đường dẫn kết nối Trợ lý AI NotebookLM của công ty
+  geminiApiKey?: string; // Google Gemini API Key cho Trợ Lý AI Chat Trực Tiếp
+}
+
+export interface AdminFeedback {
+  id: string;
+  senderId?: string;
+  senderName?: string;
+  isAnonymous?: boolean;
+  category: 'Cải tiến quy trình' | 'Môi trường làm việc' | 'Đề xuất văn hóa & chế độ' | 'Ý kiến đóng góp khác' | string;
+  title: string;
+  content: string;
+  createdAt: string;
+  status: 'Mới tiếp nhận' | 'Đã xem' | 'Đã ghi nhận & xử lý' | 'Đã đóng';
+  adminNote?: string;
 }

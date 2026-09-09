@@ -17,6 +17,7 @@ import { Option1QuestionsView } from './Option1QuestionsView';
 import { Option1ReportView } from './Option1ReportView';
 import { BaselineView } from '../BaselineView';
 import { GuideView } from '../GuideView';
+import { AiChatModal } from '../AiChatModal';
 
 import { 
   LayoutDashboard, 
@@ -35,7 +36,8 @@ import {
   Menu,
   X,
   BookOpen,
-  ExternalLink
+  ExternalLink,
+  User
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole } from '../../utils/calculator';
@@ -249,25 +251,26 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               </button>
             )}
 
-            {/* Account Profile / Login Button */}
+            {/* Compact Account Profile & Logout Controls */}
             {currentUser ? (
-              <div className="flex items-center gap-2 bg-white/80 backdrop-blur-md p-1 pl-3 rounded-2xl border border-white/80 shadow-sm">
+              <div className="flex items-center gap-1 bg-slate-200/50 backdrop-blur-md p-1 rounded-2xl border border-white/80 shadow-inner">
+                {/* Logo Account Button (Click to view info & change password) */}
                 <button
                   type="button"
                   onClick={onOpenLoginModal}
-                  className="text-left text-xs hidden lg:block hover:opacity-80 transition-opacity cursor-pointer"
-                  title="Xem thông tin tài khoản / Đổi mật khẩu"
+                  className="relative p-2 rounded-xl bg-white hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 border border-slate-200/80 shadow-sm transition-all duration-200 active:scale-95 flex items-center justify-center"
+                  title={`${currentUser.name} (${currentUser.role}) — Bấm để xem thông tin & đổi mật khẩu`}
                 >
-                  <div className="font-extrabold text-slate-800 leading-tight flex items-center gap-1 whitespace-nowrap">
-                    <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse"></span>
-                    {currentUser.name}
-                  </div>
-                  <div className="text-[10px] text-emerald-700 font-bold whitespace-nowrap">{currentUser.role}</div>
+                  <User className="w-4 h-4 text-emerald-700" />
+                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse"></span>
                 </button>
+
+                {/* Logout Icon Button */}
                 <button
+                  type="button"
                   onClick={onLogout}
-                  className="p-1.5 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50/80 transition-all"
-                  title="Đăng xuất"
+                  className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all duration-200 active:scale-95 flex items-center justify-center"
+                  title="Đăng xuất khỏi hệ thống"
                 >
                   <LogOut className="w-4 h-4" />
                 </button>
@@ -529,142 +532,16 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
         </button>
       )}
 
-      {/* NotebookLM AI Knowledge Base Modal */}
-      {showNotebookLmModal && (
-        <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-6 animate-fadeIn print:hidden">
-          <div className="bg-white rounded-3xl max-w-4xl w-full max-h-[90vh] shadow-2xl border border-slate-200 overflow-hidden flex flex-col">
-            {/* Modal Header */}
-            <div className="p-4 sm:p-5 bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white flex items-center justify-between">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-white/10 backdrop-blur-md flex items-center justify-center border border-white/20">
-                  <Sparkles className="w-5 h-5 text-emerald-300" />
-                </div>
-                <div>
-                  <h3 className="font-extrabold text-sm sm:text-base leading-tight">
-                    Google NotebookLM — Trợ Lý AI Tra Cứu Quy Định & Lỗi Vi Phạm
-                  </h3>
-                  <p className="text-[11px] text-emerald-200 font-medium mt-0.5">
-                    Hỏi đáp thông minh từ Sổ tay quy chế & Ma trận tiêu chí Nhà Của Thời Thanh Xuân
-                  </p>
-                </div>
-              </div>
-
-              <button
-                onClick={() => setShowNotebookLmModal(false)}
-                className="w-8 h-8 rounded-full bg-white/10 hover:bg-white/20 text-white font-bold flex items-center justify-center transition-colors"
-              >
-                ✕
-              </button>
-            </div>
-
-            {/* Modal Body */}
-            <div className="p-5 sm:p-7 space-y-5 overflow-y-auto flex-1 bg-gradient-to-b from-slate-50 to-white">
-              
-              {/* Google Security & Link Banner */}
-              <div className="p-4 rounded-2xl bg-emerald-500/10 border border-emerald-500/20 text-slate-800 space-y-3">
-                <div className="flex items-start justify-between gap-3">
-                  <div className="flex items-center gap-2">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    <span className="text-xs font-black text-emerald-900 uppercase tracking-wider">
-                      Google NotebookLM AI Workspace
-                    </span>
-                  </div>
-                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md border border-emerald-200">
-                    Bảo mật Google Cloud
-                  </span>
-                </div>
-                <p className="text-xs text-slate-600 leading-relaxed">
-                  Để đảm bảo tính bảo mật và quyền truy cập tài khoản Google của bạn, Google NotebookLM hoạt động tối ưu nhất trên cửa sổ làm việc độc lập.
-                </p>
-              </div>
-
-              {/* Main Action Launcher Card */}
-              <div className="p-6 rounded-3xl bg-gradient-to-br from-[#1B4332] via-[#2D6A4F] to-emerald-900 text-white shadow-xl space-y-5 border border-emerald-400/20 relative overflow-hidden">
-                <div className="absolute top-0 right-0 -mt-8 -mr-8 w-40 h-40 bg-emerald-400/10 rounded-full blur-2xl pointer-events-none"></div>
-                
-                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                  <div className="space-y-1">
-                    <div className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-emerald-400/20 text-emerald-200 text-xs font-extrabold border border-emerald-400/30">
-                      <Sparkles className="w-3.5 h-3.5" />
-                      <span>Sổ Tay AI Trực Tuyến</span>
-                    </div>
-                    <h4 className="text-lg font-black tracking-tight text-white">
-                      Nhà Của Thời Thanh Xuân — NotebookLM
-                    </h4>
-                    <p className="text-xs text-emerald-100/80 max-w-lg">
-                      Đặt câu hỏi bằng ngôn ngữ tự nhiên để AI tổng hợp tức thì các quy định, thang điểm, tiêu chí vi phạm và hướng dẫn xử lý sự cố.
-                    </p>
-                  </div>
-
-                  <a
-                    href={params.notebookLmUrl || 'https://notebooklm.google.com'}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className="inline-flex items-center justify-center gap-2 px-6 py-3.5 rounded-2xl bg-emerald-400 hover:bg-emerald-300 text-slate-950 font-black text-sm transition-all transform hover:scale-[1.03] active:scale-95 shadow-lg shadow-emerald-950/40 whitespace-nowrap group shrink-0"
-                  >
-                    <span>Mở NotebookLM Trong Tab Mới</span>
-                    <ExternalLink className="w-4 h-4 transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
-                  </a>
-                </div>
-
-                {/* Prompt Suggestions */}
-                <div className="border-t border-white/10 pt-4 space-y-2">
-                  <span className="text-[11px] font-extrabold text-emerald-200 uppercase tracking-wider block">
-                    Gợi ý câu hỏi phổ biến:
-                  </span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
-                    <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-emerald-50 hover:bg-white/15 transition-all">
-                      💬 "Nội quy về giờ giấc & văn hóa ứng xử ở các nhà?"
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-emerald-50 hover:bg-white/15 transition-all">
-                      💬 "Các tiêu chí vi phạm ranh giới đỏ gồm những mục nào?"
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-emerald-50 hover:bg-white/15 transition-all">
-                      💬 "Quy trình giải trình & khiếu nại phản hồi nhân sự?"
-                    </div>
-                    <div className="p-2.5 rounded-xl bg-white/10 backdrop-blur-md border border-white/10 text-emerald-50 hover:bg-white/15 transition-all">
-                      💬 "Cách tính điểm thưởng & đánh giá xếp loại nhân sự?"
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-              {/* URL Reference Box */}
-              <div className="p-4 rounded-2xl bg-white border border-slate-200 shadow-sm flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-                <div className="flex items-center gap-2 overflow-hidden w-full">
-                  <span className="font-extrabold text-slate-700 shrink-0">Link NotebookLM:</span>
-                  <code className="bg-slate-100 px-2.5 py-1 rounded-lg text-slate-600 truncate font-mono text-[11px] flex-1">
-                    {params.notebookLmUrl || 'https://notebooklm.google.com'}
-                  </code>
-                </div>
-                <button
-                  onClick={() => {
-                    navigator.clipboard.writeText(params.notebookLmUrl || 'https://notebooklm.google.com');
-                    alert('Đã sao chép đường dẫn NotebookLM!');
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 font-bold transition-all text-xs shrink-0"
-                >
-                  Sao Chép Link
-                </button>
-              </div>
-
-            </div>
-
-            {/* Modal Footer */}
-            <div className="p-4 bg-slate-50 border-t border-slate-200 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs">
-              <span className="text-slate-500 font-medium">
-                💡 Bạn có thể tùy chỉnh lại đường dẫn NotebookLM này tại mục <strong>Cấu hình ➔ Tham số hệ thống</strong>.
-              </span>
-              <button
-                onClick={() => setShowNotebookLmModal(false)}
-                className="px-5 py-2.5 rounded-xl bg-slate-900 text-white font-bold hover:bg-slate-800 transition-all shadow-sm w-full sm:w-auto"
-              >
-                Đóng Cửa Sổ
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Live Interactive In-App AI Chat Assistant Modal */}
+      <AiChatModal
+        isOpen={showNotebookLmModal}
+        onClose={() => setShowNotebookLmModal(false)}
+        questions={questions}
+        staffList={staffList}
+        lines={lines}
+        params={params}
+        currentUser={currentUser}
+      />
     </div>
   );
 };

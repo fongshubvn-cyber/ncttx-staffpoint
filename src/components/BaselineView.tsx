@@ -25,6 +25,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
   const [vioBoundary, setVioBoundary] = useState(params.vioBoundaryPoints ?? -1.5);
   const [appsScriptUrl, setAppsScriptUrl] = useState(params.googleAppsScriptUrl || '');
   const [notebookLmUrl, setNotebookLmUrl] = useState(params.notebookLmUrl || 'https://notebooklm.google.com');
+  const [geminiApiKey, setGeminiApiKey] = useState(params.geminiApiKey || '');
 
   // Weight State
   const [wGenNoMgmt, setWGenNoMgmt] = useState(params.weightGeneralNoMgmt ?? 0.3);
@@ -52,6 +53,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
       vioBoundaryPoints: vioBoundary,
       googleAppsScriptUrl: appsScriptUrl.trim(),
       notebookLmUrl: notebookLmUrl.trim(),
+      geminiApiKey: geminiApiKey.trim(),
       weightGeneralNoMgmt: wGenNoMgmt,
       weightTechNoMgmt: wTechNoMgmt,
       weightGeneralWithMgmt: wGenWithMgmt,
@@ -240,44 +242,24 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
           </div>
         </div>
 
-        {/* Google Apps Script Webhook URL Config */}
+        {/* Gemini API Key Config for In-App AI Chat */}
         <div className="pt-2 border-t border-slate-100 space-y-1.5">
           <label className="block text-xs font-bold text-[#1B4332] flex items-center justify-between">
-            <span>🌐 Google Apps Script Webhook URL (Kết nối 16 file Apps Script):</span>
-            <span className="text-[10px] text-slate-500 font-normal">Sheet / Drive Export</span>
+            <span>⚡ Google Gemini API Key (Cho Trợ Lý AI Trò Chuyện Trực Tiếp Trên App):</span>
+            <span className="text-[10px] text-emerald-700 font-bold">Chat In-App</span>
           </label>
           {isEditing ? (
             <input
-              type="text"
-              placeholder="Dán link Web App URL từ Google Apps Script (VD: https://script.google.com/macros/s/.../exec)"
-              value={appsScriptUrl}
-              onChange={(e) => setAppsScriptUrl(e.target.value)}
+              type="password"
+              placeholder="Dán Google Gemini API Key (VD: AIzaSy...)"
+              value={geminiApiKey}
+              onChange={(e) => setGeminiApiKey(e.target.value)}
               className="w-full p-2 bg-slate-50 border border-emerald-300 rounded-xl text-xs text-[#2D3748] font-mono focus:outline-none focus:border-[#2D6A4F]"
             />
           ) : (
-            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 truncate">
-              {params.googleAppsScriptUrl ? params.googleAppsScriptUrl : <span className="text-slate-400 font-sans italic">Chưa dán URL Google Apps Script (Sẽ tự động tải file CSV/Excel về máy khi bấm xuất)</span>}
-            </div>
-          )}
-        </div>
-
-        {/* NotebookLM AI Lookup URL Config */}
-        <div className="pt-2 border-t border-slate-100 space-y-1.5">
-          <label className="block text-xs font-bold text-[#1B4332] flex items-center justify-between">
-            <span>🤖 Google NotebookLM URL (Sổ tay AI Tra Cứu Quy Định & Lỗi Vi Phạm):</span>
-            <span className="text-[10px] text-emerald-700 font-bold">Sticky Button bên trái</span>
-          </label>
-          {isEditing ? (
-            <input
-              type="text"
-              placeholder="Dán link NotebookLM của công ty (VD: https://notebooklm.google.com/notebook/...)"
-              value={notebookLmUrl}
-              onChange={(e) => setNotebookLmUrl(e.target.value)}
-              className="w-full p-2 bg-slate-50 border border-emerald-300 rounded-xl text-xs text-[#2D3748] font-mono focus:outline-none focus:border-[#2D6A4F]"
-            />
-          ) : (
-            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 truncate">
-              {params.notebookLmUrl ? params.notebookLmUrl : <span className="text-slate-400 font-sans italic">https://notebooklm.google.com</span>}
+            <div className="p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-mono text-slate-700 truncate flex items-center justify-between">
+              <span>{params.geminiApiKey ? '••••••••••••••••••••••••' : <span className="text-slate-400 font-sans italic">Chưa nhập API Key (App tự dùng AI Search thông minh sẵn có)</span>}</span>
+              {params.geminiApiKey && <span className="text-[10px] bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded font-bold">Đã kích hoạt API</span>}
             </div>
           )}
         </div>
