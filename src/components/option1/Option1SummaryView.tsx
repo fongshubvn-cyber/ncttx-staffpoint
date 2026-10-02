@@ -7,7 +7,8 @@ import {
   isManagementRole,
   isHRHeadRole, 
   get3RecentPeriods,
-  getVisibleStaffListForUser
+  getVisibleStaffListForUser,
+  getStaffScoresForPeriod
 } from '../../utils/calculator';
 import { 
   Sparkles, 
@@ -81,12 +82,27 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
 
   if (!staff) return null;
 
-  const activeIncidents = incidents.filter(i => !i.isDeleted);
-  const staffIncidents = activeIncidents.filter(i => i.targetId === staff.id);
-  const pendingAppeals = activeIncidents.filter(i => i.status === 'Đang kháng nghị');
+  // Filter active incidents for the selected period
+  const [yStr, mStr] = selectedPeriodKey.split('-');
+  const patternSlash = `${mStr}/${yStr}`; // "10/2026"
+  const patternDash = `${yStr}-${mStr}`;  // "2026-10"
 
-  const overallScore = calculateTotalScoreForStaff(staff, params);
-  const salaryTierNum = calculateSalaryTier(overallScore, params);
+  const activePeriodIncidents = incidents.filter(inc => {
+    if (!inc || inc.isDeleted) return false;
+    if (inc.createdAt && inc.createdAt.startsWith(patternDash)) return true;
+    if (inc.date) {
+      if (inc.date.includes(patternSlash) || inc.date.includes(patternDash)) return true;
+    }
+    return false;
+  });
+
+  const staffIncidents = activePeriodIncidents.filter(i => i.targetId === staff.id);
+  const pendingAppeals = activePeriodIncidents.filter(i => i.status === 'Đang kháng nghị');
+
+  // Compute dynamic monthly scores for selected period key (Monthly Reset)
+  const periodScores = getStaffScoresForPeriod(staff, selectedPeriodKey, incidents, params);
+  const overallScore = periodScores.totalScore;
+  const salaryTierNum = periodScores.salaryTier;
   const tier = getSalaryTierBadge(salaryTierNum);
   const hasMgmtRole = isManagementRole(staff);
 
@@ -114,7 +130,7 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
               <button
                 key={p.key}
                 onClick={() => setSelectedPeriodKey(p.key)}
-                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm ${
+                className={`px-3 py-1.5 rounded-xl text-xs font-semibold transition-all shadow-sm cursor-pointer ${
                   selectedPeriodKey === p.key
                     ? 'bg-white text-emerald-900 font-bold shadow-md scale-105'
                     : 'bg-emerald-800/60 text-emerald-100 hover:bg-emerald-700/60 border border-emerald-600/30'
@@ -135,13 +151,13 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
           </div>
 
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
-            <span className="text-xs text-emerald-200/80 font-medium block">Tuyên Dương</span>
-            <span className="text-xl font-bold text-emerald-300 mt-1 block">+{activeIncidents.filter(i => i.type === 'ghi_nhan').length} phiếu</span>
+            <span className="text-xs text-emerald-200/80 font-medium block">Tuyên Dương ({currentPeriodObj.mStr}/{currentPeriodObj.year})</span>
+            <span className="text-xl font-bold text-emerald-300 mt-1 block">+{activePeriodIncidents.filter(i => i.type === 'ghi_nhan').length} phiếu</span>
           </div>
 
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
-            <span className="text-xs text-emerald-200/80 font-medium block">Biên Bản Vi Phạm</span>
-            <span className="text-xl font-bold text-rose-300 mt-1 block">{activeIncidents.filter(i => i.type === 'vi_pham').length} phiếu</span>
+            <span className="text-xs text-emerald-200/80 font-medium block">Biên Bản Vi Phạm ({currentPeriodObj.mStr}/{currentPeriodObj.year})</span>
+            <span className="text-xl font-bold text-rose-300 mt-1 block">{activePeriodIncidents.filter(i => i.type === 'vi_pham').length} phiếu</span>
           </div>
 
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
@@ -316,8 +332,8 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
 
           <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
             <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 font-medium">Điểm Đánh Giá Tổng Thể</span>
-              <span className="text-xs font-bold text-emerald-700">{overallScore}/5.0</span>
+              <span className="text-xs text-slate-500 font-medium">Điểm Đánh Giá ({currentPeriodObj.mStr}/{currentPeriodObj.year})</span>
+              <span className="text-xs font-bold text-emerald-700">{overallScore.toFixed(2)}/5.0</span>
             </div>
             <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
               <div
@@ -331,19 +347,19 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                 <span className="text-slate-400 block text-[10px] whitespace-nowrap">
                   Văn hóa ({hasMgmtRole ? '50%' : '65%'})
                 </span>
-                <span className="font-semibold text-slate-700">{staff.generalScore}/5.0</span>
+                <span className="font-semibold text-slate-700">{periodScores.generalScore}/5.0</span>
               </div>
               {hasMgmtRole && (
                 <div>
                   <span className="text-slate-400 block text-[10px] whitespace-nowrap">Quản lý (30%)</span>
-                  <span className="font-semibold text-slate-700">{staff.mgmtScore ?? 5.0}/5.0</span>
+                  <span className="font-semibold text-slate-700">{periodScores.mgmtScore > 0 ? periodScores.mgmtScore : '---'}/5.0</span>
                 </div>
               )}
               <div className="text-right">
                 <span className="text-slate-400 block text-[10px] whitespace-nowrap">
                   Chuyên môn ({hasMgmtRole ? '20%' : '35%'})
                 </span>
-                <span className="font-semibold text-slate-700">{staff.techScore}/5.0</span>
+                <span className="font-semibold text-slate-700">{periodScores.techScore}/5.0</span>
               </div>
             </div>
           </div>

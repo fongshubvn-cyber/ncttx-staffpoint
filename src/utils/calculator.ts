@@ -167,6 +167,84 @@ export function get3RecentPeriods(): ReportingPeriod[] {
 }
 
 /**
+ * Calculates a staff member's scores (General Score, Tech Score, Mgmt Score, Total Score, Salary Tier)
+ * dynamically for a specific monthly reporting period (e.g. "2026-10" vs "2026-09").
+ * 
+ * Rules:
+ * - Each month is an independent evaluation cycle.
+ * - Base general score starts at 5.0 (or staff.generalScore base).
+ * - ONLY non-deleted approved tickets recorded in that SPECIFIC period impact the score.
+ * - Tickets from previous months stay in their respective month and DO NOT carry over into the new month!
+ */
+export function getStaffScoresForPeriod(
+  staff: Staff,
+  periodKey: string,
+  incidents: any[],
+  params: ParameterConfig
+): {
+  generalScore: number;
+  techScore: number;
+  mgmtScore: number;
+  totalScore: number;
+  salaryTier: number;
+  violationsCount: number;
+  recognitionsCount: number;
+} {
+  const [yStr, mStr] = periodKey.split('-');
+  const patternSlash = `${mStr}/${yStr}`; // "10/2026"
+  const patternDash = `${yStr}-${mStr}`;  // "2026-10"
+
+  const periodIncidents = incidents.filter(inc => {
+    if (!inc || inc.isDeleted) return false;
+    if (inc.targetId !== staff.id) return false;
+
+    if (inc.createdAt && inc.createdAt.startsWith(patternDash)) return true;
+    if (inc.date) {
+      if (inc.date.includes(patternSlash) || inc.date.includes(patternDash)) return true;
+    }
+    return false;
+  });
+
+  const approvedIncidents = periodIncidents.filter(
+    i => i.status === 'Đã duyệt' || (i.type === 'vi_pham' && i.status !== 'Kháng nghị được chấp nhận')
+  );
+
+  const violationsCount = approvedIncidents.filter(i => i.type === 'vi_pham').length;
+  const recognitionsCount = approvedIncidents.filter(i => i.type === 'ghi_nhan').length;
+
+  let generalScore = 5.0;
+  approvedIncidents.forEach(inc => {
+    if (typeof inc.impactPoints === 'number' && !isNaN(inc.impactPoints)) {
+      generalScore += inc.impactPoints;
+    }
+  });
+
+  generalScore = Math.max(0, Math.min(5, Number(generalScore.toFixed(2))));
+  const techScore = typeof staff.techScore === 'number' ? staff.techScore : 4.0;
+  const hasMgmt = isManagementRole(staff);
+  const mgmtScore = hasMgmt ? (typeof staff.mgmtScore === 'number' ? staff.mgmtScore : 4.0) : 0;
+
+  const totalScore = calculateTotalScore(
+    generalScore,
+    techScore,
+    hasMgmt ? mgmtScore : undefined,
+    params
+  );
+
+  const salaryTier = calculateSalaryTier(totalScore, params);
+
+  return {
+    generalScore,
+    techScore,
+    mgmtScore,
+    totalScore,
+    salaryTier,
+    violationsCount,
+    recognitionsCount,
+  };
+}
+
+/**
  * Permission Check: Can user view a specific incident ticket?
  * - Trưởng phòng / HR Head / C-Level / Admin: sees ALL tickets across company
  * - Quản lý / Lead / Trưởng ca: sees self tickets (as target or reporter) PLUS tickets of DIRECT SUBORDINATES in their department/line (excludes tickets written about superiors/managers).

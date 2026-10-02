@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Staff, IncidentRecord, DepartmentLine, ParameterConfig, AuthUser, Question } from '../../types';
-import { getSalaryTierBadge, calculateSalaryTier, getVisibleStaffListForUser } from '../../utils/calculator';
+import { getSalaryTierBadge, calculateSalaryTier, getVisibleStaffListForUser, get3RecentPeriods, getStaffScoresForPeriod } from '../../utils/calculator';
 import { getStaffCriteriaBreakdown, getTrackScoreDetails, EvaluatedCriterion, GroupScoreDetail } from '../../utils/reportHelper';
 import { 
   BarChart3, 
@@ -20,7 +20,8 @@ import {
   Star,
   ChevronDown,
   ChevronRight,
-  ListTree
+  ListTree,
+  Calendar
 } from 'lucide-react';
 import { exportReportToGoogleSheet } from '../../utils/exportDrive';
 
@@ -45,6 +46,10 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [isExportingSheet, setIsExportingSheet] = useState<boolean>(false);
   const [expandedGroupMap, setExpandedGroupMap] = useState<Record<string, boolean>>({});
+
+  const recentPeriods = useMemo(() => get3RecentPeriods(), []);
+  const [selectedPeriodKey, setSelectedPeriodKey] = useState<string>(recentPeriods[0].key);
+  const currentPeriodObj = recentPeriods.find(p => p.key === selectedPeriodKey) || recentPeriods[0];
 
   useEffect(() => {
     const updateClock = () => {
@@ -78,12 +83,35 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
   }, [visibleStaffList, selectedStaffId]);
 
   const selectedStaff = visibleStaffList.find(s => s.id === selectedStaffId) || visibleStaffList[0];
+
+  // Filter incidents for selected reporting period
+  const periodIncidents = useMemo(() => {
+    const [yStr, mStr] = selectedPeriodKey.split('-');
+    const patternSlash = `${mStr}/${yStr}`; // e.g. "10/2026"
+    const patternDash = `${yStr}-${mStr}`;  // e.g. "2026-10"
+
+    return incidents.filter(inc => {
+      if (!inc || inc.isDeleted) return false;
+      if (inc.createdAt && inc.createdAt.startsWith(patternDash)) return true;
+      if (inc.date) {
+        if (inc.date.includes(patternSlash) || inc.date.includes(patternDash)) return true;
+      }
+      return false;
+    });
+  }, [incidents, selectedPeriodKey]);
+
   const staffIncidents = useMemo(() => {
     if (!selectedStaff) return [];
-    return incidents.filter(i => !i.isDeleted && i.targetId === selectedStaff.id);
-  }, [incidents, selectedStaff]);
+    return periodIncidents.filter(i => i.targetId === selectedStaff.id);
+  }, [periodIncidents, selectedStaff]);
 
-  // Compute criteria matrix and track breakdown
+  // Compute dynamic monthly scores for selected period key
+  const periodScores = useMemo(() => {
+    if (!selectedStaff) return null;
+    return getStaffScoresForPeriod(selectedStaff, selectedPeriodKey, incidents, params);
+  }, [selectedStaff, selectedPeriodKey, incidents, params]);
+
+  // Compute criteria matrix and track breakdown using periodIncidents
   const criteriaBreakdown = useMemo(() => {
     if (!selectedStaff) return null;
     return getStaffCriteriaBreakdown(selectedStaff, questions, lines, staffIncidents);
@@ -103,7 +131,7 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
       });
       setExpandedGroupMap(map);
     }
-  }, [selectedStaffId]);
+  }, [selectedStaffId, criteriaBreakdown]);
 
   const toggleGroupExpand = (code: string) => {
     setExpandedGroupMap(prev => ({
@@ -131,7 +159,7 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
     if (!selectedStaff) return;
     setIsExportingSheet(true);
     try {
-      await exportReportToGoogleSheet(selectedStaff, 'Tháng Hiện Tại', staffIncidents, params, questions, lines);
+      await exportReportToGoogleSheet(selectedStaff, currentPeriodObj.label, staffIncidents, params, questions, lines);
     } catch (err) {
       console.error(err);
     } finally {
@@ -141,7 +169,12 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
 
   if (!selectedStaff || !criteriaBreakdown || !trackInfo) return null;
 
-  const salaryTierNum = calculateSalaryTier(selectedStaff.totalScore, params);
+  const totalScoreVal = periodScores ? periodScores.totalScore : selectedStaff.totalScore;
+  const generalScoreVal = periodScores ? periodScores.generalScore : selectedStaff.generalScore;
+  const techScoreVal = periodScores ? periodScores.techScore : selectedStaff.techScore;
+  const mgmtScoreVal = periodScores ? periodScores.mgmtScore : (selectedStaff.mgmtScore || 0);
+
+  const salaryTierNum = calculateSalaryTier(totalScoreVal, params);
   const tier = getSalaryTierBadge(salaryTierNum);
 
   // Helper render for a Grouped List Section (Mục chung ➔ Chi tiết mục)
@@ -338,6 +371,35 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
 
       {/* Staff Selector & Search Bar */}
       <div className="bg-white rounded-2xl p-4 shadow-sm border border-slate-200/80 print:hidden space-y-3">
+        {/* REPORTING PERIOD SELECTOR (3 RECENT MONTHS) */}
+        <div className="p-3 rounded-2xl bg-[#EDEAE3]/60 border border-slate-200 space-y-2">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
+            <span className="text-xs font-black text-[#1B4332] flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-[#2D6A4F] shrink-0" />
+              <span>Kỳ Báo Cáo (Reset Hàng Tháng - 3 Tháng Gần Nhất):</span>
+            </span>
+            <span className="text-[10px] font-mono font-extrabold text-[#2D6A4F] bg-white px-2.5 py-0.5 rounded-full border border-slate-200">
+              Đang xem: {currentPeriodObj.label}
+            </span>
+          </div>
+
+          <div className="flex items-center gap-1.5 overflow-x-auto pb-0.5">
+            {recentPeriods.map((p) => (
+              <button
+                key={p.key}
+                onClick={() => setSelectedPeriodKey(p.key)}
+                className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all whitespace-nowrap active:scale-95 cursor-pointer ${
+                  selectedPeriodKey === p.key
+                    ? 'bg-[#2D6A4F] text-white shadow-sm border border-[#2D6A4F]'
+                    : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
+                }`}
+              >
+                <span>{p.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
           <label className="block text-xs font-bold text-slate-800 flex items-center gap-1.5">
             <User className="w-4 h-4 text-emerald-600" />
@@ -475,10 +537,10 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
           <div className={`p-4 rounded-2xl border-2 flex flex-col sm:flex-row sm:items-center justify-between gap-3 shadow-md ${tier.bgClass} ${tier.borderClass}`}>
             <div>
               <span className="text-[10px] font-black uppercase tracking-wider opacity-80 block">
-                TỔNG ĐIỂM NĂNG LỰC P2 DỰ KIẾN KẾT HỢP
+                TỔNG ĐIỂM NĂNG LỰC P2 KỲ {currentPeriodObj.mStr}/{currentPeriodObj.year}
               </span>
               <div className="flex items-baseline gap-2 mt-0.5">
-                <span className="text-2xl sm:text-3xl font-black font-heading">{selectedStaff.totalScore.toFixed(2)}</span>
+                <span className="text-2xl sm:text-3xl font-black font-heading">{totalScoreVal.toFixed(2)}</span>
                 <span className="text-xs opacity-75 font-bold">/ 5.0 Điểm Chuẩn</span>
               </div>
             </div>
@@ -494,7 +556,7 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
         {renderGroupedListSection(
           "2. Ngạch Văn Hóa Chung (Danh sách Mục chung ➔ Chi tiết mục)",
           criteriaBreakdown.commonGroups,
-          selectedStaff.generalScore,
+          generalScoreVal,
           <ShieldCheck className="w-4 h-4 text-emerald-600" />,
           "bg-emerald-100",
           "text-emerald-900"
@@ -504,7 +566,7 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
         {renderGroupedListSection(
           `3. Ngạch Chuyên Môn Phòng Ban [${selectedStaff.line}] (Danh sách Mục chung ➔ Chi tiết mục)`,
           criteriaBreakdown.deptGroups,
-          selectedStaff.techScore,
+          techScoreVal,
           <Building2 className="w-4 h-4 text-teal-600" />,
           "bg-teal-100",
           "text-teal-900"
@@ -515,7 +577,7 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
           renderGroupedListSection(
             "4. Ngạch Quản Lý & Lãnh Đạo (Danh sách Mục chung ➔ Chi tiết mục)",
             criteriaBreakdown.mgmtGroups,
-            selectedStaff.mgmtScore || 0,
+            mgmtScoreVal,
             <Star className="w-4 h-4 text-purple-600" />,
             "bg-purple-100",
             "text-purple-900"

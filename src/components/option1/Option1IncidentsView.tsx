@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IncidentRecord, Staff, Question, AuthUser, AdminFeedback } from '../../types';
-import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident } from '../../utils/calculator';
+import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident, get3RecentPeriods } from '../../utils/calculator';
 import { 
   Trophy, 
   Plus, 
@@ -62,6 +62,9 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
   const [selectedIncidentForAppeal, setSelectedIncidentForAppeal] = useState<IncidentRecord | null>(null);
   const [appealReason, setAppealReason] = useState<string>('');
   const [viewImageModal, setViewImageModal] = useState<string | null>(null);
+
+  const recentPeriods = get3RecentPeriods();
+  const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>('all');
 
   // Admin Feedback Box State
   const [feedbacks, setFeedbacks] = useState<AdminFeedback[]>(() => {
@@ -161,15 +164,27 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
   const baseListToFilter = filterType === 'trash' ? deletedIncidents : activeIncidents;
 
   const filteredIncidents = baseListToFilter.filter((item) => {
+    if (selectedMonthFilter !== 'all') {
+      const [yStr, mStr] = selectedMonthFilter.split('-');
+      const patternSlash = `${mStr}/${yStr}`;
+      const patternDash = `${yStr}-${mStr}`;
+
+      const matchesMonth = (item.createdAt && item.createdAt.startsWith(patternDash)) ||
+                           (item.date && (item.date.includes(patternSlash) || item.date.includes(patternDash)));
+      if (!matchesMonth) return false;
+    }
+
     if (filterType === 'my_submitted') {
-      return item.reporterId === currentUser?.id;
+      if (item.reporterId !== currentUser?.id) return false;
+    } else if (filterType === 'my_received') {
+      if (item.targetId !== currentUser?.id) return false;
+    } else if (filterType === 'ghi_nhan') {
+      if (item.type !== 'ghi_nhan') return false;
+    } else if (filterType === 'vi_pham') {
+      if (item.type !== 'vi_pham') return false;
+    } else if (filterType === 'khang_nghi') {
+      if (item.status !== 'Đang kháng nghị' && !item.appealReason) return false;
     }
-    if (filterType === 'my_received') {
-      return item.targetId === currentUser?.id;
-    }
-    if (filterType === 'ghi_nhan') return item.type === 'ghi_nhan';
-    if (filterType === 'vi_pham') return item.type === 'vi_pham';
-    if (filterType === 'khang_nghi') return item.status === 'Đang kháng nghị' || !!item.appealReason;
 
     const targetStaff = staffList.find(s => s.id === item.targetId);
     const staffName = targetStaff ? targetStaff.name : item.targetId;
@@ -239,6 +254,34 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
 
       {/* Search & Filter Tabs */}
       <div className="space-y-3">
+        {/* Month Filter Selector Bar */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
+          <span className="font-extrabold text-slate-400 uppercase text-[10px] shrink-0">Lọc Theo Tháng:</span>
+          <button
+            onClick={() => setSelectedMonthFilter('all')}
+            className={`px-3 py-1 rounded-xl font-bold transition-all border whitespace-nowrap cursor-pointer ${
+              selectedMonthFilter === 'all'
+                ? 'bg-emerald-950 text-white border-emerald-950 shadow-xs'
+                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Tất cả các tháng
+          </button>
+          {recentPeriods.map(p => (
+            <button
+              key={p.key}
+              onClick={() => setSelectedMonthFilter(p.key)}
+              className={`px-3 py-1 rounded-xl font-bold transition-all border whitespace-nowrap cursor-pointer ${
+                selectedMonthFilter === p.key
+                  ? 'bg-emerald-700 text-white border-emerald-700 shadow-xs'
+                  : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {p.label}
+            </button>
+          ))}
+        </div>
+
         {filterType !== 'admin_feedback' && (
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />

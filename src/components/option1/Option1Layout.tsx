@@ -183,7 +183,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <h1 className="font-extrabold text-base tracking-tight text-slate-900 flex items-center gap-1.5 whitespace-nowrap">
                   StaffPoint 
                   <span className="text-emerald-600 font-mono text-xs bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
-                    v3.0
+                    v1.001
                   </span>
                 </h1>
 

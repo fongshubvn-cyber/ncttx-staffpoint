@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Staff, IncidentRecord, Question, ParameterConfig, AuthUser } from '../types';
-import { getSalaryTierBadge, isHRHeadRole, get3RecentPeriods, getVisibleStaffListForUser } from '../utils/calculator';
+import { getSalaryTierBadge, isHRHeadRole, get3RecentPeriods, getVisibleStaffListForUser, getStaffScoresForPeriod } from '../utils/calculator';
 import { 
   Sparkles, 
   User, 
@@ -60,9 +60,25 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
 
   if (!staff) return null;
 
-  const staffIncidents = incidents.filter(i => i.targetId === staff.id);
-  const recognitions = staffIncidents.filter(i => i.type === 'ghi_nhan' && i.status === 'Đã duyệt');
-  const violations = staffIncidents.filter(i => i.type === 'vi_pham' && i.status === 'Đã duyệt');
+  // Compute dynamic monthly scores for selected period key
+  const periodScores = getStaffScoresForPeriod(staff, selectedPeriodKey, incidents, params);
+
+  const [yStr, mStr] = selectedPeriodKey.split('-');
+  const patternSlash = `${mStr}/${yStr}`; // "10/2026"
+  const patternDash = `${yStr}-${mStr}`;  // "2026-10"
+
+  const periodIncidents = incidents.filter(inc => {
+    if (!inc || inc.isDeleted) return false;
+    if (inc.createdAt && inc.createdAt.startsWith(patternDash)) return true;
+    if (inc.date) {
+      if (inc.date.includes(patternSlash) || inc.date.includes(patternDash)) return true;
+    }
+    return false;
+  });
+
+  const staffIncidents = periodIncidents.filter(i => i.targetId === staff.id);
+  const recognitions = staffIncidents.filter(i => i.type === 'ghi_nhan' && (i.status === 'Đã duyệt' || i.status === 'Chờ HR duyệt'));
+  const violations = staffIncidents.filter(i => i.type === 'vi_pham' && i.status !== 'Kháng nghị được chấp nhận');
 
   const generateImprovementTips = () => {
     const tips = [];
@@ -78,47 +94,47 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
       });
     }
 
-    if (staff.generalScore < 4.5) {
+    if (periodScores.generalScore < 4.5) {
       tips.push({
         title: 'Nâng cao Điểm Văn Hóa Chung (One Voice)',
         type: 'van_hoa',
-        description: `Điểm văn hóa hiện tại là ${staff.generalScore}/5.0. Thực hành giao tiếp chân thành, tôn trọng đồng nghiệp khiếm thính và duy trì văn hóa không phòng vệ.`,
+        description: `Điểm văn hóa kỳ ${selectedPeriodKey} là ${periodScores.generalScore}/5.0. Thực hành giao tiếp chân thành, tôn trọng đồng nghiệp khiếm thính và duy trì văn hóa không phòng vệ.`,
         priority: 'Rèn luyện',
       });
     }
 
-    if (staff.techScore < 4.5) {
+    if (periodScores.techScore < 4.5) {
       tips.push({
         title: 'Hoàn thiện Năng Lực Chuyên Môn',
         type: 'chuyen_mon',
-        description: `Điểm chuyên môn là ${staff.techScore}/5.0. Ôn luyện bộ tiêu chí chất lượng thật của tuyến ${staff.line}.`,
+        description: `Điểm chuyên môn là ${periodScores.techScore}/5.0. Ôn luyện bộ tiêu chí chất lượng thật của tuyến ${staff.line}.`,
         priority: 'Rèn luyện',
       });
     }
 
-    if (staff.mgmtScore !== undefined && staff.mgmtScore < 4.5) {
+    if (staff.mgmtScore !== undefined && periodScores.mgmtScore < 4.5) {
       tips.push({
         title: 'Vững Vàng Năng Lực Quản Lý OPA',
         type: 'quan_ly',
-        description: `Điểm quản lý là ${staff.mgmtScore}/5.0. Thể hiện tư duy quản trị vững chãi và hỗ trợ sát sao cho đội nhóm ca làm việc.`,
+        description: `Điểm quản lý là ${periodScores.mgmtScore}/5.0. Thể hiện tư duy quản trị vững chãi và hỗ trợ sát sao cho đội nhóm ca làm việc.`,
         priority: 'Cần chú ý',
       });
     }
 
-    if (staff.salaryTier < 5) {
+    if (periodScores.salaryTier < 5) {
       const nextTierScore = (params.tier5Threshold * 5.0).toFixed(2);
-      const gap = (parseFloat(nextTierScore) - staff.totalScore).toFixed(2);
+      const gap = (parseFloat(nextTierScore) - periodScores.totalScore).toFixed(2);
       tips.push({
         title: `Lộ trình chinh phục Bậc 5 (Xuất sắc - 85%+ điểm)`,
         type: 'lo_trinh',
-        description: `Bạn đang ở Bậc ${staff.salaryTier}. Cần thêm khoảng +${gap} điểm làm việc để cán mốc Bậc 5 (${nextTierScore} điểm). Nhận thêm 1-2 phiếu khen thưởng chất lượng sẽ giúp bạn củng cố vị trí!`,
+        description: `Bạn đang ở Bậc ${periodScores.salaryTier} (Kỳ ${selectedPeriodKey}). Cần thêm khoảng +${gap} điểm làm việc để cán mốc Bậc 5 (${nextTierScore} điểm). Nhận thêm 1-2 phiếu khen thưởng chất lượng sẽ giúp bạn củng cố vị trí!`,
         priority: 'Khuyến khích',
       });
     } else {
       tips.push({
         title: 'Duy trì phong độ Xuất sắc Bậc 5 ⭐️',
         type: 'duy_tri',
-        description: 'Chúc mừng bạn đã vững vàng ở Bậc 5! Tiếp tục lan tỏa giá trị chữa lành và nâng đỡ đồng nghiệp.',
+        description: `Chúc mừng bạn đã vững vàng ở Bậc 5 (Kỳ ${selectedPeriodKey})! Tiếp tục lan tỏa giá trị chữa lành và nâng đỡ đồng nghiệp.`,
         priority: 'Ghi nhận',
       });
     }
@@ -202,7 +218,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           <div className="flex flex-col items-end shrink-0">
             <span className="px-3.5 py-1.5 rounded-full bg-[#1B4332] text-[#52B788] text-xs font-black border border-[#2D6A4F] inline-flex items-center space-x-1.5 shadow-sm">
               <Star className="w-3.5 h-3.5 text-[#52B788] fill-[#52B788] shrink-0" />
-              <span>Bậc {staff.salaryTier} / 5</span>
+              <span>Bậc {periodScores.salaryTier} / 5</span>
             </span>
             <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 mt-1 tracking-tight">Hệ số P2 tháng</span>
           </div>
@@ -231,33 +247,33 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         <div className="bg-gradient-to-br from-[#1B4332]/5 to-[#2D6A4F]/10 p-4 rounded-2xl border border-[#2D6A4F]/20 space-y-3 shadow-inner">
           <div className="flex items-center justify-between">
             <span className="text-xs sm:text-sm font-black font-heading tracking-wide text-[#1B4332]">
-              ĐIỂM LÀM VIỆC TỔNG HỢP
+              ĐIỂM LÀM VIỆC TỔNG HỢP ({selectedPeriodKey})
             </span>
             <span className="text-lg sm:text-xl font-black text-[#1B4332] font-mono">
-              {staff.totalScore.toFixed(2)} <span className="text-xs font-bold text-[#2D6A4F] font-sans">/ 5.0</span>
+              {periodScores.totalScore.toFixed(2)} <span className="text-xs font-bold text-[#2D6A4F] font-sans">/ 5.0</span>
             </span>
           </div>
 
           <div className="w-full h-3 bg-white rounded-full overflow-hidden p-0.5 border border-emerald-900/15 shadow-inner">
             <div
               className="h-full brand-gradient rounded-full transition-all duration-500"
-              style={{ width: `${(staff.totalScore / 5.0) * 100}%` }}
+              style={{ width: `${(periodScores.totalScore / 5.0) * 100}%` }}
             ></div>
           </div>
 
           <div className="grid grid-cols-3 gap-2 text-center pt-1">
             <div className="bg-white p-2.5 rounded-xl border border-emerald-900/10 shadow-xs flex flex-col items-center justify-center space-y-0.5">
               <span className="text-[10px] font-extrabold text-slate-500">Văn hóa</span>
-              <span className="text-sm sm:text-base font-black text-[#1B4332] font-mono">{staff.generalScore}</span>
+              <span className="text-sm sm:text-base font-black text-[#1B4332] font-mono">{periodScores.generalScore}</span>
             </div>
             <div className="bg-white p-2.5 rounded-xl border border-emerald-900/10 shadow-xs flex flex-col items-center justify-center space-y-0.5">
               <span className="text-[10px] font-extrabold text-slate-500">Chuyên môn</span>
-              <span className="text-sm sm:text-base font-black text-[#1B4332] font-mono">{staff.techScore}</span>
+              <span className="text-sm sm:text-base font-black text-[#1B4332] font-mono">{periodScores.techScore}</span>
             </div>
             <div className="bg-white p-2.5 rounded-xl border border-emerald-900/10 shadow-xs flex flex-col items-center justify-center space-y-0.5">
               <span className="text-[10px] font-extrabold text-slate-500">Quản lý</span>
               <span className="text-sm sm:text-base font-black text-[#1B4332] font-mono">
-                {staff.mgmtScore !== undefined ? staff.mgmtScore : '---'}
+                {periodScores.mgmtScore > 0 ? periodScores.mgmtScore : '---'}
               </span>
             </div>
           </div>

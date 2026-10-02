@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Staff, IncidentRecord, DepartmentLine, ParameterConfig, AuthUser, Question } from '../types';
 import { exportReportToGoogleSheet, exportBatchMonthlyToGoogleSheet } from '../utils/exportDrive';
 import { getStaffCriteriaBreakdown, getTrackScoreDetails } from '../utils/reportHelper';
+import { getStaffScoresForPeriod } from '../utils/calculator';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -125,11 +126,9 @@ export const ReportView: React.FC<ReportViewProps> = ({
         if (inc.date.includes(patternSlash)) return true;
         if (inc.date.startsWith(patternDash)) return true;
       }
-      // Fallback for demo incidents if viewing current month
-      if (selectedPeriodKey === recentPeriods[0].key) return true;
       return false;
     });
-  }, [incidents, selectedPeriodKey, recentPeriods]);
+  }, [incidents, selectedPeriodKey]);
 
   // Incidents for selected staff member in selected reporting period
   const staffIncidents = useMemo(() => {

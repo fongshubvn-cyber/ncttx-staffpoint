@@ -1,25 +1,31 @@
 ---
 name: ncttx-staffpoint-guide
-description: Hướng dẫn quản trị, cấu hình và triển khai ứng dụng "Ghi nhận phản hồi nhân sự - Nhà Của Thời Thanh Xuân" (StaffPoint v3.0).
+description: Hướng dẫn quản trị, cấu hình và triển khai ứng dụng "Ghi nhận phản hồi nhân sự - Nhà Của Thời Thanh Xuân" (StaffPoint v1.001+).
 ---
 
 # Hướng Dẫn Quản Trị & Triển Khai Ứng Dụng "Ghi Nhận Phản Hồi Nhân Sự NCTTX"
 
-## 1. Tổng Quan Hệ Thống
+## 0. Quy Tắc Quản Lý Phiên Bản (Versioning Convention)
+- **Quy tắc phiên bản**: Đánh số phiên bản hệ thống bắt đầu bằng **`v1.001`**, tăng dần theo từng bản phát hành/cập nhật hoàn thành (`v1.002`, `v1.003`...).
+- **Hiển thị phiên bản**: Đã hiển thị nhãn phiên bản chuẩn trên logo thương hiệu ứng dụng (`Navbar.tsx` & `Option1Layout.tsx`) và file `package.json`.
+
+## 1. Tổng Quan Hệ Thống (Phiên Bản Hiện Tại: v1.001)
 Ứng dụng **Ghi nhận phản hồi nhân sự** (Phát triển bởi Nhà Của Thời Thanh Xuân) là ứng dụng Single Page Application (SPA) xây dựng trên nền tảng **React 18 + Vite + TypeScript + TailwindCSS**.
 
 ### Key Features:
-- **Tài khoản & Phân quyền**:
-  - `admin` (Pass: `123456A!`): Quản trị viên tối cao, xem và kiểm soát tất cả 29 nhân sự & 7 ngạch phòng ban.
-  - Từ Trưởng phòng trở lên: Thêm nhân sự, tạo mật khẩu, thiết lập tiêu chí.
-  - Trưởng phòng Nhân sự (`TTX005` - Trần Thị Thanh Hải): Xử lý kháng nghị 48h.
-  - Mật khẩu mặc định lần đầu: `123456` (yêu cầu đổi mật khẩu ngay khi đăng nhập).
-- **Phân quyền ngạch phòng ban**: Nhân viên ngạch nào chỉ thấy ma trận tiêu chí của ngạch đó (E-Commerce, Pha chế, Sản xuất, Kho & Đóng gói, Nhân sự, Thương mại & Dịch vụ, Phát triển Kinh doanh).
+- **Tài khoản & Quản lý Mật khẩu Admin (mới ở v1.001)**:
+  - `admin` (Mật khẩu mặc định: `123456A!`): Quản trị viên tối cao Toàn quyền xem và kiểm soát tất cả 29 nhân sự & ngạch phòng ban.
+  - **Quản Lý Mật Khẩu Admin (`AdminPasswordModal.tsx`)**: Cho phép Admin xem, tìm kiếm, chỉnh sửa mật khẩu của bất kỳ thành viên nào trong hệ thống.
+  - **Reset Mật Khẩu Hàng Loạt**: Admin có nút `🔄 Reset Tất Cả Về 123456` đưa toàn bộ tài khoản về mật khẩu mặc định.
+  - **Yêu cầu Đổi Mật Khẩu Lần Đầu**: Hệ thống tự động chặn truy cập và buộc thành viên phải đặt mật khẩu mới khi đăng nhập bằng mật khẩu mặc định `123456`.
+- **Cơ Chế Firebase Cloud Realtime Sync & Nút Làm Mới (mới ở v1.001)**:
+  - **Single Source of Truth**: Cloud Firestore là nguồn dữ liệu chuẩn duy nhất (loại bỏ hoàn toàn cơ chế gộp `localStorage` cũ lên Cloud làm quay lại dữ liệu cũ).
+  - **Nút `🔄 Làm Mới Cloud`**: Đã trang bị trên Header và trang Tổng quan giúp kéo dữ liệu chuẩn từ Firestore bất cứ lúc nào.
+- **Phân quyền ngạch phòng ban**: Nhân viên ngạch nào chỉ thấy ma trận tiêu chí của ngạch đó (E-Commerce, Pha chế, Sản xuất, Kho & Đóng gói, Kế Toán, Thương mại & Dịch vụ, C-Level, Founder).
 - **Quản lý phiếu khen thưởng & vi phạm**:
   - Tự động lưu thời gian Realtime (ngày, giờ, phút, giây).
   - Cho phép đính kèm minh chứng hình ảnh dưới 10MB.
-  - Tối ưu không cần nhập tiêu đề rườm rà.
-  - Cơ chế kháng nghị 48 giờ trực tiếp lên Trưởng phòng Nhân sự.
+  - Cơ chế kháng nghị 48 giờ trực tiếp lên Trưởng phòng Nhân sự (`TTX005` - Trần Thị Thanh Hải).
 - **Báo cáo Realtime & PDF**:
   - Báo cáo tổng điểm, bậc lương P2 (Bậc 1 ➔ Bậc 5).
   - Chi tiết lịch sử lỗi vi phạm & tuyên dương của 1 nhân sự.
