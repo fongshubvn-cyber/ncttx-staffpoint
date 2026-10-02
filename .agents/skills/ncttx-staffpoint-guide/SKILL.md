@@ -9,10 +9,14 @@ description: Hướng dẫn quản trị, cấu hình và triển khai ứng d�
 - **Quy tắc phiên bản**: Đánh số phiên bản hệ thống bắt đầu bằng **`v1.001`**, tăng dần theo từng bản phát hành/cập nhật hoàn thành (`v1.002`, `v1.003`...).
 - **Hiển thị phiên bản**: Đã hiển thị nhãn phiên bản chuẩn trên logo thương hiệu ứng dụng (`Navbar.tsx` & `Option1Layout.tsx`) và file `package.json`.
 
-## 1. Tổng Quan Hệ Thống (Phiên Bản Hiện Tại: v1.001)
+## 1. Tổng Quan Hệ Thống (Phiên Bản Hiện Tại: v1.002)
 Ứng dụng **Ghi nhận phản hồi nhân sự** (Phát triển bởi Nhà Của Thời Thanh Xuân) là ứng dụng Single Page Application (SPA) xây dựng trên nền tảng **React 18 + Vite + TypeScript + TailwindCSS**.
 
 ### Key Features:
+- **Cơ Chế Reset & Lọc Điểm Theo Kỳ Hàng Tháng (mới ở v1.002)**:
+  - **Lọc theo kỳ (`selectedPeriodKey`)**: Tách biệt hoàn toàn phiếu khen thưởng/vi phạm của từng tháng (`2026-10`, `2026-09`...). Sự kiện tháng trước không bị dồn sang tháng mới.
+  - **Tính điểm động theo kỳ (`getStaffScoresForPeriod`)**: Điểm tổng hợp, điểm văn hóa, điểm chuyên môn và xếp Bậc lương P2 (Bậc 1 ➔ 5) được reset và tính độc lập theo từng tháng.
+  - **Bộ lọc tháng trên Option 1 Layout**: Trang Tổng quan (`Option1SummaryView`), Báo cáo (`Option1ReportView`) và Nhật ký phiếu (`Option1IncidentsView`) đều hỗ trợ chọn nhanh 3 tháng gần nhất.
 - **Tài khoản & Quản lý Mật khẩu Admin (mới ở v1.001)**:
   - `admin` (Mật khẩu mặc định: `123456A!`): Quản trị viên tối cao Toàn quyền xem và kiểm soát tất cả 29 nhân sự & ngạch phòng ban.
   - **Quản Lý Mật Khẩu Admin (`AdminPasswordModal.tsx`)**: Cho phép Admin xem, tìm kiếm, chỉnh sửa mật khẩu của bất kỳ thành viên nào trong hệ thống.
@@ -29,25 +33,30 @@ description: Hướng dẫn quản trị, cấu hình và triển khai ứng d�
 - **Báo cáo Realtime & PDF**:
   - Báo cáo tổng điểm, bậc lương P2 (Bậc 1 ➔ Bậc 5).
   - Chi tiết lịch sử lỗi vi phạm & tuyên dương của 1 nhân sự.
-  - Xuất báo cáo PDF / In ấn chuẩn khổ A4.
+  - Xuất báo cáo PDF / In ấn chuẩn khổ A4 / Xuất Google Sheets.
 
 ---
 
-## 2. Hướng Dẫn Triển Khai Online (Deploy Web App)
+## 2. Hướng Dẫn Triển Khai & Cập Nhật Online (Deploy Web App)
 
 Ứng dụng được đóng gói tĩnh (**Static SPA**) vào thư mục `dist/` khi chạy lệnh `npm run build`. Bạn có thể triển khai online cực kỳ dễ dàng qua các cách sau:
 
-### Cách 1: Triển Khai Miễn Phí Qua Vercel (Khuyên Dùng - Nhanh Nhất 🚀)
-1. Đưa mã nguồn ứng dụng lên **GitHub** (hoặc GitLab / Bitbucket).
-2. Đăng nhập vào [Vercel.com](https://vercel.com) bằng tài khoản GitHub.
-3. Bấm **"Add New Project"** ➔ Chọn Repository `ncttx-staffpoint`.
-4. Cấu hình Build:
-   - **Framework Preset**: Vite
-   - **Build Command**: `npm run build`
-   - **Output Directory**: `dist`
-5. Bấm **Deploy**. Vercel sẽ cấp cho bạn một đường dẫn (URL) HTTPS miễn phí (dạng `https://ncttx-staffpoint.vercel.app`) để truy cập ngay từ điện thoại.
-
-*(Hoặc dùng Vercel CLI trong terminal: `npx vercel`)*
+### Cách 1: Triển Khai & Cập Nhật Qua Vercel (Khuyên Dùng 🚀)
+1. **Khởi tạo lần đầu**:
+   - Đưa mã nguồn ứng dụng lên **GitHub**.
+   - Đăng nhập vào [Vercel.com](https://vercel.com) ➔ Bấm **"Add New Project"** ➔ Chọn Repository `ncttx-staffpoint`.
+   - Cấu hình Build: Framework Preset: Vite | Build Command: `npm run build` | Output Directory: `dist`.
+2. **Cập nhật phiên bản mới (Update / Re-deploy)**:
+   Mỗi khi chỉnh sửa mã nguồn, chạy 3 lệnh sau trong Terminal để đẩy code mới lên GitHub, Vercel sẽ tự động build và cập nhật phiên bản mới nhất:
+   ```bash
+   git add .
+   git commit -m "Update staffpoint v1.002 and monthly reset fix"
+   git push origin main
+   ```
+3. **Deploy trực tiếp bằng Vercel CLI (nếu không dùng Git Auto-build)**:
+   ```bash
+   npx vercel --prod
+   ```
 
 ---
 

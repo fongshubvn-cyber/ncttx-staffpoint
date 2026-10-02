@@ -169,70 +169,57 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
       
       {/* Glassmorphic Floating Top Header */}
       <header className="sticky top-2 z-40 px-3 sm:px-6 max-w-7xl w-full mx-auto print:hidden">
-        <div className="backdrop-blur-xl bg-white/75 border border-white/60 shadow-[0_8px_32px_0_rgba(16,185,129,0.08)] rounded-3xl px-4 py-2.5 flex items-center justify-between transition-all duration-300">
+        <div className="backdrop-blur-xl bg-white/85 border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-3xl px-3.5 sm:px-5 py-2 flex items-center justify-between transition-all duration-300 gap-2 overflow-hidden">
           
-          {/* Brand Logo & Cloud Status Badge */}
-          <div className="flex items-center gap-3">
+          {/* Brand Logo & Cloud Status */}
+          <div className="flex items-center gap-2.5 shrink-0">
             <img 
               src={logoImg} 
               alt="Nhà Của Thời Thanh Xuân Logo" 
-              className="w-10 h-10 object-contain rounded-2xl bg-white p-1 shadow-md ring-2 ring-emerald-500/20 shrink-0 border border-emerald-100" 
+              className="w-9 h-9 object-contain rounded-2xl bg-white p-1 shadow-sm ring-1 ring-emerald-500/20 shrink-0 border border-emerald-100" 
             />
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="font-extrabold text-base tracking-tight text-slate-900 flex items-center gap-1.5 whitespace-nowrap">
+            <div className="min-w-0">
+              <div className="flex items-center gap-1.5">
+                <h1 className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 flex items-center gap-1.5 whitespace-nowrap font-sans">
                   StaffPoint 
-                  <span className="text-emerald-600 font-mono text-xs bg-emerald-500/10 px-1.5 py-0.5 rounded-md border border-emerald-500/20">
-                    v1.001
+                  <span className="text-emerald-700 font-mono text-[10px] font-extrabold bg-emerald-50 px-1.5 py-0.2 rounded-md border border-emerald-200 shrink-0">
+                    v1.002
                   </span>
                 </h1>
 
-                {/* Cloud Sync Status Badge */}
+                {/* Cloud Status Dot Indicator: Green (Online) / Red (Offline) */}
                 <div 
-                  className={`hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border backdrop-blur-md transition-all ${
-                    cloudSyncInfo.status === 'error'
-                      ? 'bg-rose-50 text-rose-700 border-rose-200'
-                      : cloudSyncInfo.status === 'connected'
-                      ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                      : 'bg-amber-50 text-amber-700 border-amber-200'
+                  className={`flex items-center justify-center w-5 h-5 rounded-full border transition-all shrink-0 ${
+                    cloudSyncInfo.status === 'connected'
+                      ? 'bg-emerald-50 border-emerald-300'
+                      : 'bg-rose-50 border-rose-300'
                   }`}
-                  title={cloudSyncInfo.status === 'connected' ? "Đã kết nối Firebase Cloud Realtime Sync" : "Trạng thái kết nối"}
+                  title={cloudSyncInfo.status === 'connected' ? "Firebase Cloud Sync: Online (Đang hoạt động)" : "Firebase Cloud Sync: Offline"}
                 >
-                  {cloudSyncInfo.status === 'connected' ? (
-                    <>
-                      <Cloud className="w-3 h-3 text-emerald-600 animate-pulse" />
-                      <span>Cloud Live</span>
-                    </>
-                  ) : (
-                    <>
-                      <CloudOff className="w-3 h-3 text-rose-500" />
-                      <span>Sync Off</span>
-                    </>
-                  )}
+                  <span className={`w-2 h-2 rounded-full ${cloudSyncInfo.status === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></span>
                 </div>
 
-                {/* Manual Cloud Refresh Button */}
+                {/* Refresh Cloud Button (Gọn gàng với Icon Refresh) */}
                 {onRefreshCloud && (
                   <button
                     type="button"
                     onClick={onRefreshCloud}
                     disabled={isRefreshingCloud}
-                    className="hidden sm:inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-extrabold border bg-emerald-50 text-emerald-800 border-emerald-300 hover:bg-emerald-100 transition-all cursor-pointer shadow-xs active:scale-95 disabled:opacity-50"
-                    title="Bấm để tải lại toàn bộ dữ liệu chuẩn mới nhất từ Firebase Cloud Firestore"
+                    className="p-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-all cursor-pointer shadow-2xs active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
+                    title="Làm mới dữ liệu từ Firebase Cloud Firestore"
                   >
-                    <RotateCw className={`w-3 h-3 text-emerald-600 ${isRefreshingCloud ? 'animate-spin' : ''}`} />
-                    <span>Làm Mới Cloud</span>
+                    <RotateCw className={`w-3.5 h-3.5 text-emerald-700 ${isRefreshingCloud ? 'animate-spin' : ''}`} />
                   </button>
                 )}
               </div>
-              <p className="text-[10px] text-slate-400 font-medium hidden sm:block">
+              <p className="text-[10px] text-slate-400 font-medium hidden 2xl:block leading-tight">
                 Nhà Của Thời Thanh Xuân
               </p>
             </div>
           </div>
 
           {/* Desktop Glass Pill Navigation */}
-          <nav className="hidden md:flex items-center gap-1 bg-slate-200/50 backdrop-blur-md p-1.5 rounded-2xl border border-white/80 shadow-inner">
+          <nav className="hidden md:flex items-center gap-1 bg-slate-100/90 backdrop-blur-md p-1 rounded-2xl border border-slate-200/80 shadow-inner shrink-0">
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = 
@@ -243,17 +230,17 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <button
                   key={item.id}
                   onClick={() => setActiveTab(item.id)}
-                  className={`flex items-center gap-2 px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 relative whitespace-nowrap ${
+                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-bold transition-all duration-200 relative whitespace-nowrap cursor-pointer ${
                     isActive
-                      ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/30 transform scale-[1.02]'
-                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/70'
+                      ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-sm font-extrabold'
+                      : 'text-slate-600 hover:text-slate-900 hover:bg-white/80'
                   }`}
                 >
-                  <Icon className="w-3.5 h-3.5" />
+                  <Icon className="w-3.5 h-3.5 shrink-0" />
                   <span>{item.label}</span>
                   {item.badge !== undefined && (
                     <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
-                      isActive ? 'bg-white text-emerald-700' : 'bg-emerald-500/20 text-emerald-800'
+                      isActive ? 'bg-white text-emerald-800' : 'bg-emerald-500/20 text-emerald-800'
                     }`}>
                       {item.badge}
                     </span>
@@ -263,58 +250,62 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             })}
           </nav>
 
-          <div className="flex items-center gap-2">
-            {currentUser?.isAdmin && (
-              <button
-                type="button"
-                onClick={() => {
-                  setAdminPasswordTargetId(undefined);
-                  setShowAdminPasswordModal(true);
-                }}
-                className="hidden sm:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-amber-500/10 hover:bg-amber-500/20 text-amber-900 border border-amber-500/30 text-xs font-bold transition-all duration-200 active:scale-95 shadow-xs whitespace-nowrap"
-                title="Quản lý & Đổi mật khẩu tất cả thành viên (Admin)"
-              >
-                <Key className="w-3.5 h-3.5 text-amber-700" />
-                <span>Đổi MK Admin</span>
-              </button>
-            )}
-
+          {/* Right-side Action Buttons */}
+          <div className="flex items-center gap-1.5 shrink-0">
             {isManager && (
               <button
                 onClick={() => onOpenIncidentModal()}
-                className="hidden lg:flex items-center gap-1.5 px-3 py-1.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white text-xs font-bold shadow-md shadow-emerald-600/25 active:scale-95 transition-all duration-200 whitespace-nowrap"
+                className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-extrabold shadow-sm active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
                 title="Tạo ghi nhận / vi phạm mới"
               >
-                <Plus className="w-3.5 h-3.5" />
+                <Plus className="w-3.5 h-3.5 shrink-0" />
                 <span>Tạo Phản Hồi</span>
               </button>
             )}
 
             {currentUser ? (
-              <div className="flex items-center gap-1 bg-slate-200/50 backdrop-blur-md p-1 rounded-2xl border border-white/80 shadow-inner">
+              <div className="flex items-center gap-1 bg-slate-100/90 backdrop-blur-md p-1 rounded-2xl border border-slate-200/80 shadow-inner">
+                {/* User Profile Button */}
                 <button
                   type="button"
                   onClick={onOpenLoginModal}
-                  className="relative p-2 rounded-xl bg-white hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 border border-slate-200/80 shadow-sm transition-all duration-200 active:scale-95 flex items-center justify-center"
+                  className="relative px-2.5 py-1 rounded-xl bg-white hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 border border-slate-200 shadow-2xs transition-all duration-200 active:scale-95 flex items-center gap-1.5 cursor-pointer text-xs font-bold"
                   title={`${currentUser.name} (${currentUser.role}) — Bấm để xem thông tin & đổi mật khẩu`}
                 >
-                  <User className="w-4 h-4 text-emerald-700" />
-                  <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-500 ring-2 ring-white animate-pulse"></span>
+                  <User className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <span className="hidden sm:inline-block max-w-[90px] truncate text-[11px] font-bold">{currentUser.name.split(' ').pop()}</span>
+                  <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white shrink-0"></span>
                 </button>
 
+                {/* Admin Password Management Button (Tích hợp gọn trong Account Icon Group) */}
+                {currentUser.isAdmin && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setAdminPasswordTargetId(undefined);
+                      setShowAdminPasswordModal(true);
+                    }}
+                    className="p-1.5 text-amber-800 hover:text-amber-950 rounded-xl hover:bg-amber-100 bg-amber-50 border border-amber-300 transition-all duration-200 active:scale-95 flex items-center justify-center cursor-pointer shadow-2xs"
+                    title="Quản lý & Đổi mật khẩu tất cả thành viên (Admin)"
+                  >
+                    <Key className="w-3.5 h-3.5 text-amber-700 shrink-0" />
+                  </button>
+                )}
+
+                {/* Logout Button */}
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="p-2 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all duration-200 active:scale-95 flex items-center justify-center"
+                  className="p-1.5 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all duration-200 active:scale-95 flex items-center justify-center cursor-pointer"
                   title="Đăng xuất khỏi hệ thống"
                 >
-                  <LogOut className="w-4 h-4" />
+                  <LogOut className="w-3.5 h-3.5" />
                 </button>
               </div>
             ) : (
               <button
                 onClick={onOpenLoginModal}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-2xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md shadow-slate-900/20 active:scale-95 transition-all whitespace-nowrap"
+                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md active:scale-95 transition-all whitespace-nowrap cursor-pointer"
               >
                 <LogIn className="w-3.5 h-3.5" />
                 <span>Đăng Nhập</span>
