@@ -39,6 +39,7 @@ interface Option1IncidentsViewProps {
   onAppealIncident: (incidentId: string, reason: string) => void;
   onResolveAppeal: (incidentId: string, approved: boolean) => void;
   initialFilterType?: string;
+  onOpenChoiceModal?: () => void;
 }
 
 export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
@@ -56,6 +57,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
   onAppealIncident,
   onResolveAppeal,
   initialFilterType = 'all',
+  onOpenChoiceModal,
 }) => {
   const [filterType, setFilterType] = useState<string>(initialFilterType);
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -242,8 +244,8 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
 
           {isManager && (
             <button
-              onClick={() => onOpenIncidentModal()}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all active:scale-95 whitespace-nowrap"
+              onClick={() => onOpenChoiceModal ? onOpenChoiceModal() : onOpenIncidentModal()}
+              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
             >
               <Plus className="w-4 h-4" />
               <span>Tạo Phản Hồi Mới</span>

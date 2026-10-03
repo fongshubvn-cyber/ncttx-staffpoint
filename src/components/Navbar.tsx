@@ -209,7 +209,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <h1 className="font-black text-base sm:text-lg tracking-tight text-white flex items-center space-x-1.5 font-heading whitespace-nowrap">
                 <span>Ghi nhận phản hồi nhân sự</span>
                 <span className="text-[10px] sm:text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-[#52B788] text-[#1B4332] shrink-0 shadow-sm">
-                  v1.002
+                  v1.003
                 </span>
               </h1>
               <p className="text-xs text-emerald-100 font-semibold italic whitespace-nowrap truncate">

@@ -1,5 +1,27 @@
 # 📜 NHẬT KÝ PHIÊN BẢN & MỐC NGUYÊN BẢN DỰ ÁN STAFFPOINT
 
+## 📌 PHIÊN BẢN V1.003-STABLE (04/10/2026)
+**Git Tag:** `v1.003-stable`  
+**GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  
+**Trạng thái:** ✅ Đã nâng cấp thành công hệ thống Điểm Nội Quy 100đ, Popup Phản hồi 2 nhánh & Khắc phục hoàn toàn đồng bộ phiếu mới.
+
+### 🌟 BẢNG TỔNG HỢP CÁC TÍNH NĂNG & CẢI TIẾN TRONG BẢN V1.003:
+
+#### 1. 🛡️ Tích hợp Hệ thống Điểm Nội Quy & Account Health UI (100đ)
+- Định nghĩa 10 Điều Khoản Nội Quy chuẩn NCTTX (`NQ01` đến `NQ10`) với mức trừ điểm nội quy (`-5đ`, `-10đ`, `-15đ`, `-20đ`, `-50đ`) và biện pháp xử lý kỷ luật.
+- Hiển thị 2 khung điểm độc lập: **Bên trái (Đánh giá công việc 5.0đ)** và **Bên phải (Điểm nội quy 100đ)**.
+- Giao diện Account Health chuẩn TikTok Shop với thước đo 4 cấp độ (Tốt, Cần chú ý, Nghiêm trọng, Đình chỉ) & cơ chế Kháng nghị 48h.
+
+#### 2. ⚡ Popup Chọn Loại Phản Hồi ("Đánh giá" vs "Phản ánh nội quy")
+- Khi bấm nút **"Tạo Phản Hồi"** (ở Header hoặc nút `+` góc màn hình), hệ thống bật popup 2 lựa chọn:
+  * **🌟 Đánh Giá Công Việc (Thang 5.0):** Cho phép chọn `[ 🌟 KHEN THƯỞNG (+ ĐIỂM) ]` hoặc `[ 📢 NHẮC NHỞ (- ĐIỂM) ]` tác động vào điểm 5.0.
+  * **🛡️ Phản Ánh Nội Quy (Thang 100đ):** Cố định chọn 1 trong 10 Điều Khoản Nội Quy (`NQ01` - `NQ10`) và trừ điểm trực tiếp vào 100đ Account Health.
+
+#### 3. 🔄 Khắc Phục Hoàn Toàn Xung Đột Đồng Bộ Phiếu Mới (Smart State Merge)
+- Nâng cấp thuật toán gộp dữ liệu thời gian thực (Smart State Merge & Local Persistence) trong `subscribeToCollection`, triệt tiêu hoàn toàn hiện tượng phiếu mới tạo bị đè đợt sóng snapshot Firebase.
+
+---
+
 ## 📌 PHIÊN BẢN V1.002-STABLE (MỐC CHUẨN NGUYÊN BẢN - 03/10/2026)
 **Git Commit Hash:** `32a3cc1`  
 **Git Tag:** `v1.002-stable`  

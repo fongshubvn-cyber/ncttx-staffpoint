@@ -129,14 +129,26 @@ export function App() {
     const unsubIncidents = subscribeToCollection('incidents', (cloudData) => {
       isCloudLoadedRef.current['incidents'] = true;
       if (Array.isArray(cloudData)) {
-        const sorted = [...cloudData].sort((a, b) => {
-          if (a.date && b.date && a.date !== b.date) {
-            return b.date.localeCompare(a.date);
-          }
-          return (b.id || '').localeCompare(a.id || '');
+        setIncidents(prevIncidents => {
+          const map = new Map<string, IncidentRecord>();
+          // Put cloud items
+          cloudData.forEach((item: IncidentRecord) => {
+            if (item && item.id) map.set(item.id, item);
+          });
+          // Preserve local items created during runtime if not in cloudData yet
+          prevIncidents.forEach((item: IncidentRecord) => {
+            if (item && item.id && !map.has(item.id)) {
+              map.set(item.id, item);
+            }
+          });
+          const merged = Array.from(map.values()).sort((a, b) => {
+            const dateA = a.createdAt || a.date || a.id || '';
+            const dateB = b.createdAt || b.date || b.id || '';
+            return dateB.localeCompare(dateA);
+          });
+          localStorage.setItem('ncttx_incidents', JSON.stringify(merged));
+          return merged;
         });
-        setIncidents(sorted);
-        localStorage.setItem('ncttx_incidents', JSON.stringify(sorted));
       }
     }, initialIncidents);
 

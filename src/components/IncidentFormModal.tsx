@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { Staff, Question, DepartmentLine, IncidentRecord, IncidentType, SeverityLevel, ParameterConfig, AuthUser } from '../types';
 import { isManagementRole } from '../utils/calculator';
-import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X } from 'lucide-react';
+import { initialPolicyRules } from '../data/seedData';
+import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert } from 'lucide-react';
 
 interface IncidentFormModalProps {
   show: boolean;
@@ -34,18 +35,40 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
 }) => {
   if (!show) return null;
 
+  const policyRulesList = (params?.policyRules && params.policyRules.length > 0) 
+    ? params.policyRules 
+    : initialPolicyRules;
+
   // Form State
+  const [formCategory, setFormCategory] = useState<'policy' | 'work'>(initialType === 'vi_pham' ? 'policy' : 'work');
+  const [workEvalMode, setWorkEvalMode] = useState<'plus' | 'minus'>('plus');
   const [type, setType] = useState<IncidentType>(initialType || 'ghi_nhan');
   const [reporterId, setReporterId] = useState<string>(currentUser?.id || staffList[0]?.id || '');
   const [targetId, setTargetId] = useState<string>(initialTargetId || staffList[1]?.id || staffList[0]?.id || '');
   const [criteriaScope, setCriteriaScope] = useState<string>('Chung'); // 'Chung', 'Department', 'Management', or 'Boundary'
+  const [policyRuleId, setPolicyRuleId] = useState<string>('NQ01');
   const [submittedSuccess, setSubmittedSuccess] = useState<IncidentRecord | null>(null);
 
   React.useEffect(() => {
     if (show) {
       if (currentUser?.id) setReporterId(currentUser.id);
       if (initialTargetId) setTargetId(initialTargetId);
-      if (initialType) setType(initialType);
+      const isPol = initialType === 'vi_pham';
+      setFormCategory(isPol ? 'policy' : 'work');
+      setWorkEvalMode('plus');
+      setType(isPol ? 'vi_pham' : 'ghi_nhan');
+      
+      if (isPol) {
+        const firstRule = policyRulesList.find(r => r.active !== false) || policyRulesList[0];
+        if (firstRule) {
+          setPolicyRuleId(firstRule.id);
+          setTitle(`[${firstRule.code}] ${firstRule.title}`);
+          setDescription(firstRule.description);
+        }
+      } else {
+        setTitle('');
+        setDescription('');
+      }
       setSubmittedSuccess(null);
     }
   }, [show, initialTargetId, initialType, currentUser]);
@@ -158,50 +181,72 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     const reporter = staffList.find(s => s.id === reporterId);
     const target = staffList.find(s => s.id === targetId);
     const selectedQ = questions.find(q => q.id === questionId);
+    const selectedPolicyRule = policyRulesList.find(r => r.id === policyRuleId);
 
-    const isBoundaryRecord = criteriaScope === 'Boundary' || (selectedQ && selectedQ.groupCode.startsWith('RG'));
+    const isPolicy = formCategory === 'policy';
+    const isMinusWork = formCategory === 'work' && workEvalMode === 'minus';
+
+    const isBoundaryRecord = !isPolicy && (criteriaScope === 'Boundary' || (selectedQ && selectedQ.groupCode.startsWith('RG')));
 
     // Configured Points from Parameters
     const recMin = params?.recMinorPoints ?? 0.5;
     const recMod = params?.recModeratePoints ?? 1.0;
     const recMaj = params?.recMajorPoints ?? 1.5;
+
     const vioMin = params?.vioMinorPoints ?? -0.2;
     const vioMod = params?.vioModeratePoints ?? -0.5;
     const vioMaj = params?.vioMajorPoints ?? -1.0;
     const vioBou = params?.vioBoundaryPoints ?? -1.5;
 
-    const impactPoints = type === 'vi_pham' 
-      ? (isBoundaryRecord ? vioBou : severity === 'Nghiêm trọng' ? vioMaj : severity === 'Vừa' ? vioMod : vioMin)
-      : (isBoundaryRecord ? recMaj : severity === 'Nghiêm trọng' ? recMaj : severity === 'Vừa' ? recMod : recMin);
+    const impactPoints = isPolicy 
+      ? 0 
+      : isMinusWork
+        ? (isBoundaryRecord ? vioBou : severity === 'Nghiêm trọng' ? vioMaj : severity === 'Vừa' ? vioMod : vioMin)
+        : (isBoundaryRecord ? recMaj : severity === 'Nghiêm trọng' ? recMaj : severity === 'Vừa' ? recMod : recMin);
 
-    const autoTitle = selectedQ ? selectedQ.text : (description.length > 50 ? `${description.substring(0, 50)}...` : description);
+    const recordType: IncidentType = (isPolicy || isMinusWork) ? 'vi_pham' : 'ghi_nhan';
 
-    const formattedTitle = isBoundaryRecord 
-      ? (type === 'vi_pham' ? `[RANH GIỚI ĐỎ ⚠️] ${autoTitle}` : `[KHEN THƯỞNG RANH GIỚI 🌟] ${autoTitle}`)
-      : autoTitle;
+    let formattedTitle = title;
+    if (isPolicy) {
+      formattedTitle = selectedPolicyRule 
+        ? `[${selectedPolicyRule.code}] ${selectedPolicyRule.title}`
+        : (title || 'Vi phạm nội quy');
+    } else {
+      const autoTitle = selectedQ ? selectedQ.text : (description.length > 50 ? `${description.substring(0, 50)}...` : description);
+      if (isBoundaryRecord) {
+        formattedTitle = isMinusWork ? `[RANH GIỚI ĐỎ ⚠️] ${autoTitle}` : `[KHEN THƯỞNG RANH GIỚI 🌟] ${autoTitle}`;
+      } else {
+        formattedTitle = isMinusWork ? `[NHẮC NHỞ CHUYÊN MÔN 📢] ${autoTitle}` : autoTitle;
+      }
+    }
 
     const now = new Date();
     const realtimeStr = `${now.getHours().toString().padStart(2, '0')}:${now.getMinutes().toString().padStart(2, '0')}:${now.getSeconds().toString().padStart(2, '0')} ${now.getDate().toString().padStart(2, '0')}/${(now.getMonth() + 1).toString().padStart(2, '0')}/${now.getFullYear()}`;
 
+    const mappedSeverity: SeverityLevel = isPolicy
+      ? (selectedPolicyRule?.severity === 'Rất nghiêm trọng' ? 'Nghiêm trọng' : (selectedPolicyRule?.severity as SeverityLevel) || severity)
+      : severity;
+
     const newRecord: IncidentRecord = {
       id: `INC-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
-      type,
+      type: recordType,
       reporterId,
       reporterName: reporter ? reporter.name : reporterId,
       targetId,
       targetName: target ? target.name : targetId,
       targetRole: target ? target.role : 'Nhân sự',
-      questionId: questionId || undefined,
-      groupCode: selectedQ ? selectedQ.groupCode : isBoundaryRecord ? 'RG1' : undefined,
+      questionId: !isPolicy ? (questionId || undefined) : undefined,
+      policyRuleId: isPolicy ? (policyRuleId || undefined) : undefined,
+      groupCode: isPolicy ? (selectedPolicyRule?.code || 'NQ') : (selectedQ ? selectedQ.groupCode : isBoundaryRecord ? 'RG1' : undefined),
       title: formattedTitle,
       description,
-      severity: isBoundaryRecord && type === 'vi_pham' ? 'Nghiêm trọng' : severity,
+      severity: mappedSeverity,
       date: realtimeStr,
       createdAt: now.toISOString(),
-      status: type === 'vi_pham' ? 'Đã ghi nhận' : 'Chờ HR duyệt',
+      status: isPolicy ? 'Đã ghi nhận' : (isMinusWork ? 'Đã ghi nhận' : 'Chờ HR duyệt'),
       impactPoints,
-      policyPenaltyPoints: type === 'vi_pham'
-        ? (isBoundaryRecord ? 50 : severity === 'Nghiêm trọng' ? 20 : severity === 'Vừa' ? 10 : 5)
+      policyPenaltyPoints: isPolicy
+        ? (selectedPolicyRule ? selectedPolicyRule.penaltyPoints : 5)
         : undefined,
       imageUrl: imagePreview || undefined,
     };
@@ -328,13 +373,23 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
             {/* Header */}
             <div className="flex items-center justify-between border-b border-slate-200 pb-3">
               <div className="flex items-center space-x-2">
-                <h2 className="text-base font-extrabold font-heading text-[#1B4332]">
-                  🎁 Lập Phiếu Khen Thưởng / Biên Bản Vi Phạm
+                <h2 className="text-base font-extrabold font-heading text-[#1B4332] flex items-center gap-2">
+                  {formCategory === 'policy' ? (
+                    <>
+                      <ShieldAlert className="w-5 h-5 text-rose-600" />
+                      <span>Lập Phản Ánh Vi Phạm Nội Quy (Thang 100đ)</span>
+                    </>
+                  ) : (
+                    <>
+                      <Trophy className="w-5 h-5 text-amber-500" />
+                      <span>Lập Phiếu Đánh Giá Công Việc (Thang 5.0)</span>
+                    </>
+                  )}
                 </h2>
               </div>
               <button
                 onClick={onClose}
-                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 font-bold flex items-center justify-center text-sm"
+                className="w-8 h-8 rounded-full bg-slate-100 text-slate-500 hover:text-slate-800 font-bold flex items-center justify-center text-sm cursor-pointer"
               >
                 ✕
               </button>
@@ -342,36 +397,50 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           
-          {/* 1. Toggle Type: Phiếu Khen Thưởng vs Biên Bản Vi Phạm */}
+          {/* 1. Loại Phiếu Banner / Toggle */}
           <div>
-            <label className="block text-slate-700 font-extrabold font-heading mb-1.5">
-              1. Chọn Loại Phiếu <span className="text-rose-500">*</span>
-            </label>
-            <div className="grid grid-cols-2 gap-2">
-              <button
-                type="button"
-                onClick={() => setType('ghi_nhan')}
-                className={`p-3 rounded-2xl border font-black font-heading flex items-center justify-center space-x-1.5 transition-all ${
-                  type === 'ghi_nhan'
-                    ? 'bg-[#2D6A4F] text-white border-[#2D6A4F] shadow-md ring-2 ring-[#2D6A4F]/30'
-                    : 'bg-slate-50 text-slate-600 border-slate-200'
-                }`}
-              >
-                <span>🌟 GHI NHẬN</span>
-              </button>
+            {formCategory === 'policy' ? (
+              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-xs text-rose-950 font-bold shadow-2xs">
+                <span className="flex items-center gap-2">
+                  <ShieldAlert className="w-4.5 h-4.5 text-rose-600 shrink-0" />
+                  <span>Loại Phiếu: <strong>Phản Ánh Vi Phạm Nội Quy</strong> (Trừ 100đ Nội Quy)</span>
+                </span>
+                <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black font-mono">
+                  100đ Account Health
+                </span>
+              </div>
+            ) : (
+              <div>
+                <label className="block text-slate-700 font-extrabold font-heading mb-1.5">
+                  1. Hình Thức Đánh Giá Công Việc (Thang 5.0) <span className="text-rose-500">*</span>
+                </label>
+                <div className="grid grid-cols-2 gap-2">
+                  <button
+                    type="button"
+                    onClick={() => setWorkEvalMode('plus')}
+                    className={`p-3 rounded-2xl border font-black font-heading flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                      workEvalMode === 'plus'
+                        ? 'bg-[#2D6A4F] text-white border-[#2D6A4F] shadow-md ring-2 ring-[#2D6A4F]/30'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-emerald-50'
+                    }`}
+                  >
+                    <span>🌟 KHEN THƯỞNG (+ CỘNG ĐIỂM)</span>
+                  </button>
 
-              <button
-                type="button"
-                onClick={() => setType('vi_pham')}
-                className={`p-3 rounded-2xl border font-black font-heading flex items-center justify-center space-x-1.5 transition-all ${
-                  type === 'vi_pham'
-                    ? 'bg-[#DD6B20] text-white border-[#DD6B20] shadow-md ring-2 ring-[#DD6B20]/30'
-                    : 'bg-slate-50 text-slate-600 border-slate-200'
-                }`}
-              >
-                <span>📢 LẬP BIÊN BẢN</span>
-              </button>
-            </div>
+                  <button
+                    type="button"
+                    onClick={() => setWorkEvalMode('minus')}
+                    className={`p-3 rounded-2xl border font-black font-heading flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                      workEvalMode === 'minus'
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/30'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-amber-50'
+                    }`}
+                  >
+                    <span>📢 NHẮC NHỞ (- TRỪ ĐIỂM)</span>
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
 
           {/* 2. Select Reporter */}
@@ -439,136 +508,200 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
             </div>
           </div>
 
-          {/* 4. Select Criteria Scope (Khung chung vs Ngạch riêng bộ phận vs Ranh giới) */}
-          <div>
-            <label className="block text-slate-700 font-extrabold font-heading mb-1">
-              4. Phạm Vi Tiêu Chí Áp Dụng <span className="text-rose-500">*</span>
-            </label>
-            <select
-              value={criteriaScope}
-              onChange={(e) => {
-                setCriteriaScope(e.target.value);
-                setQuestionId('');
-              }}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#1B4332] font-bold focus:outline-none focus:border-[#2D6A4F]"
-            >
-              <option value="Chung">1. Khung chung (Áp dụng toàn công ty - 65% hoặc 50%)</option>
-              <option value="Department">
-                2. Ngạch chuyên môn riêng của bộ phận: {targetStaff?.line} (35% hoặc 20%)
-              </option>
-              {isTargetManager && (
-                <option value="Management">
-                  3. Ngạch Quản lý (Chỉ áp dụng Quản lý trở lên - 30%)
-                </option>
-              )}
-              <option value="Boundary">
-                4. Ranh Giới Không Thỏa Hiệp ⚠️ (Khen thưởng giữ ranh giới / Biên bản vi phạm ranh giới đỏ)
-              </option>
-            </select>
-
-            {criteriaScope === 'Boundary' && (
-              <div className="mt-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-[11px] text-rose-800 space-y-1">
-                <p className="font-bold flex items-center space-x-1">
-                  <span>⚠️ Ranh Giới Không Thỏa Hiệp (Zero-Tolerance):</span>
-                </p>
-                <p className="text-[10px] text-slate-700 leading-tight">
-                  Tất cả vi phạm ranh giới đỏ (lấy hoàn cảnh khiếm thính bán hàng, nói quá sản phẩm, sai giá...) sẽ bị lập <strong>Biên bản xử lý nghiêm trọng (-1.5 điểm)</strong> hoặc <strong>Ghi nhận tuyên dương khen thưởng (+1.5 điểm)</strong> khi bảo vệ tính tử tế!
-                </p>
-              </div>
-            )}
-
-            {criteriaScope !== 'Boundary' && (
-              <p className="text-[10px] text-[#2D6A4F] mt-1 font-medium italic">
-                💡 Nhân sự thuộc bộ phận <strong>{targetStaff?.line}</strong> sẽ chỉ chịu tác động bởi Ngạch chuyên môn của bộ phận này.
-              </p>
-            )}
-          </div>
-
-          {/* 5. Select Question with Quick Search */}
-          <div className="space-y-1.5">
-            <div className="flex items-center justify-between">
-              <label className="block text-slate-700 font-extrabold font-heading">
-                5. Tìm & Chọn Tiêu Chí Cụ Thể
-              </label>
-              <span className="text-[10px] text-[#2D6A4F] font-bold">
-                Tìm thấy {filteredAvailableQuestions.length} tiêu chí
-              </span>
-            </div>
-
-            {/* Quick Search Input Field */}
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#2D6A4F]" />
-              <input
-                type="text"
-                placeholder="🔍 Nhập mã (VH1, TC1...) hoặc từ khóa tiêu chí để tìm nhanh..."
-                value={searchCriteriaTerm}
-                onChange={(e) => setSearchCriteriaTerm(e.target.value)}
-                className="w-full pl-9 pr-8 py-2.5 bg-[#EDEAE3]/70 border border-emerald-900/20 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#2D6A4F] font-medium"
-              />
-              {searchCriteriaTerm && (
-                <button
-                  type="button"
-                  onClick={() => setSearchCriteriaTerm('')}
-                  className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 font-bold p-1"
-                >
-                  ✕
-                </button>
-              )}
-            </div>
-
-            {/* Dropdown Select */}
-            <select
-              value={questionId}
-              onChange={(e) => handleSelectQuestion(e.target.value)}
-              className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium focus:outline-none focus:border-[#2D6A4F]"
-            >
-              <option value="">-- Chọn tiêu chí từ danh sách dropdown --</option>
-              {filteredAvailableQuestions.map((q) => (
-                <option key={q.id} value={q.id}>
-                  [{q.id}] {q.groupCode}: {q.text}
-                </option>
-              ))}
-            </select>
-
-            {/* Quick Clickable Suggestions List */}
-            {searchCriteriaTerm && filteredAvailableQuestions.length > 0 && (
-              <div className="space-y-1 max-h-44 overflow-y-auto p-2 bg-emerald-50/80 rounded-xl border border-emerald-200">
-                <span className="text-[10px] text-[#1B4332] font-black uppercase tracking-wider block mb-1">
-                  🎯 Đề xuất kết quả tìm kiếm nhanh:
+          {/* 4 & 5. SELECT CRITERIA (BIÊN BẢN NỘI QUY (100đ) VS ĐÁNH GIÁ CÔNG VIỆC (5.0đ)) */}
+          {formCategory === 'policy' ? (
+            /* DÀNH CHO NỘI QUY: CHỈ HIỂN THỊ 10 NỘI QUY */
+            <div className="space-y-3 p-3.5 bg-rose-50/70 border border-rose-200 rounded-2xl">
+              <div className="flex items-center justify-between">
+                <label className="block text-rose-950 font-extrabold font-heading text-xs flex items-center gap-1.5">
+                  <ShieldAlert className="w-4 h-4 text-rose-600" />
+                  <span>4. Chọn Điều Khoản Nội Quy Vi Phạm (Thang 100đ)</span>
+                </label>
+                <span className="text-[10px] text-rose-700 font-bold bg-white px-2 py-0.5 rounded-full border border-rose-200">
+                  {policyRulesList.length} Nội quy quy định
                 </span>
-                {filteredAvailableQuestions.slice(0, 6).map((q) => (
-                  <button
-                    key={q.id}
-                    type="button"
-                    onClick={() => {
-                      handleSelectQuestion(q.id);
-                      setSearchCriteriaTerm('');
-                    }}
-                    className={`w-full text-left p-2 rounded-xl text-xs transition-all flex items-start justify-between gap-2 cursor-pointer ${
-                      questionId === q.id 
-                        ? 'bg-[#2D6A4F] text-white font-bold shadow-sm' 
-                        : 'bg-white hover:bg-emerald-100/70 text-slate-800 border border-emerald-100'
-                    }`}
-                  >
-                    <div className="min-w-0">
-                      <div className="flex items-center gap-1.5">
-                        <span className={`font-mono text-[10px] font-black px-1.5 py-0.2 rounded ${
-                          questionId === q.id ? 'bg-white/20 text-white' : 'bg-emerald-100 text-[#1B4332]'
-                        }`}>
-                          {q.id}
-                        </span>
-                        {q.groupCode && (
-                          <span className="text-[10px] opacity-75">[{q.groupCode}]</span>
-                        )}
-                      </div>
-                      <p className="text-[11px] leading-snug font-medium line-clamp-2 mt-0.5">{q.text}</p>
-                    </div>
-                    {questionId === q.id && <Check className="w-4 h-4 shrink-0 text-emerald-300 mt-0.5" />}
-                  </button>
-                ))}
               </div>
-            )}
-          </div>
+
+              <select
+                value={policyRuleId}
+                onChange={(e) => {
+                  const rId = e.target.value;
+                  setPolicyRuleId(rId);
+                  const r = policyRulesList.find(item => item.id === rId);
+                  if (r) {
+                    setTitle(`[${r.code}] ${r.title}`);
+                    setDescription(r.description);
+                  }
+                }}
+                className="w-full p-2.5 bg-white border border-rose-300 rounded-xl text-slate-900 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer"
+              >
+                <option value="">-- Chọn 1 trong 10 Điều Khoản Nội Quy Vi Phạm --</option>
+                {policyRulesList.filter(r => r.active !== false).map((rule) => (
+                  <option key={rule.id} value={rule.id}>
+                    [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ nội quy — Mức {rule.severity})
+                  </option>
+                ))}
+              </select>
+
+              {/* Selected Rule Detail Box */}
+              {policyRulesList.find(r => r.id === policyRuleId) && (
+                <div className="p-3 bg-white rounded-xl border border-rose-200 space-y-1.5 text-xs">
+                  {(() => {
+                    const rule = policyRulesList.find(r => r.id === policyRuleId)!;
+                    return (
+                      <>
+                        <div className="flex items-center justify-between font-extrabold text-rose-950">
+                          <span>📋 [{rule.code}] {rule.title}</span>
+                          <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-mono font-black text-[11px]">
+                            -{rule.penaltyPoints}đ Nội quy
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-slate-600 leading-relaxed font-medium">{rule.description}</p>
+                        <div className="text-[10px] text-rose-800 font-semibold pt-1 border-t border-rose-100 flex items-center justify-between gap-2">
+                          <span>Phân loại: <strong>{rule.category}</strong></span>
+                          <span>Biện pháp: <strong>{rule.enforcementMeasure}</strong></span>
+                        </div>
+                      </>
+                    );
+                  })()}
+                </div>
+              )}
+            </div>
+          ) : (
+            /* DÀNH CHO ĐÁNH GIÁ CÔNG VIỆC: HIỂN THỊ TIÊU CHÍ CÔNG VIỆC (THANG 5.0) */
+            <div className="space-y-3">
+              {/* 4. Select Criteria Scope (Khung chung vs Ngạch riêng bộ phận vs Ranh giới) */}
+              <div>
+                <label className="block text-slate-700 font-extrabold font-heading mb-1">
+                  4. Phạm Vi Tiêu Chí Đánh Giá (Thang 5.0) <span className="text-rose-500">*</span>
+                </label>
+                <select
+                  value={criteriaScope}
+                  onChange={(e) => {
+                    setCriteriaScope(e.target.value);
+                    setQuestionId('');
+                  }}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#1B4332] font-bold focus:outline-none focus:border-[#2D6A4F]"
+                >
+                  <option value="Chung">1. Khung chung (Áp dụng toàn công ty - 65% hoặc 50%)</option>
+                  <option value="Department">
+                    2. Ngạch chuyên môn riêng của bộ phận: {targetStaff?.line} (35% hoặc 20%)
+                  </option>
+                  {isTargetManager && (
+                    <option value="Management">
+                      3. Ngạch Quản lý (Chỉ áp dụng Quản lý trở lên - 30%)
+                    </option>
+                  )}
+                  <option value="Boundary">
+                    4. Ranh Giới Không Thỏa Hiệp ⚠️ (Khen thưởng giữ ranh giới / Bảo vệ tính tử tế)
+                  </option>
+                </select>
+
+                {criteriaScope === 'Boundary' && (
+                  <div className="mt-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 space-y-1">
+                    <p className="font-bold flex items-center space-x-1">
+                      <span>🌟 Ranh Giới Tử Tế & Khen Thưởng:</span>
+                    </p>
+                    <p className="text-[10px] text-slate-700 leading-tight">
+                      Ghi nhận và tuyên dương các hành động bảo vệ ranh giới sự thật, giữ gìn sự tử tế và thương hiệu Nhà Của Thời Thanh Xuân!
+                    </p>
+                  </div>
+                )}
+
+                {criteriaScope !== 'Boundary' && (
+                  <p className="text-[10px] text-[#2D6A4F] mt-1 font-medium italic">
+                    💡 Nhân sự thuộc bộ phận <strong>{targetStaff?.line}</strong> sẽ chỉ chịu tác động bởi Ngạch chuyên môn của bộ phận này.
+                  </p>
+                )}
+              </div>
+
+              {/* 5. Select Question with Quick Search */}
+              <div className="space-y-1.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-700 font-extrabold font-heading">
+                    5. Tìm & Chọn Tiêu Chí Đánh Giá Cụ Thể
+                  </label>
+                  <span className="text-[10px] text-[#2D6A4F] font-bold">
+                    Tìm thấy {filteredAvailableQuestions.length} tiêu chí
+                  </span>
+                </div>
+
+                {/* Quick Search Input Field */}
+                <div className="relative">
+                  <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#2D6A4F]" />
+                  <input
+                    type="text"
+                    placeholder="🔍 Nhập mã (VH1, TC1...) hoặc từ khóa tiêu chí để tìm nhanh..."
+                    value={searchCriteriaTerm}
+                    onChange={(e) => setSearchCriteriaTerm(e.target.value)}
+                    className="w-full pl-9 pr-8 py-2.5 bg-[#EDEAE3]/70 border border-emerald-900/20 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#2D6A4F] font-medium"
+                  />
+                  {searchCriteriaTerm && (
+                    <button
+                      type="button"
+                      onClick={() => setSearchCriteriaTerm('')}
+                      className="absolute right-2.5 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-700 font-bold p-1"
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+
+                {/* Dropdown Select */}
+                <select
+                  value={questionId}
+                  onChange={(e) => handleSelectQuestion(e.target.value)}
+                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium focus:outline-none focus:border-[#2D6A4F]"
+                >
+                  <option value="">-- Chọn tiêu chí từ danh sách dropdown --</option>
+                  {filteredAvailableQuestions.map((q) => (
+                    <option key={q.id} value={q.id}>
+                      [{q.id}] {q.groupCode}: {q.text}
+                    </option>
+                  ))}
+                </select>
+
+                {/* Quick Clickable Suggestions List */}
+                {searchCriteriaTerm && filteredAvailableQuestions.length > 0 && (
+                  <div className="space-y-1 max-h-44 overflow-y-auto p-2 bg-emerald-50/80 rounded-xl border border-emerald-200">
+                    <span className="text-[10px] text-[#1B4332] font-black uppercase tracking-wider block mb-1">
+                      🎯 Đề xuất kết quả tìm kiếm nhanh:
+                    </span>
+                    {filteredAvailableQuestions.slice(0, 6).map((q) => (
+                      <button
+                        key={q.id}
+                        type="button"
+                        onClick={() => {
+                          handleSelectQuestion(q.id);
+                          setSearchCriteriaTerm('');
+                        }}
+                        className={`w-full text-left p-2 rounded-xl text-xs transition-all flex items-start justify-between gap-2 cursor-pointer ${
+                          questionId === q.id 
+                            ? 'bg-[#2D6A4F] text-white font-bold shadow-sm' 
+                            : 'bg-white hover:bg-emerald-100/70 text-slate-800 border border-emerald-100'
+                        }`}
+                      >
+                        <div className="min-w-0">
+                          <div className="flex items-center gap-1.5">
+                            <span className={`font-mono text-[10px] font-black px-1.5 py-0.2 rounded ${
+                              questionId === q.id ? 'bg-white/20 text-white' : 'bg-emerald-100 text-[#1B4332]'
+                            }`}>
+                              {q.id}
+                            </span>
+                            {q.groupCode && (
+                              <span className="text-[10px] opacity-75">[{q.groupCode}]</span>
+                            )}
+                          </div>
+                          <p className="text-[11px] leading-snug font-medium line-clamp-2 mt-0.5">{q.text}</p>
+                        </div>
+                        {questionId === q.id && <Check className="w-4 h-4 shrink-0 text-emerald-300 mt-0.5" />}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* 6. Detailed Description & Violation Details */}
           <div>

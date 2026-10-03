@@ -283,7 +283,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 <span>BÊN TRÁI: ĐIỂM ĐÁNH GIÁ CÔNG VIỆC</span>
               </span>
               <span className="px-2 py-0.5 rounded-full bg-[#1B4332] text-[#52B788] text-[10px] font-black font-mono">
-                Thang 5.0
+                Điểm tối đa: 5.0
               </span>
             </div>
             
@@ -292,7 +292,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                 <span className="text-2xl sm:text-3xl font-black font-mono text-[#1B4332]">
                   {periodScores.totalScore.toFixed(2)}
                 </span>
-                <span className="text-xs font-bold text-[#2D6A4F]">/ 5.0</span>
+                <span className="text-xs font-bold text-[#2D6A4F]">(Điểm tối đa: 5.0)</span>
               </div>
               <span className="text-xs font-bold text-[#1B4332] bg-white px-2.5 py-1 rounded-xl border border-emerald-900/10 shadow-2xs">
                 {getSalaryTierBadge(periodScores.salaryTier).label}
@@ -310,15 +310,15 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
             <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] pt-0.5">
               <div className="bg-white p-1.5 rounded-xl border border-slate-200">
                 <span className="text-slate-500 font-bold block">Văn hóa</span>
-                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.generalScore}</strong>
+                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.generalScore} / 5</strong>
               </div>
               <div className="bg-white p-1.5 rounded-xl border border-slate-200">
                 <span className="text-slate-400 font-bold block">Chuyên môn</span>
-                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.techScore}</strong>
+                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.techScore} / 5</strong>
               </div>
               <div className="bg-white p-1.5 rounded-xl border border-slate-200">
                 <span className="text-slate-400 font-bold block">Quản lý</span>
-                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.mgmtScore > 0 ? periodScores.mgmtScore : '---'}</strong>
+                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.mgmtScore > 0 ? `${periodScores.mgmtScore} / 5` : '---'}</strong>
               </div>
             </div>
           </div>

@@ -360,7 +360,9 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                   <Star className="w-3.5 h-3.5 text-[#52B788] fill-[#52B788]" />
                   <span>Điểm Đánh Giá Công Việc</span>
                 </span>
-                <span className="text-xs font-mono font-bold text-[#2D6A4F]">{overallScore.toFixed(2)}/5.0</span>
+                <span className="text-xs font-mono font-bold text-[#2D6A4F]">
+                  {overallScore.toFixed(2)} <span className="text-[10px] text-slate-500 font-sans font-normal">(Điểm tối đa: 5.0)</span>
+                </span>
               </div>
               <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
                 <div
@@ -368,10 +370,10 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                   style={{ width: `${(overallScore / 5) * 100}%` }}
                 ></div>
               </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-600">
-                <span>VH: {periodScores.generalScore}</span>
-                {hasMgmtRole && <span>QL: {periodScores.mgmtScore}</span>}
-                <span>CM: {periodScores.techScore}</span>
+              <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
+                <span>VH: {periodScores.generalScore}/5</span>
+                {hasMgmtRole && <span>QL: {periodScores.mgmtScore}/5</span>}
+                <span>CM: {periodScores.techScore}/5</span>
               </div>
             </div>
 

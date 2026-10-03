@@ -26,6 +26,7 @@ interface PolicyViewProps {
   currentUser: AuthUser | null;
   onAppealIncident?: (incidentId: string, reason: string) => void;
   selectedPeriodKey: string;
+  onOpenIncidentModal?: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham') => void;
 }
 
 export const PolicyView: React.FC<PolicyViewProps> = ({
@@ -36,6 +37,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
   currentUser,
   onAppealIncident,
   selectedPeriodKey,
+  onOpenIncidentModal,
 }) => {
   const [activeTab, setActiveTab] = useState<'rules' | 'staff_scores' | 'appeals'>('rules');
   const [isEditingRules, setIsEditingRules] = useState(false);
@@ -251,9 +253,21 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
               />
             </div>
 
-            <span className="text-xs font-bold text-slate-500">
-              Tổng số: <strong className="text-[#1B4332] font-mono font-black">{filteredStaffList.length} nhân sự</strong>
-            </span>
+            <div className="flex items-center gap-2 w-full sm:w-auto justify-between sm:justify-end">
+              <span className="text-xs font-bold text-slate-500">
+                Tổng số: <strong className="text-[#1B4332] font-mono font-black">{filteredStaffList.length} nhân sự</strong>
+              </span>
+
+              {onOpenIncidentModal && (
+                <button
+                  onClick={() => onOpenIncidentModal(undefined, 'vi_pham')}
+                  className="px-3 py-1.5 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-all shadow-2xs flex items-center space-x-1 cursor-pointer"
+                >
+                  <ShieldAlert className="w-3.5 h-3.5" />
+                  <span>+ Lập Biên Bản Vi Phạm Mới</span>
+                </button>
+              )}
+            </div>
           </div>
 
           <div className="border border-slate-200 rounded-2xl overflow-hidden bg-white shadow-2xs text-xs">
@@ -296,13 +310,25 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
                         </span>
                       </td>
                       <td className="p-3 text-right">
-                        <button
-                          onClick={() => setSelectedStaffForModal(st)}
-                          className="px-3 py-1.5 rounded-xl bg-[#2D6A4F] hover:bg-[#1B4332] text-white text-xs font-bold transition-all shadow-2xs inline-flex items-center space-x-1 cursor-pointer"
-                        >
-                          <span>Xem UI TikTok Health</span>
-                          <ChevronRight className="w-3.5 h-3.5" />
-                        </button>
+                        <div className="flex items-center justify-end gap-1.5">
+                          {onOpenIncidentModal && (
+                            <button
+                              onClick={() => onOpenIncidentModal(st.id, 'vi_pham')}
+                              className="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-all inline-flex items-center space-x-1 cursor-pointer"
+                              title="Lập biên bản vi phạm nội quy cho nhân sự này"
+                            >
+                              <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                              <span>Lập vi phạm</span>
+                            </button>
+                          )}
+                          <button
+                            onClick={() => setSelectedStaffForModal(st)}
+                            className="px-3 py-1.5 rounded-xl bg-[#2D6A4F] hover:bg-[#1B4332] text-white text-xs font-bold transition-all shadow-2xs inline-flex items-center space-x-1 cursor-pointer"
+                          >
+                            <span>Xem điểm nội quy</span>
+                            <ChevronRight className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );

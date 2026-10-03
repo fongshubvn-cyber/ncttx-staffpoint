@@ -42,7 +42,9 @@ import {
   User,
   Key,
   RotateCw,
-  ShieldCheck
+  ShieldCheck,
+  Star,
+  ShieldAlert
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole } from '../../utils/calculator';
@@ -123,6 +125,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [showNotebookLmModal, setShowNotebookLmModal] = useState(false);
   const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
+  const [showFeedbackChoiceModal, setShowFeedbackChoiceModal] = useState(false);
   const [adminPasswordTargetId, setAdminPasswordTargetId] = useState<string | undefined>(undefined);
   const [cloudSyncInfo, setCloudSyncInfo] = useState<{ status: CloudSyncState; errorDetails: string | null }>({
     status: 'connecting',
@@ -185,7 +188,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <h1 className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 flex items-center gap-1.5 whitespace-nowrap font-sans">
                   StaffPoint 
                   <span className="text-emerald-700 font-mono text-[10px] font-extrabold bg-emerald-50 px-1.5 py-0.2 rounded-md border border-emerald-200 shrink-0">
-                    v1.002
+                    v1.003
                   </span>
                 </h1>
 
@@ -256,9 +259,9 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           <div className="flex items-center gap-1.5 shrink-0">
             {isManager && (
               <button
-                onClick={() => onOpenIncidentModal()}
+                onClick={() => setShowFeedbackChoiceModal(true)}
                 className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-extrabold shadow-sm active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
-                title="Tạo ghi nhận / vi phạm mới"
+                title="Tạo phản hồi mới (Đánh giá hoặc Phản ánh nội quy)"
               >
                 <Plus className="w-3.5 h-3.5 shrink-0" />
                 <span>Tạo Phản Hồi</span>
@@ -455,6 +458,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             onUpdateStatus={onUpdateStatus}
             isManager={isManager}
             onOpenIncidentModal={onOpenIncidentModal}
+            onOpenChoiceModal={() => setShowFeedbackChoiceModal(true)}
             currentUser={currentUser}
             onAppealIncident={onAppealIncident}
             onResolveAppeal={onResolveAppeal}
@@ -516,6 +520,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 currentUser={currentUser}
                 onAppealIncident={onAppealIncident}
                 selectedPeriodKey="2026-10"
+                onOpenIncidentModal={onOpenIncidentModal}
               />
             )}
 
@@ -611,12 +616,100 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
       {/* Floating Action Button (FAB) on Right for Mobile */}
       {isManager && (
         <button
-          onClick={() => onOpenIncidentModal()}
-          className="md:hidden fixed right-5 bottom-5 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-xl shadow-emerald-600/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/80 backdrop-blur-md print:hidden"
+          onClick={() => setShowFeedbackChoiceModal(true)}
+          className="md:hidden fixed right-5 bottom-5 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-xl shadow-emerald-600/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/80 backdrop-blur-md print:hidden cursor-pointer"
           title="Tạo phản hồi mới"
         >
           <Plus className="w-7 h-7" />
         </button>
+      )}
+
+      {/* Modal Popup Lựa Chọn Loại Phản Hồi ("Đánh giá" vs "Phản ánh nội quy") */}
+      {showFeedbackChoiceModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in print:hidden">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 transform transition-all animate-scale-up">
+            <div className="flex items-center justify-between pb-3 border-b border-slate-100">
+              <div className="flex items-center gap-2.5">
+                <div className="p-2 bg-emerald-100 text-emerald-800 rounded-2xl">
+                  <Plus className="w-5 h-5" />
+                </div>
+                <div>
+                  <h3 className="text-base font-extrabold text-slate-900">Tạo Phản Hồi Mới</h3>
+                  <p className="text-xs text-slate-500 font-medium">Vui lòng chọn hình thức bạn muốn tạo</p>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowFeedbackChoiceModal(false)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-all cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3.5 pt-1">
+              {/* Lựa chọn 1: Đánh giá */}
+              <button
+                onClick={() => {
+                  setShowFeedbackChoiceModal(false);
+                  onOpenIncidentModal(undefined, 'ghi_nhan');
+                }}
+                className="group relative p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-100/30 hover:from-emerald-100 hover:to-teal-100/80 border border-emerald-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
+              >
+                <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
+                  <Star className="w-6 h-6 fill-white text-white" />
+                </div>
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-extrabold text-[#1B4332] group-hover:text-emerald-950">
+                      🌟 Đánh Giá
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 text-[10px] font-black font-mono">
+                      Thang 5.0đ
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Ghi nhận thành tích, khen thưởng tuyên dương hoặc đóng góp ý kiến về chuyên môn & văn hóa.
+                  </p>
+                </div>
+              </button>
+
+              {/* Lựa chọn 2: Phản ánh nội quy */}
+              <button
+                onClick={() => {
+                  setShowFeedbackChoiceModal(false);
+                  onOpenIncidentModal(undefined, 'vi_pham');
+                }}
+                className="group relative p-4 rounded-2xl bg-gradient-to-br from-amber-50/80 via-rose-50/40 to-orange-100/30 hover:from-amber-100/90 hover:to-rose-100/80 border border-rose-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
+              >
+                <div className="p-3 bg-gradient-to-br from-rose-600 to-amber-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
+                  <ShieldAlert className="w-6 h-6 text-white" />
+                </div>
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-extrabold text-rose-950 group-hover:text-rose-900">
+                      🛡️ Phản Ánh Nội Quy
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-rose-200/80 text-rose-900 text-[10px] font-black font-mono">
+                      100đ Nội quy
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Lập biên bản phản ánh vi phạm 10 điều khoản nội quy, nhắc nhở kỷ luật & ranh giới không thỏa hiệp.
+                  </p>
+                </div>
+              </button>
+            </div>
+
+            <div className="pt-2 text-center border-t border-slate-100">
+              <button
+                onClick={() => setShowFeedbackChoiceModal(false)}
+                className="text-xs font-bold text-slate-400 hover:text-slate-600 py-1.5 px-4 rounded-xl transition-all cursor-pointer"
+              >
+                Đóng / Hủy
+              </button>
+            </div>
+          </div>
+        </div>
       )}
 
       {/* Live Interactive In-App AI Chat Assistant Modal */}
