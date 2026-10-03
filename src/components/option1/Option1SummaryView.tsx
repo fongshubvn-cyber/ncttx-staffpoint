@@ -8,8 +8,10 @@ import {
   isHRHeadRole, 
   get3RecentPeriods,
   getVisibleStaffListForUser,
-  getStaffScoresForPeriod
+  getStaffScoresForPeriod,
+  getStaffPolicyScoreForPeriod
 } from '../../utils/calculator';
+import { PolicyHealthModal } from '../PolicyHealthModal';
 import { 
   Sparkles, 
   User, 
@@ -22,7 +24,10 @@ import {
   Search,
   Check,
   Plus,
-  RotateCw
+  RotateCw,
+  ShieldCheck,
+  ChevronRight,
+  Star
 } from 'lucide-react';
 
 interface Option1SummaryViewProps {
@@ -35,6 +40,7 @@ interface Option1SummaryViewProps {
   currentUser: AuthUser | null;
   onRefreshCloud?: () => void;
   isRefreshingCloud?: boolean;
+  onAppealIncident?: (incidentId: string, reason: string) => void;
 }
 
 export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
@@ -47,10 +53,12 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
   currentUser,
   onRefreshCloud,
   isRefreshingCloud = false,
+  onAppealIncident,
 }) => {
   const isHRManager = isHRHeadRole(currentUser);
   const recentPeriods = get3RecentPeriods();
   const [selectedPeriodKey, setSelectedPeriodKey] = useState<string>(recentPeriods[0].key);
+  const [showPolicyModal, setShowPolicyModal] = useState<boolean>(false);
   const currentPeriodObj = recentPeriods.find(p => p.key === selectedPeriodKey) || recentPeriods[0];
 
   const visibleStaffList = getVisibleStaffListForUser(currentUser, staffList).slice().sort((a, b) => {
@@ -101,6 +109,7 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
 
   // Compute dynamic monthly scores for selected period key (Monthly Reset)
   const periodScores = getStaffScoresForPeriod(staff, selectedPeriodKey, incidents, params);
+  const policyData = getStaffPolicyScoreForPeriod(staff, selectedPeriodKey, incidents, params);
   const overallScore = periodScores.totalScore;
   const salaryTierNum = periodScores.salaryTier;
   const tier = getSalaryTierBadge(salaryTierNum);
@@ -108,6 +117,18 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
 
   return (
     <div className="space-y-6 pb-12">
+      {/* Policy Health Modal */}
+      <PolicyHealthModal
+        isOpen={showPolicyModal}
+        onClose={() => setShowPolicyModal(false)}
+        staff={staff}
+        periodKey={selectedPeriodKey}
+        incidents={incidents}
+        params={params}
+        currentUser={currentUser}
+        onAppealIncident={onAppealIncident}
+      />
+
       {/* Top Banner KPI Header */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white p-6 shadow-xl border border-emerald-700/40">
         <div className="absolute -right-10 -bottom-10 w-44 h-44 bg-emerald-500/20 rounded-full blur-3xl pointer-events-none"></div>
@@ -330,36 +351,60 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
             </div>
           </div>
 
-          <div className="p-4 rounded-2xl bg-slate-50 border border-slate-100 space-y-3">
-            <div className="flex items-center justify-between">
-              <span className="text-xs text-slate-500 font-medium">Điểm Đánh Giá ({currentPeriodObj.mStr}/{currentPeriodObj.year})</span>
-              <span className="text-xs font-bold text-emerald-700">{overallScore.toFixed(2)}/5.0</span>
-            </div>
-            <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-              <div
-                className="bg-gradient-to-r from-emerald-500 to-teal-600 h-full rounded-full transition-all duration-500"
-                style={{ width: `${(overallScore / 5) * 100}%` }}
-              ></div>
+          {/* DUAL SCORE SIDEBAR: 1. WORK SCORE, 2. POLICY SCORE */}
+          <div className="space-y-3">
+            {/* WORK SCORE CARD (BÊN TRÁI) */}
+            <div className="p-4 rounded-2xl bg-[#EDEAE3]/50 border border-slate-200 space-y-3">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#1B4332] flex items-center space-x-1">
+                  <Star className="w-3.5 h-3.5 text-[#52B788] fill-[#52B788]" />
+                  <span>Điểm Đánh Giá Công Việc</span>
+                </span>
+                <span className="text-xs font-mono font-bold text-[#2D6A4F]">{overallScore.toFixed(2)}/5.0</span>
+              </div>
+              <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                <div
+                  className="bg-gradient-to-r from-emerald-600 to-teal-600 h-full rounded-full transition-all duration-500"
+                  style={{ width: `${(overallScore / 5) * 100}%` }}
+                ></div>
+              </div>
+              <div className="flex items-center justify-between text-[11px] text-slate-600">
+                <span>VH: {periodScores.generalScore}</span>
+                {hasMgmtRole && <span>QL: {periodScores.mgmtScore}</span>}
+                <span>CM: {periodScores.techScore}</span>
+              </div>
             </div>
 
-            <div className="pt-2 flex items-center justify-between text-xs gap-2">
-              <div>
-                <span className="text-slate-400 block text-[10px] whitespace-nowrap">
-                  Văn hóa ({hasMgmtRole ? '50%' : '65%'})
+            {/* POLICY SCORE CARD (BÊN PHẢI - ACCOUNT HEALTH) */}
+            <div 
+              onClick={() => setShowPolicyModal(true)}
+              className="p-4 rounded-2xl bg-emerald-50/60 border border-emerald-200 space-y-3 cursor-pointer hover:border-[#2D6A4F] transition-all group shadow-2xs"
+            >
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-bold text-[#1B4332] flex items-center space-x-1">
+                  <ShieldCheck className="w-4 h-4 text-[#2D6A4F]" />
+                  <span>Điểm Nội Quy (Tình Trạng)</span>
                 </span>
-                <span className="font-semibold text-slate-700">{periodScores.generalScore}/5.0</span>
+                <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${policyData.statusObj.badgeClass}`}>
+                  {policyData.statusObj.level}
+                </span>
               </div>
-              {hasMgmtRole && (
-                <div>
-                  <span className="text-slate-400 block text-[10px] whitespace-nowrap">Quản lý (30%)</span>
-                  <span className="font-semibold text-slate-700">{periodScores.mgmtScore > 0 ? periodScores.mgmtScore : '---'}/5.0</span>
-                </div>
-              )}
-              <div className="text-right">
-                <span className="text-slate-400 block text-[10px] whitespace-nowrap">
-                  Chuyên môn ({hasMgmtRole ? '20%' : '35%'})
+
+              <div className="flex items-baseline justify-between">
+                <span className="text-2xl font-mono font-black text-[#1B4332]">
+                  {policyData.policyScore} <span className="text-xs font-bold text-slate-500">/ 100</span>
                 </span>
-                <span className="font-semibold text-slate-700">{periodScores.techScore}/5.0</span>
+                <span className="text-[11px] font-bold text-white bg-[#2D6A4F] group-hover:bg-[#1B4332] px-2.5 py-1 rounded-xl transition-all flex items-center gap-1">
+                  <span>Chi tiết UI</span>
+                  <ChevronRight className="w-3 h-3" />
+                </span>
+              </div>
+
+              <div className="w-full bg-slate-200 h-2 rounded-full overflow-hidden flex">
+                <div className="h-full bg-rose-500 w-[20%]" title="Đình chỉ (<20)" />
+                <div className="h-full bg-orange-400 w-[30%]" title="Nghiêm trọng (20-49)" />
+                <div className="h-full bg-amber-400 w-[30%]" title="Cần chú ý (50-79)" />
+                <div className="h-full bg-emerald-500 w-[20%]" title="Tốt (80-100)" />
               </div>
             </div>
           </div>

@@ -47,6 +47,7 @@ export interface Staff {
   isAdmin?: boolean;
   password?: string;
   mustChangePassword?: boolean;
+  policyScore?: number; // Điểm nội quy tuân thủ (mặc định 100)
 }
 
 export interface Question {
@@ -72,6 +73,7 @@ export interface IncidentRecord {
   targetName: string;
   targetRole: string;
   questionId?: string;
+  policyRuleId?: string; // Mã ID nội quy vi phạm (NQ01 - NQ10) nếu có
   groupCode?: string;
   title: string;
   description: string;
@@ -80,6 +82,7 @@ export interface IncidentRecord {
   createdAt?: string; // Timestamp ISO format to accurately calculate 48h deadline
   status: IncidentStatus;
   impactPoints: number;
+  policyPenaltyPoints?: number; // Điểm bị trừ khỏi 100 điểm nội quy
   appealReason?: string;
   appealDate?: string;
   appealStatus?: 'none' | 'pending' | 'approved' | 'rejected';
@@ -125,6 +128,10 @@ export interface ParameterConfig {
   defaultViolationPoints: number; // 5
   defaultRecognitionPoints: number; // 0
   
+  // Internal Policy Settings
+  defaultPolicyScore?: number; // Default 100 points
+  policyRules?: PolicyRule[];
+  
   // Configurable Incident / Ticket Point Impacts
   recMinorPoints?: number;    // +0.5 (Ghi nhận mức Nhẹ)
   recModeratePoints?: number; // +1.0 (Ghi nhận mức Vừa)
@@ -136,6 +143,27 @@ export interface ParameterConfig {
   googleAppsScriptUrl?: string; // Webhook URL từ Google Apps Script
   notebookLmUrl?: string; // Đường dẫn kết nối Trợ lý AI NotebookLM của công ty
   geminiApiKey?: string; // Google Gemini API Key cho Trợ Lý AI Chat Trực Tiếp
+}
+
+export interface PolicyRule {
+  id: string; // 'NQ01', 'NQ02'
+  code: string; // 'NQ-01'
+  title: string;
+  category: string;
+  description: string;
+  penaltyPoints: number; // Điểm phạt bị trừ khỏi 100 (5, 10, 15, 20, 30, 50)
+  severity: 'Nhẹ' | 'Vừa' | 'Nghiêm trọng' | 'Rất nghiêm trọng';
+  enforcementMeasure: string;
+  active: boolean;
+}
+
+export interface PolicyHealthStatus {
+  score: number; // 0 - 100
+  level: 'Tốt' | 'Cần chú ý' | 'Nghiêm trọng' | 'Đình chỉ vĩnh viễn';
+  color: string;
+  badgeClass: string;
+  advice: string;
+  enforcementAction: string;
 }
 
 export interface AdminFeedback {

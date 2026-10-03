@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Staff, IncidentRecord, Question, ParameterConfig, AuthUser } from '../types';
-import { getSalaryTierBadge, isHRHeadRole, get3RecentPeriods, getVisibleStaffListForUser, getStaffScoresForPeriod } from '../utils/calculator';
+import { getSalaryTierBadge, isHRHeadRole, get3RecentPeriods, getVisibleStaffListForUser, getStaffScoresForPeriod, getStaffPolicyScoreForPeriod } from '../utils/calculator';
+import { PolicyHealthModal } from './PolicyHealthModal';
 import { 
   Sparkles, 
   User, 
@@ -13,7 +14,10 @@ import {
   Lightbulb,
   Leaf,
   Plus,
-  Calendar
+  Calendar,
+  ShieldCheck,
+  ChevronRight,
+  ShieldAlert
 } from 'lucide-react';
 
 interface SummaryViewProps {
@@ -24,6 +28,7 @@ interface SummaryViewProps {
   onOpenIncidentModal: () => void;
   isManager: boolean;
   currentUser: AuthUser | null;
+  onAppealIncident?: (incidentId: string, reason: string) => void;
 }
 
 export const SummaryView: React.FC<SummaryViewProps> = ({
@@ -34,10 +39,12 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   onOpenIncidentModal,
   isManager,
   currentUser,
+  onAppealIncident,
 }) => {
   const isHRManager = isHRHeadRole(currentUser);
   const recentPeriods = get3RecentPeriods();
   const [selectedPeriodKey, setSelectedPeriodKey] = useState<string>(recentPeriods[0].key);
+  const [showPolicyModal, setShowPolicyModal] = useState<boolean>(false);
   const currentPeriodObj = recentPeriods.find(p => p.key === selectedPeriodKey) || recentPeriods[0];
 
   const visibleStaffList = getVisibleStaffListForUser(currentUser, staffList).slice().sort((a, b) => {
@@ -79,16 +86,26 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   const staffIncidents = periodIncidents.filter(i => i.targetId === staff.id);
   const recognitions = staffIncidents.filter(i => i.type === 'ghi_nhan' && (i.status === 'Đã duyệt' || i.status === 'Chờ HR duyệt'));
   const violations = staffIncidents.filter(i => i.type === 'vi_pham' && i.status !== 'Kháng nghị được chấp nhận');
+  const policyData = getStaffPolicyScoreForPeriod(staff, selectedPeriodKey, incidents, params);
 
   const generateImprovementTips = () => {
     const tips = [];
+
+    if (policyData.policyScore < 80) {
+      tips.push({
+        title: `Cải thiện Điểm Nội Quy & Tuân Thủ (${policyData.policyScore}/100 đ)`,
+        type: 'vi_pham',
+        description: `Điểm nội quy hiện tại là ${policyData.policyScore}/100 đ (${policyData.statusObj.level}). Đã bị trừ -${policyData.totalDeduction} đ do ${policyData.violations.length} vi phạm trong kỳ. Hãy rà soát 10 nội quy để lấy lại mốc Tốt (80+ điểm).`,
+        priority: 'Cần chú ý',
+      });
+    }
 
     if (violations.length > 0) {
       violations.forEach(v => {
         tips.push({
           title: `Khắc phục vi phạm: ${v.title}`,
           type: 'vi_pham',
-          description: `Bạn có biên bản nhắc nhở ngày ${v.date}. Hãy rèn luyện tuân thủ quy chuẩn để khôi phục điểm nhóm ${v.groupCode || 'Khung chung'}.`,
+          description: `Biên bản ngày ${v.date}. Hãy rèn luyện tuân thủ quy chuẩn để khôi phục điểm nhóm ${v.groupCode || 'Khung chung'}.`,
           priority: 'Cần chú ý',
         });
       });
@@ -98,7 +115,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
       tips.push({
         title: 'Nâng cao Điểm Văn Hóa Chung (One Voice)',
         type: 'van_hoa',
-        description: `Điểm văn hóa kỳ ${selectedPeriodKey} là ${periodScores.generalScore}/5.0. Thực hành giao tiếp chân thành, tôn trọng đồng nghiệp khiếm thính và duy trì văn hóa không phòng vệ.`,
+        description: `Điểm văn hóa kỳ ${selectedPeriodKey} là ${periodScores.generalScore}/5.0. Thực hành giao tiếp chân thành, tôn trọng đồng nghiệp khiếm thính.`,
         priority: 'Rèn luyện',
       });
     }
@@ -116,7 +133,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
       tips.push({
         title: 'Vững Vàng Năng Lực Quản Lý OPA',
         type: 'quan_ly',
-        description: `Điểm quản lý là ${periodScores.mgmtScore}/5.0. Thể hiện tư duy quản trị vững chãi và hỗ trợ sát sao cho đội nhóm ca làm việc.`,
+        description: `Điểm quản lý là ${periodScores.mgmtScore}/5.0. Thể hiện tư duy quản trị vững chãi và hỗ trợ sát sao cho đội nhóm.`,
         priority: 'Cần chú ý',
       });
     }
@@ -127,7 +144,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
       tips.push({
         title: `Lộ trình chinh phục Bậc 5 (Xuất sắc - 85%+ điểm)`,
         type: 'lo_trinh',
-        description: `Bạn đang ở Bậc ${periodScores.salaryTier} (Kỳ ${selectedPeriodKey}). Cần thêm khoảng +${gap} điểm làm việc để cán mốc Bậc 5 (${nextTierScore} điểm). Nhận thêm 1-2 phiếu khen thưởng chất lượng sẽ giúp bạn củng cố vị trí!`,
+        description: `Bạn đang ở Bậc ${periodScores.salaryTier} (Kỳ ${selectedPeriodKey}). Cần thêm khoảng +${gap} điểm làm việc để cán mốc Bậc 5.`,
         priority: 'Khuyến khích',
       });
     } else {
@@ -147,7 +164,19 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
   return (
     <div className="space-y-4 pb-20">
       
-      {/* REPORTING PERIOD SELECTOR (3 RECENT MONTHS - MONTHLY RESET) */}
+      {/* Policy Health Modal */}
+      <PolicyHealthModal
+        isOpen={showPolicyModal}
+        onClose={() => setShowPolicyModal(false)}
+        staff={staff}
+        periodKey={selectedPeriodKey}
+        incidents={incidents}
+        params={params}
+        currentUser={currentUser}
+        onAppealIncident={onAppealIncident}
+      />
+      
+      {/* REPORTING PERIOD SELECTOR */}
       <div className="mobile-card p-3 border border-slate-200 bg-white space-y-2 shadow-xs">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-1">
           <span className="text-xs font-black text-[#1B4332] flex items-center space-x-1.5">
@@ -176,7 +205,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         </div>
       </div>
 
-      {/* Current Staff Switcher Bar (VISIBLE TO ADMIN, HR & LEADS) */}
+      {/* Current Staff Switcher Bar */}
       {visibleStaffList.length > 1 && (
         <div className="mobile-card p-3 flex items-center justify-between border border-[#1B4332]/10 bg-white">
           <div className="flex items-center space-x-2 text-xs">
@@ -198,7 +227,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         </div>
       )}
 
-      {/* 1. Main Personal Info & Score Card */}
+      {/* 1. Main Personal Info & DUAL-SCORE CARD (Hệ thống 2 Mức Điểm 2 Bên) */}
       <div className="mobile-card p-5 sm:p-6 border border-emerald-900/15 bg-white space-y-4 shadow-sm relative overflow-hidden">
         
         {/* Top Header Row */}
@@ -243,38 +272,97 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           </div>
         </div>
 
-        {/* Score Breakdown Bar */}
-        <div className="bg-gradient-to-br from-[#1B4332]/5 to-[#2D6A4F]/10 p-4 rounded-2xl border border-[#2D6A4F]/20 space-y-3 shadow-inner">
-          <div className="flex items-center justify-between">
-            <span className="text-xs sm:text-sm font-black font-heading tracking-wide text-[#1B4332]">
-              ĐIỂM LÀM VIỆC TỔNG HỢP ({selectedPeriodKey})
-            </span>
-            <span className="text-lg sm:text-xl font-black text-[#1B4332] font-mono">
-              {periodScores.totalScore.toFixed(2)} <span className="text-xs font-bold text-[#2D6A4F] font-sans">/ 5.0</span>
-            </span>
-          </div>
-
-          <div className="w-full h-3 bg-white rounded-full overflow-hidden p-0.5 border border-emerald-900/15 shadow-inner">
-            <div
-              className="h-full brand-gradient rounded-full transition-all duration-500"
-              style={{ width: `${(periodScores.totalScore / 5.0) * 100}%` }}
-            ></div>
-          </div>
-
-          <div className="grid grid-cols-3 gap-2 text-center pt-1">
-            <div className="bg-white p-2.5 rounded-xl border border-emerald-900/10 shadow-xs flex flex-col items-center justify-center space-y-0.5">
-              <span className="text-[10px] font-extrabold text-slate-500">Văn hóa</span>
-              <span className="text-sm sm:text-base font-black text-[#1B4332] font-mono">{periodScores.generalScore}</span>
-            </div>
-            <div className="bg-white p-2.5 rounded-xl border border-emerald-900/10 shadow-xs flex flex-col items-center justify-center space-y-0.5">
-              <span className="text-[10px] font-extrabold text-slate-500">Chuyên môn</span>
-              <span className="text-sm sm:text-base font-black text-[#1B4332] font-mono">{periodScores.techScore}</span>
-            </div>
-            <div className="bg-white p-2.5 rounded-xl border border-emerald-900/10 shadow-xs flex flex-col items-center justify-center space-y-0.5">
-              <span className="text-[10px] font-extrabold text-slate-500">Quản lý</span>
-              <span className="text-sm sm:text-base font-black text-[#1B4332] font-mono">
-                {periodScores.mgmtScore > 0 ? periodScores.mgmtScore : '---'}
+        {/* DUAL SCORE CONTAINER (2 MỨC ĐIỂM 2 BÊN) */}
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
+          
+          {/* BÊN TRÁI: ĐIỂM ĐÁNH GIÁ CÔNG VIỆC (0 - 5.0) */}
+          <div className="bg-gradient-to-br from-emerald-900/5 via-emerald-800/10 to-emerald-900/5 p-4 rounded-2xl border border-emerald-700/20 space-y-2.5 relative overflow-hidden shadow-xs">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black font-heading tracking-wide text-[#1B4332] flex items-center space-x-1.5">
+                <Star className="w-4 h-4 text-[#52B788] fill-[#52B788]" />
+                <span>BÊN TRÁI: ĐIỂM ĐÁNH GIÁ CÔNG VIỆC</span>
               </span>
+              <span className="px-2 py-0.5 rounded-full bg-[#1B4332] text-[#52B788] text-[10px] font-black font-mono">
+                Thang 5.0
+              </span>
+            </div>
+            
+            <div className="flex items-baseline justify-between pt-0.5">
+              <div className="flex items-baseline space-x-1">
+                <span className="text-2xl sm:text-3xl font-black font-mono text-[#1B4332]">
+                  {periodScores.totalScore.toFixed(2)}
+                </span>
+                <span className="text-xs font-bold text-[#2D6A4F]">/ 5.0</span>
+              </div>
+              <span className="text-xs font-bold text-[#1B4332] bg-white px-2.5 py-1 rounded-xl border border-emerald-900/10 shadow-2xs">
+                {getSalaryTierBadge(periodScores.salaryTier).label}
+              </span>
+            </div>
+
+            {/* Work score mini progress */}
+            <div className="w-full h-2.5 bg-white rounded-full overflow-hidden p-0.5 border border-emerald-900/15 shadow-inner">
+              <div 
+                className="h-full bg-gradient-to-r from-[#2D6A4F] to-[#52B788] rounded-full transition-all duration-500" 
+                style={{ width: `${(periodScores.totalScore / 5.0) * 100}%` }} 
+              />
+            </div>
+
+            <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] pt-0.5">
+              <div className="bg-white p-1.5 rounded-xl border border-slate-200">
+                <span className="text-slate-500 font-bold block">Văn hóa</span>
+                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.generalScore}</strong>
+              </div>
+              <div className="bg-white p-1.5 rounded-xl border border-slate-200">
+                <span className="text-slate-400 font-bold block">Chuyên môn</span>
+                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.techScore}</strong>
+              </div>
+              <div className="bg-white p-1.5 rounded-xl border border-slate-200">
+                <span className="text-slate-400 font-bold block">Quản lý</span>
+                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.mgmtScore > 0 ? periodScores.mgmtScore : '---'}</strong>
+              </div>
+            </div>
+          </div>
+
+          {/* BÊN PHẢI: ĐIỂM NỘI QUY (ACCOUNT HEALTH - 0 TO 100) */}
+          <div 
+            onClick={() => setShowPolicyModal(true)}
+            className="bg-gradient-to-br from-amber-500/5 via-emerald-500/5 to-teal-500/10 p-4 rounded-2xl border border-emerald-700/20 space-y-2.5 relative overflow-hidden shadow-xs hover:border-[#2D6A4F] cursor-pointer transition-all group"
+          >
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black font-heading tracking-wide text-[#1B4332] flex items-center space-x-1.5">
+                <ShieldCheck className="w-4 h-4 text-[#2D6A4F]" />
+                <span>BÊN PHẢI: ĐIỂM NỘI QUY (TÌNH TRẠNG)</span>
+              </span>
+              <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${policyData.statusObj.badgeClass}`}>
+                {policyData.statusObj.level}
+              </span>
+            </div>
+
+            <div className="flex items-baseline justify-between pt-0.5">
+              <div className="flex items-baseline space-x-1">
+                <span className="text-2xl sm:text-3xl font-black font-mono text-[#1B4332]">
+                  {policyData.policyScore}
+                </span>
+                <span className="text-xs font-bold text-slate-500">/ 100</span>
+              </div>
+
+              <button className="text-[11px] font-bold text-white bg-[#2D6A4F] group-hover:bg-[#1B4332] px-3 py-1 rounded-xl shadow-2xs transition-all flex items-center space-x-1">
+                <span>Chi tiết UI</span>
+                <ChevronRight className="w-3.5 h-3.5" />
+              </button>
+            </div>
+
+            {/* Policy score progress track */}
+            <div className="relative w-full h-2.5 bg-slate-100 rounded-full overflow-hidden p-0.5 border border-slate-200 shadow-inner flex">
+              <div className="h-full bg-rose-500 w-[20%]" title="Đình chỉ (<20)" />
+              <div className="h-full bg-orange-400 w-[30%]" title="Nghiêm trọng (20-49)" />
+              <div className="h-full bg-amber-400 w-[30%]" title="Cần chú ý (50-79)" />
+              <div className="h-full bg-emerald-500 w-[20%]" title="Tốt (80-100)" />
+            </div>
+
+            <div className="flex items-center justify-between text-[10px] text-slate-600 pt-0.5 font-bold">
+              <span>Đã trừ: <strong className="text-rose-600 font-mono">-{policyData.totalDeduction} điểm</strong></span>
+              <span>Số vi phạm: <strong className="text-amber-700 font-mono">{policyData.violations.length} lần</strong></span>
             </div>
           </div>
         </div>

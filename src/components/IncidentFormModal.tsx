@@ -200,6 +200,9 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
       createdAt: now.toISOString(),
       status: type === 'vi_pham' ? 'Đã ghi nhận' : 'Chờ HR duyệt',
       impactPoints,
+      policyPenaltyPoints: type === 'vi_pham'
+        ? (isBoundaryRecord ? 50 : severity === 'Nghiêm trọng' ? 20 : severity === 'Vừa' ? 10 : 5)
+        : undefined,
       imageUrl: imagePreview || undefined,
     };
 

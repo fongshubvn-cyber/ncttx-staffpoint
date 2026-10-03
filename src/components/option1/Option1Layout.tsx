@@ -418,6 +418,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             currentUser={currentUser}
             onRefreshCloud={onRefreshCloud}
             isRefreshingCloud={isRefreshingCloud}
+            onAppealIncident={onAppealIncident}
           />
         )}
 

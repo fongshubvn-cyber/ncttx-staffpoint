@@ -1,4 +1,4 @@
-import { ParameterConfig, Staff } from '../types';
+import { ParameterConfig, Staff, IncidentRecord, PolicyRule, PolicyHealthStatus } from '../types';
 
 /**
  * Checks if a staff member holds a management position.
@@ -404,6 +404,127 @@ export function getVisibleStaffListForUser(
 
     return isMatch;
   });
+}
+
+/**
+ * Returns Policy Health Status object (Tốt, Cần chú ý, Nghiêm trọng, Đình chỉ vĩnh viễn)
+ * based on the 100-point Internal Policy system inspired by Account Health.
+ */
+export function getPolicyHealthStatus(score: number): PolicyHealthStatus {
+  const safeScore = Math.max(0, Math.min(100, score));
+
+  if (safeScore >= 80) {
+    return {
+      score: safeScore,
+      level: 'Tốt',
+      color: '#10B981',
+      badgeClass: 'bg-emerald-100 text-[#1B4332] border-emerald-300',
+      advice: 'Tài khoản & Điểm nội quy của bạn ở trạng thái tốt (80 - 100). Hãy tiếp tục phát huy!',
+      enforcementAction: 'Không cưỡng chế.',
+    };
+  } else if (safeScore >= 50) {
+    return {
+      score: safeScore,
+      level: 'Cần chú ý',
+      color: '#F59E0B',
+      badgeClass: 'bg-amber-100 text-amber-900 border-amber-300',
+      advice: 'Tài khoản ở mức Cần chú ý (50 - 79). Cần rà soát lại các nội quy vi phạm để tránh bị khóa quyền lợi thưởng.',
+      enforcementAction: 'Nhắc nhở ca làm việc & Tạm khóa đề xuất khen thưởng / tăng lương trong tháng.',
+    };
+  } else if (safeScore >= 20) {
+    return {
+      score: safeScore,
+      level: 'Nghiêm trọng',
+      color: '#F97316',
+      badgeClass: 'bg-orange-100 text-orange-900 border-orange-300',
+      advice: 'Cảnh báo: Điểm nội quy giảm chạm mức Nghiêm trọng (20 - 49)! Hãy hoàn thành bài kiểm tra khắc phục.',
+      enforcementAction: 'Tạm đình chỉ ca làm việc 3-7 ngày & Hạ 1 bậc làm việc (P2).',
+    };
+  } else {
+    return {
+      score: safeScore,
+      level: 'Đình chỉ vĩnh viễn',
+      color: '#EF4444',
+      badgeClass: 'bg-rose-100 text-rose-800 border-rose-300',
+      advice: 'Tài khoản vi phạm mức kỷ luật cao nhất (Dưới 20 điểm)!',
+      enforcementAction: 'Đình chỉ công tác & Xem xét đơn phương chấm dứt hợp đồng lao động.',
+    };
+  }
+}
+
+/**
+ * Calculates a staff member's 100-point Policy Score for a specific monthly period.
+ * Starts at 100 points, deducting penalty points for each policy violation in that month.
+ */
+export function getStaffPolicyScoreForPeriod(
+  staff: Staff,
+  periodKey: string,
+  incidents: IncidentRecord[],
+  params: ParameterConfig
+): {
+  policyScore: number;
+  totalDeduction: number;
+  violations: IncidentRecord[];
+  statusObj: PolicyHealthStatus;
+} {
+  const [yStr, mStr] = periodKey.split('-');
+  const patternSlash = `${mStr}/${yStr}`; // "10/2026"
+  const patternDash = `${yStr}-${mStr}`;  // "2026-10"
+
+  const defaultScore = params.defaultPolicyScore ?? 100;
+  const rules = params.policyRules || [];
+
+  const periodIncidents = incidents.filter(inc => {
+    if (!inc || inc.isDeleted) return false;
+    if (inc.targetId !== staff.id) return false;
+    if (inc.type !== 'vi_pham') return false;
+    if (inc.status === 'Kháng nghị được chấp nhận') return false;
+
+    if (inc.createdAt && inc.createdAt.startsWith(patternDash)) return true;
+    if (inc.date) {
+      if (inc.date.includes(patternSlash) || inc.date.includes(patternDash)) return true;
+    }
+    return false;
+  });
+
+  let totalDeduction = 0;
+
+  periodIncidents.forEach(inc => {
+    if (typeof inc.policyPenaltyPoints === 'number' && !isNaN(inc.policyPenaltyPoints)) {
+      totalDeduction += inc.policyPenaltyPoints;
+    } else if (inc.policyRuleId) {
+      const matchedRule = rules.find(r => r.id === inc.policyRuleId || r.code === inc.policyRuleId);
+      if (matchedRule) {
+        totalDeduction += matchedRule.penaltyPoints;
+      } else {
+        totalDeduction += 10;
+      }
+    } else {
+      // Severity default deduction
+      switch (inc.severity) {
+        case 'Nghiêm trọng':
+          totalDeduction += 20;
+          break;
+        case 'Vừa':
+          totalDeduction += 10;
+          break;
+        case 'Nhẹ':
+        default:
+          totalDeduction += 5;
+          break;
+      }
+    }
+  });
+
+  const finalScore = Math.max(0, defaultScore - totalDeduction);
+  const statusObj = getPolicyHealthStatus(finalScore);
+
+  return {
+    policyScore: finalScore,
+    totalDeduction,
+    violations: periodIncidents,
+    statusObj,
+  };
 }
 
 

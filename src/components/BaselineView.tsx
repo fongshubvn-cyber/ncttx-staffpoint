@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
-import { BaselinePoint, ParameterConfig, AuthUser } from '../types';
-import { BarChart3, Sliders, Award, Calculator, Star, Leaf, Check, Edit3 } from 'lucide-react';
+import { BaselinePoint, ParameterConfig, AuthUser, PolicyRule } from '../types';
+import { initialPolicyRules } from '../data/seedData';
+import { BarChart3, Sliders, Award, Calculator, Star, Leaf, Check, Edit3, ShieldCheck, ShieldAlert, Plus } from 'lucide-react';
 
 interface BaselineViewProps {
   baselinePoints: BaselinePoint[];
@@ -16,6 +17,9 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
   currentUser,
 }) => {
   const [isEditing, setIsEditing] = useState(false);
+  const [policyRules, setPolicyRules] = useState<PolicyRule[]>(
+    params.policyRules || initialPolicyRules
+  );
   const [recMinor, setRecMinor] = useState(params.recMinorPoints ?? 0.5);
   const [recModerate, setRecModerate] = useState(params.recModeratePoints ?? 1.0);
   const [recMajor, setRecMajor] = useState(params.recMajorPoints ?? 1.5);
@@ -44,6 +48,8 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
     if (!onUpdateParams) return;
     onUpdateParams({
       ...params,
+      policyRules,
+      defaultPolicyScore: 100,
       recMinorPoints: recMinor,
       recModeratePoints: recModerate,
       recMajorPoints: recMajor,
@@ -65,7 +71,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
       tier2Threshold: t2,
     });
     setIsEditing(false);
-    alert('Đã lưu toàn bộ tham số hệ thống & công thức thành công!');
+    alert('Đã lưu toàn bộ tham số hệ thống & 10 nội quy thành công!');
   };
 
   return (
@@ -502,6 +508,80 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
               <span className="font-bold text-rose-800">&lt; {Math.round((params.tier2Threshold ?? 0.40) * 100)}%</span>
             )}
           </div>
+        </div>
+      </div>
+
+      {/* 10 POLICY RULES CONFIG CARD */}
+      <div className="mobile-card p-4 sm:p-5 space-y-4 border-2 border-[#1B4332]/20 bg-white shadow-md">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-3">
+          <div className="flex items-center space-x-2 text-[#1B4332]">
+            <ShieldCheck className="w-5 h-5 text-[#2D6A4F] shrink-0" />
+            <div>
+              <h3 className="text-sm font-extrabold font-heading text-[#1B4332]">
+                Cấu Hình 10 Nội Quy Công Ty & Điểm Phạt (Mặc Định 100 Điểm) 🛡️
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                Admin tùy chỉnh quy tắc và mức trừ điểm dựa theo severity
+              </p>
+            </div>
+          </div>
+
+          {currentUser?.isAdmin && (
+            <span className="text-[10px] font-mono font-bold bg-emerald-50 text-[#2D6A4F] px-2.5 py-1 rounded-full border border-emerald-200 whitespace-nowrap">
+              100 Điểm Gốc
+            </span>
+          )}
+        </div>
+
+        <div className="space-y-2.5">
+          {policyRules.map((rule, idx) => (
+            <div key={rule.id} className="p-3.5 rounded-2xl bg-[#EDEAE3]/40 border border-slate-200/80 space-y-2 text-xs">
+              <div className="flex items-start justify-between gap-2">
+                <div className="flex items-center space-x-2">
+                  <span className="px-2 py-0.5 rounded-full font-mono text-[10px] font-black bg-[#1B4332] text-[#52B788]">
+                    {rule.code || rule.id}
+                  </span>
+                  <span className="font-extrabold text-[#1B4332] text-xs sm:text-sm">{rule.title}</span>
+                </div>
+
+                <div className="flex items-center space-x-2 shrink-0">
+                  <span className="text-[10px] font-bold text-slate-500 bg-white px-2 py-0.5 rounded-lg border border-slate-200">
+                    {rule.category}
+                  </span>
+                  {isEditing ? (
+                    <div className="flex items-center space-x-1">
+                      <span className="text-rose-600 font-bold">-</span>
+                      <input
+                        type="number"
+                        min="1"
+                        max="100"
+                        value={rule.penaltyPoints}
+                        onChange={(e) => {
+                          const val = Math.max(1, Number(e.target.value));
+                          const updated = [...policyRules];
+                          updated[idx] = { ...updated[idx], penaltyPoints: val };
+                          setPolicyRules(updated);
+                        }}
+                        className="w-14 p-1 bg-white border border-rose-300 rounded text-center font-mono font-black text-rose-600"
+                      />
+                      <span className="font-bold text-slate-500">đ</span>
+                    </div>
+                  ) : (
+                    <span className="font-mono font-black text-xs text-rose-600 bg-rose-50 px-2 py-0.5 rounded-lg border border-rose-200">
+                      -{rule.penaltyPoints} điểm
+                    </span>
+                  )}
+                </div>
+              </div>
+
+              <p className="text-slate-600 leading-relaxed text-[11px] font-medium">{rule.description}</p>
+
+              <div className="flex items-center justify-between pt-1 border-t border-slate-200/60 text-[11px] text-slate-500">
+                <span>Biện pháp: <strong className="text-slate-700 font-bold">{rule.enforcementMeasure}</strong></span>
+                <span className="font-bold text-[#2D6A4F]">Mức: {rule.severity}</span>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
 
