@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { Staff, IncidentRecord, ParameterConfig, AuthUser, PolicyRule } from '../types';
 import { getStaffPolicyScoreForPeriod, getPolicyHealthStatus } from '../utils/calculator';
 import { PolicyHealthModal } from './PolicyHealthModal';
+import { initialPolicyRules } from '../data/seedData';
 import { 
   ShieldCheck, 
   ShieldAlert, 
@@ -38,7 +39,12 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
 }) => {
   const [activeTab, setActiveTab] = useState<'rules' | 'staff_scores' | 'appeals'>('rules');
   const [isEditingRules, setIsEditingRules] = useState(false);
-  const [rules, setRules] = useState<PolicyRule[]>(params.policyRules || []);
+  const [rules, setRules] = useState<PolicyRule[]>(() => {
+    if (params.policyRules && Array.isArray(params.policyRules) && params.policyRules.length > 0) {
+      return params.policyRules;
+    }
+    return initialPolicyRules;
+  });
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStaffForModal, setSelectedStaffForModal] = useState<Staff | null>(null);
 
@@ -79,21 +85,19 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
         />
       )}
 
-      {/* Brand Header Banner */}
-      <div className="mobile-card p-6 border-2 border-emerald-800/30 bg-gradient-to-br from-[#1B4332] via-[#2D6A4F] to-[#1B4332] text-white shadow-xl space-y-3 relative overflow-hidden">
-        <div className="absolute -right-10 -bottom-10 w-48 h-48 bg-white/10 rounded-full blur-2xl pointer-events-none"></div>
-
+      {/* Brand Header Banner (Solid Dark Green Background - High Contrast) */}
+      <div className="p-6 rounded-3xl border-2 border-emerald-900/50 bg-[#1B4332] text-white shadow-xl space-y-3.5 relative overflow-hidden">
         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 relative z-10">
           <div className="space-y-1">
-            <div className="inline-flex items-center space-x-2 bg-white/10 px-3 py-1 rounded-full border border-white/20 text-emerald-200 text-xs font-bold">
+            <div className="inline-flex items-center space-x-2 bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-500/40 text-[#52B788] text-xs font-bold">
               <ShieldCheck className="w-4 h-4 text-[#52B788]" />
               <span>Hệ Thống Nội Quy & Tình Trạng Nhân Sự (Account Health)</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl font-black font-heading text-white tracking-tight">
+            <h2 className="text-xl sm:text-2xl font-black font-heading text-white tracking-tight">
               10 Nội Quy Mặc Định & Điểm Tuân Thủ (100 Điểm Gốc) 🛡️
             </h2>
             <p className="text-xs sm:text-sm text-emerald-100/90 max-w-2xl font-medium leading-relaxed">
-              Mỗi nhân sự Nhà Của Thời Thanh Xuân được cấp <strong>100 điểm nội quy mặc định</strong>. Khi vi phạm sẽ bị trừ điểm theo mốc severity của nội quy.
+              Mỗi nhân sự Nhà Của Thời Thanh Xuân được cấp <strong className="text-[#52B788]">100 điểm nội quy mặc định</strong>. Khi vi phạm sẽ bị trừ điểm theo mốc severity của nội quy.
             </p>
           </div>
 
@@ -103,7 +107,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
                 if (isEditingRules) handleSaveRules();
                 else setIsEditingRules(true);
               }}
-              className="px-4 py-2 rounded-2xl bg-white hover:bg-emerald-50 text-[#1B4332] font-black text-xs shadow-md transition-all active:scale-95 shrink-0 flex items-center space-x-1.5 cursor-pointer"
+              className="px-4 py-2 rounded-2xl bg-white hover:bg-emerald-100 text-[#1B4332] font-black text-xs shadow-md transition-all active:scale-95 shrink-0 flex items-center space-x-1.5 cursor-pointer border border-emerald-200"
             >
               <Edit3 className="w-4 h-4 text-[#2D6A4F]" />
               <span>{isEditingRules ? "💾 Lưu Cấu Hình Điểm Phạt" : "✏️ Chỉnh Sửa 10 Nội Quy"}</span>
@@ -113,20 +117,20 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
 
         {/* Mốc Cảnh Báo Quick Badges */}
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 pt-2 text-xs relative z-10">
-          <div className="bg-white/10 p-2.5 rounded-xl border border-white/15 backdrop-blur-xs">
-            <span className="text-emerald-300 font-bold block text-[10px] uppercase">🟢 Tốt (80 - 100đ)</span>
+          <div className="bg-[#112d22] p-2.5 rounded-xl border border-emerald-700/60">
+            <span className="text-emerald-400 font-extrabold block text-[10px] uppercase">🟢 Tốt (80 - 100đ)</span>
             <span className="font-extrabold text-white text-xs">Không Cưỡng Chế</span>
           </div>
-          <div className="bg-white/10 p-2.5 rounded-xl border border-white/15 backdrop-blur-xs">
-            <span className="text-amber-300 font-bold block text-[10px] uppercase">🟡 Cần Chú Ý (50 - 79đ)</span>
+          <div className="bg-[#112d22] p-2.5 rounded-xl border border-emerald-700/60">
+            <span className="text-amber-400 font-extrabold block text-[10px] uppercase">🟡 Cần Chú Ý (50 - 79đ)</span>
             <span className="font-extrabold text-white text-xs">Tạm Khóa Đề Xuất Thưởng</span>
           </div>
-          <div className="bg-white/10 p-2.5 rounded-xl border border-white/15 backdrop-blur-xs">
-            <span className="text-orange-300 font-bold block text-[10px] uppercase">🟠 Nghiêm Trọng (20 - 49đ)</span>
+          <div className="bg-[#112d22] p-2.5 rounded-xl border border-emerald-700/60">
+            <span className="text-orange-400 font-extrabold block text-[10px] uppercase">🟠 Nghiêm Trọng (20 - 49đ)</span>
             <span className="font-extrabold text-white text-xs">Tạm Đình Chỉ Ca 3-7 Ngày</span>
           </div>
-          <div className="bg-white/10 p-2.5 rounded-xl border border-white/15 backdrop-blur-xs">
-            <span className="text-rose-300 font-bold block text-[10px] uppercase">🔴 Đình Chỉ (&lt;20đ)</span>
+          <div className="bg-[#112d22] p-2.5 rounded-xl border border-emerald-700/60">
+            <span className="text-rose-400 font-extrabold block text-[10px] uppercase">🔴 Đình Chỉ (&lt;20đ)</span>
             <span className="font-extrabold text-white text-xs">Xem Xét Chấm Dứt HĐLĐ</span>
           </div>
         </div>

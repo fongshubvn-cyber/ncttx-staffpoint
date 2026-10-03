@@ -29,7 +29,8 @@ import {
   initialQuestions, 
   initialIncidents, 
   initialBaselinePoints, 
-  defaultParameters 
+  defaultParameters,
+  initialPolicyRules
 } from './data/seedData';
 import { isFirebaseConfigured, subscribeToCollection, saveToCloud, fetchDocFromCloud } from './config/firebase';
 import { isDeptHeadOrAboveRole } from './utils/calculator';
@@ -100,7 +101,14 @@ export function App() {
   const [baselinePoints] = useState<BaselinePoint[]>(initialBaselinePoints);
   const [params, setParams] = useState<ParameterConfig>(() => {
     const saved = localStorage.getItem('ncttx_params');
-    return saved ? { ...defaultParameters, ...JSON.parse(saved) } : defaultParameters;
+    const parsed = saved ? JSON.parse(saved) : {};
+    return {
+      ...defaultParameters,
+      ...parsed,
+      policyRules: (parsed.policyRules && Array.isArray(parsed.policyRules) && parsed.policyRules.length > 0)
+        ? parsed.policyRules
+        : initialPolicyRules,
+    };
   });
 
   // Track which collections have completed initial Cloud load
