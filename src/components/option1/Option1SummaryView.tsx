@@ -27,7 +27,9 @@ import {
   RotateCw,
   ShieldCheck,
   ChevronRight,
-  Star
+  Star,
+  ClipboardCheck,
+  BookOpen
 } from 'lucide-react';
 
 interface Option1SummaryViewProps {
@@ -309,22 +311,22 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
             )}
           </div>
 
-          {/* Action Buttons (+ Tuyên Dương / + Ghi Vi Phạm) */}
+          {/* Action Buttons (+ Ghi nhận và đánh giá / + Nội quy) */}
           {isHRManager && (
             <div className="flex items-center gap-2 shrink-0">
               <button
                 onClick={() => onOpenIncidentModal(staff.id, 'ghi_nhan')}
                 className="px-3.5 py-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-all border border-emerald-200/80 shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 text-emerald-600" />
-                <span>Tuyên Dương</span>
+                <ClipboardCheck className="w-4 h-4 text-emerald-600" />
+                <span>Ghi nhận và đánh giá</span>
               </button>
               <button
                 onClick={() => onOpenIncidentModal(staff.id, 'vi_pham')}
                 className="px-3.5 py-2 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-bold transition-all border border-rose-200/80 shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
-                <Plus className="w-3.5 h-3.5 text-rose-600" />
-                <span>Ghi Vi Phạm</span>
+                <BookOpen className="w-4 h-4 text-rose-600" />
+                <span>Nội quy</span>
               </button>
             </div>
           )}

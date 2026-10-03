@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Staff, Question, DepartmentLine, IncidentRecord, IncidentType, SeverityLevel, ParameterConfig, AuthUser } from '../types';
 import { isManagementRole } from '../utils/calculator';
 import { initialPolicyRules } from '../data/seedData';
-import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert } from 'lucide-react';
+import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert, ClipboardCheck, BookOpen } from 'lucide-react';
 
 interface IncidentFormModalProps {
   show: boolean;
@@ -376,13 +376,13 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 <h2 className="text-base font-extrabold font-heading text-[#1B4332] flex items-center gap-2">
                   {formCategory === 'policy' ? (
                     <>
-                      <ShieldAlert className="w-5 h-5 text-rose-600" />
-                      <span>Lập Phản Ánh Vi Phạm Nội Quy (Thang 100đ)</span>
+                      <BookOpen className="w-5 h-5 text-rose-600" />
+                      <span>Phiếu Phản Ánh Nội Quy (Quỹ điểm 100đ)</span>
                     </>
                   ) : (
                     <>
-                      <Trophy className="w-5 h-5 text-amber-500" />
-                      <span>Lập Phiếu Đánh Giá Công Việc (Thang 5.0)</span>
+                      <ClipboardCheck className="w-5 h-5 text-emerald-600" />
+                      <span>Phiếu Ghi Nhận & Đánh Giá (Thang 5.0đ)</span>
                     </>
                   )}
                 </h2>
@@ -402,8 +402,8 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
             {formCategory === 'policy' ? (
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-xs text-rose-950 font-bold shadow-2xs">
                 <span className="flex items-center gap-2">
-                  <ShieldAlert className="w-4.5 h-4.5 text-rose-600 shrink-0" />
-                  <span>Loại Phiếu: <strong>Phản Ánh Vi Phạm Nội Quy</strong> (Trừ 100đ Nội Quy)</span>
+                  <BookOpen className="w-4.5 h-4.5 text-rose-600 shrink-0" />
+                  <span>Loại Phiếu: <strong>Phản Ánh Nội Quy</strong> (Trừ quỹ 100đ Tuân thủ)</span>
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black font-mono">
                   100đ Account Health

@@ -44,7 +44,8 @@ import {
   RotateCw,
   ShieldCheck,
   Star,
-  ShieldAlert
+  ShieldAlert,
+  ClipboardCheck
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole } from '../../utils/calculator';
@@ -647,7 +648,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             </div>
 
             <div className="grid grid-cols-1 gap-3.5 pt-1">
-              {/* Lựa chọn 1: Đánh giá */}
+              {/* Lựa chọn 1: Ghi nhận và đánh giá */}
               <button
                 onClick={() => {
                   setShowFeedbackChoiceModal(false);
@@ -656,24 +657,24 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 className="group relative p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-100/30 hover:from-emerald-100 hover:to-teal-100/80 border border-emerald-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
               >
                 <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
-                  <Star className="w-6 h-6 fill-white text-white" />
+                  <ClipboardCheck className="w-6 h-6 text-white" />
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-extrabold text-[#1B4332] group-hover:text-emerald-950">
-                      🌟 Đánh Giá
+                      📝 Ghi nhận và đánh giá
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 text-[10px] font-black font-mono">
                       Thang 5.0đ
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Ghi nhận thành tích, khen thưởng tuyên dương hoặc đóng góp ý kiến về chuyên môn & văn hóa.
+                    Ghi nhận thành tích, khen thưởng tuyên dương hoặc đánh giá hiệu quả công việc (Thang điểm 5.0).
                   </p>
                 </div>
               </button>
 
-              {/* Lựa chọn 2: Phản ánh nội quy */}
+              {/* Lựa chọn 2: Nội quy */}
               <button
                 onClick={() => {
                   setShowFeedbackChoiceModal(false);
@@ -682,19 +683,19 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 className="group relative p-4 rounded-2xl bg-gradient-to-br from-amber-50/80 via-rose-50/40 to-orange-100/30 hover:from-amber-100/90 hover:to-rose-100/80 border border-rose-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
               >
                 <div className="p-3 bg-gradient-to-br from-rose-600 to-amber-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
-                  <ShieldAlert className="w-6 h-6 text-white" />
+                  <BookOpen className="w-6 h-6 text-white" />
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-extrabold text-rose-950 group-hover:text-rose-900">
-                      🛡️ Phản Ánh Nội Quy
+                      📜 Nội quy
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-rose-200/80 text-rose-900 text-[10px] font-black font-mono">
                       100đ Nội quy
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Lập biên bản phản ánh vi phạm 10 điều khoản nội quy, nhắc nhở kỷ luật & ranh giới không thỏa hiệp.
+                    Lập biên bản phản ánh vi phạm 10 điều khoản nội quy tổ chức (Quỹ điểm 100đ tuân thủ).
                   </p>
                 </div>
               </button>

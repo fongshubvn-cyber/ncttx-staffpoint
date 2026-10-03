@@ -13,7 +13,9 @@ import {
   Layers,
   Grid,
   ListFilter,
-  Key
+  Key,
+  ClipboardCheck,
+  BookOpen
 } from 'lucide-react';
 
 interface Option1StaffViewProps {
@@ -263,15 +265,17 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => onOpenIncidentModal(staff.id, 'ghi_nhan')}
-              className="flex-1 py-1.5 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[11px] font-bold transition-all border border-emerald-200/60"
+              className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[11px] font-bold transition-all border border-emerald-200/60 flex items-center justify-center gap-1 cursor-pointer"
             >
-              + Khen Thưởng
+              <ClipboardCheck className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Ghi nhận & đánh giá</span>
             </button>
             <button
               onClick={() => onOpenIncidentModal(staff.id, 'vi_pham')}
-              className="flex-1 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-bold transition-all border border-rose-200/60"
+              className="flex-1 py-1.5 px-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-bold transition-all border border-rose-200/60 flex items-center justify-center gap-1 cursor-pointer"
             >
-              + Ghi Vi Phạm
+              <BookOpen className="w-3.5 h-3.5 text-rose-600" />
+              <span>Nội quy</span>
             </button>
           </div>
         )}
