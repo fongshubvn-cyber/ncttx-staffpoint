@@ -136,12 +136,12 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     return () => unsub();
   }, []);
 
-  const [configSubTab, setConfigSubTab] = useState<'questions' | 'baseline'>('questions');
+  const [configSubTab, setConfigSubTab] = useState<'policy' | 'questions' | 'baseline'>('policy');
   const [analyticsSubTab, setAnalyticsSubTab] = useState<'report' | 'guide'>('report');
 
   useEffect(() => {
-    if (activeTab === 'questions' || activeTab === 'baseline') {
-      setConfigSubTab(activeTab);
+    if (activeTab === 'questions' || activeTab === 'baseline' || activeTab === 'policy') {
+      setConfigSubTab(activeTab as any);
     }
     if (activeTab === 'report' || activeTab === 'guide') {
       setAnalyticsSubTab(activeTab);
@@ -162,7 +162,6 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     { id: 'summary', label: 'Tổng Quan', icon: LayoutDashboard },
     { id: 'staff', label: 'Nhân Sự', icon: Users },
     { id: 'incidents', label: 'Phản Hồi', icon: Trophy, badge: visibleIncidentsBadgeCount > 0 ? visibleIncidentsBadgeCount : undefined },
-    { id: 'policy', label: '🛡️ Nội Quy (100đ)', icon: ShieldCheck },
     { id: 'config', label: 'Cấu Hình', icon: Sliders },
     { id: 'analytics', label: 'Báo Cáo & Hướng Dẫn', icon: BarChart3 },
   ];
@@ -462,29 +461,30 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           />
         )}
 
-        {activeTab === 'policy' && (
-          <PolicyView
-            staffList={staffList}
-            incidents={incidents}
-            params={params}
-            onUpdateParams={onUpdateParams}
-            currentUser={currentUser}
-            onAppealIncident={onAppealIncident}
-            selectedPeriodKey="2026-10"
-          />
-        )}
-
-        {/* CONSOLIDATED TAB 1: Cấu Hình (Tiêu Chí & Tham Số) */}
-        {(activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline') && (
+        {/* CONSOLIDATED TAB: Cấu Hình (10 Nội Quy, Tiêu Chí & Tham Số) */}
+        {(activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline' || activeTab === 'policy') && (
           <div className="space-y-6">
             {/* Glass Sub-tab Switcher Bar */}
-            <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-2 max-w-md">
+            <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-2 max-w-xl">
+              <button
+                type="button"
+                onClick={() => setConfigSubTab('policy')}
+                className={`flex-1 py-2 px-3 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                  configSubTab === 'policy'
+                    ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <ShieldCheck className="w-4 h-4" />
+                <span>🛡️ 10 Nội Quy (100đ)</span>
+              </button>
+
               <button
                 type="button"
                 onClick={() => setConfigSubTab('questions')}
-                className={`flex-1 py-2 px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`flex-1 py-2 px-3 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   configSubTab === 'questions'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25'
+                    ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
@@ -495,9 +495,9 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setConfigSubTab('baseline')}
-                className={`flex-1 py-2 px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`flex-1 py-2 px-3 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
                   configSubTab === 'baseline'
-                    ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25'
+                    ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
@@ -506,7 +506,20 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               </button>
             </div>
 
-            {/* Sub-tab 1 Content: Tiêu Chí */}
+            {/* Sub-tab 1 Content: 10 Nội Quy (100đ) */}
+            {configSubTab === 'policy' && (
+              <PolicyView
+                staffList={staffList}
+                incidents={incidents}
+                params={params}
+                onUpdateParams={onUpdateParams}
+                currentUser={currentUser}
+                onAppealIncident={onAppealIncident}
+                selectedPeriodKey="2026-10"
+              />
+            )}
+
+            {/* Sub-tab 2 Content: Tiêu Chí */}
             {configSubTab === 'questions' && (
               <Option1QuestionsView
                 questions={questions}
