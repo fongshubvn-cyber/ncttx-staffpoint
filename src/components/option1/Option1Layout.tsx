@@ -17,6 +17,7 @@ import { Option1QuestionsView } from './Option1QuestionsView';
 import { Option1ReportView } from './Option1ReportView';
 import { BaselineView } from '../BaselineView';
 import { GuideView } from '../GuideView';
+import { PolicyView } from '../PolicyView';
 import { AiChatModal } from '../AiChatModal';
 import { AdminPasswordModal } from '../AdminPasswordModal';
 
@@ -40,7 +41,8 @@ import {
   ExternalLink,
   User,
   Key,
-  RotateCw
+  RotateCw,
+  ShieldCheck
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole } from '../../utils/calculator';
@@ -160,6 +162,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     { id: 'summary', label: 'Tổng Quan', icon: LayoutDashboard },
     { id: 'staff', label: 'Nhân Sự', icon: Users },
     { id: 'incidents', label: 'Phản Hồi', icon: Trophy, badge: visibleIncidentsBadgeCount > 0 ? visibleIncidentsBadgeCount : undefined },
+    { id: 'policy', label: '🛡️ Nội Quy (100đ)', icon: ShieldCheck },
     { id: 'config', label: 'Cấu Hình', icon: Sliders },
     { id: 'analytics', label: 'Báo Cáo & Hướng Dẫn', icon: BarChart3 },
   ];
@@ -456,6 +459,18 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             currentUser={currentUser}
             onAppealIncident={onAppealIncident}
             onResolveAppeal={onResolveAppeal}
+          />
+        )}
+
+        {activeTab === 'policy' && (
+          <PolicyView
+            staffList={staffList}
+            incidents={incidents}
+            params={params}
+            onUpdateParams={onUpdateParams}
+            currentUser={currentUser}
+            onAppealIncident={onAppealIncident}
+            selectedPeriodKey="2026-10"
           />
         )}
 

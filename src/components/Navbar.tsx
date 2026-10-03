@@ -74,6 +74,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   const rawNavItems = [
     { id: 'summary', label: 'Tổng hợp', icon: LayoutDashboard },
     { id: 'incidents', label: 'Phiếu', icon: HeartHandshake },
+    { id: 'policy', label: 'Nội Quy (100đ)', icon: ShieldCheck },
     { id: 'staff', label: 'Đội ngũ', icon: Users },
     { id: 'questions', label: 'Tiêu chí', icon: Sparkles },
     { id: 'baseline', label: 'Tham số', icon: BarChart3 },
