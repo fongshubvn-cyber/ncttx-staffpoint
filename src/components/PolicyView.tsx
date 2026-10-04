@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Staff, IncidentRecord, ParameterConfig, AuthUser, PolicyRule } from '../types';
-import { getStaffPolicyScoreForPeriod, getPolicyHealthStatus } from '../utils/calculator';
+import { getStaffPolicyScoreForPeriod, getPolicyHealthStatus, get3RecentPeriods } from '../utils/calculator';
 import { PolicyHealthModal } from './PolicyHealthModal';
 import { initialPolicyRules } from '../data/seedData';
 import { 
@@ -15,7 +15,8 @@ import {
   ChevronRight, 
   AlertCircle,
   RotateCw,
-  Plus
+  Plus,
+  Calendar
 } from 'lucide-react';
 
 interface PolicyViewProps {
@@ -39,6 +40,10 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
   selectedPeriodKey,
   onOpenIncidentModal,
 }) => {
+  const recentPeriods = get3RecentPeriods();
+  const [activePeriodKey, setActivePeriodKey] = useState<string>(selectedPeriodKey || recentPeriods[0].key);
+  const activePeriodObj = recentPeriods.find(p => p.key === activePeriodKey) || recentPeriods[0];
+
   const [activeTab, setActiveTab] = useState<'rules' | 'staff_scores' | 'appeals'>('rules');
   const [isEditingRules, setIsEditingRules] = useState(false);
   const [rules, setRules] = useState<PolicyRule[]>(() => {
@@ -79,7 +84,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
           isOpen={Boolean(selectedStaffForModal)}
           onClose={() => setSelectedStaffForModal(null)}
           staff={selectedStaffForModal}
-          periodKey={selectedPeriodKey}
+          periodKey={activePeriodKey}
           incidents={incidents}
           params={params}
           currentUser={currentUser}
@@ -96,10 +101,10 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
               <span>Hệ Thống Nội Quy & Tình Trạng Nhân Sự (Account Health)</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black font-heading text-white tracking-tight">
-              10 Nội Quy Mặc Định & Điểm Tuân Thủ (100 Điểm Gốc) 🛡️
+              10 Nội Quy Mặc Định & Điểm Tuân Thủ (100 Điểm Gốc Mỗi Tháng) 🛡️
             </h2>
             <p className="text-xs sm:text-sm text-emerald-100/90 max-w-2xl font-medium leading-relaxed">
-              Mỗi nhân sự Nhà Của Thời Thanh Xuân được cấp <strong className="text-[#52B788]">100 điểm nội quy mặc định</strong>. Khi vi phạm sẽ bị trừ điểm theo mốc severity của nội quy.
+              Mỗi tháng, nhân sự được cấp <strong className="text-[#52B788]">100 điểm nội quy mặc định độc lập</strong>. Điểm trừ chỉ tính trong kỳ tháng đó. Sang tháng mới, điểm tuân thủ sẽ tự động <strong className="text-amber-300">Restart về 100đ</strong>.
             </p>
           </div>
 
@@ -115,6 +120,32 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
               <span>{isEditingRules ? "💾 Lưu Cấu Hình Điểm Phạt" : "✏️ Chỉnh Sửa 10 Nội Quy"}</span>
             </button>
           )}
+        </div>
+
+        {/* Monthly Period Selector Bar */}
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#112d22] p-3.5 rounded-2xl border border-emerald-700/60 relative z-10">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-200">
+            <Calendar className="w-4 h-4 text-[#52B788]" />
+            <span>Kỳ Đánh Giá Nội Quy:</span>
+            <span className="text-[10px] text-emerald-400/90 font-medium">
+              (Tháng nào lưu tháng đó • Tự động restart 100đ khi sang tháng mới)
+            </span>
+          </div>
+          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
+            {recentPeriods.map((p) => (
+              <button
+                key={p.key}
+                onClick={() => setActivePeriodKey(p.key)}
+                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  activePeriodKey === p.key
+                    ? 'bg-[#52B788] text-[#1B4332] shadow-md font-extrabold scale-105'
+                    : 'bg-emerald-950/80 text-emerald-200 hover:bg-emerald-900 border border-emerald-700/40'
+                }`}
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
         </div>
 
         {/* Mốc Cảnh Báo Quick Badges */}
@@ -455,14 +486,14 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
                   <th className="p-3">Mã NV</th>
                   <th className="p-3">Họ và Tên</th>
                   <th className="p-3">Vị trí & Phòng ban</th>
-                  <th className="p-3 text-center">Điểm Nội Quy (Gốc 100đ)</th>
+                  <th className="p-3 text-center">Điểm Nội Quy Kỳ {activePeriodObj.mStr}/{activePeriodObj.year} (Gốc 100đ)</th>
                   <th className="p-3 text-center">Trạng Thái Health</th>
                   <th className="p-3 text-right">Thao tác</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100">
                 {filteredStaffList.map((st) => {
-                  const policyData = getStaffPolicyScoreForPeriod(st, selectedPeriodKey, incidents, params);
+                  const policyData = getStaffPolicyScoreForPeriod(st, activePeriodKey, incidents, params);
                   const { policyScore, totalDeduction, statusObj, violations } = policyData;
 
                   return (
