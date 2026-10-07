@@ -1,5 +1,30 @@
 # 📜 NHẬT KÝ PHIÊN BẢN & MỐC NGUYÊN BẢN DỰ ÁN STAFFPOINT
 
+## 📌 PHIÊN BẢN V1.004-STABLE (07/10/2026)
+**Git Tag:** `v1.004-stable`  
+**GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  
+**Trạng thái:** ✅ Đã nâng cấp thành công giao diện Tỉ lệ % Hoàn Thành Công Việc, Tách bạch 3 Ngạch Điểm & Điểm Chuyên Môn Mặc Định 5.0.
+
+### 🌟 BẢNG TỔNG HỢP CÁC TÍNH NĂNG & CẢI TIẾN TRONG BẢN V1.004:
+
+#### 1. 📊 Tổng Điểm Đánh Giá Công Việc theo Phần Trăm (%)
+- Thay thế dòng ghi chú `(Điểm tối đa 5.0)` bằng **tỉ lệ % hoàn thành công việc** (Ví dụ: `100%` tương ứng `4.82đ` mốc ngạch tiêu chuẩn).
+- Thanh tiến trình fill theo tỉ lệ phần trăm đạt được trực quan.
+
+#### 2. 📑 Tổ chức 3 Hàng Danh Mục Riêng Cho Các Ngạch Điểm
+- Sắp xếp minh bạch 3 tiêu chí riêng biệt: **🟢 Văn Hóa & Thái Độ (5.0/5.0)**, **🔵 Ngạch Quản Lý (e.g. 4.4/4.4)**, **🟣 Ngạch Chuyên Môn (e.g. 4.2/4.2)**.
+- Mẫu số điểm ngạch thể hiện mốc ngạch chuẩn thực tế thay vì `/5.0` cứng.
+
+#### 3. 🎯 Điểm Chuyên Môn Tự Động 5.0/5.0 Khi Chưa Có Dữ Liệu Ngạch
+- Nhân sự chưa có dữ liệu sát hạch ngạch chuyên môn riêng sẽ tự động tính **5.0/5.0** và hiển thị ghi chú `Chưa có dữ liệu ngạch (Auto 5/5)`.
+- Cho phép Admin chỉnh sửa ngạch chuyên môn tùy chỉnh trong tab quản lý Nhân sự.
+
+#### 4. 🔄 Lưu Điểm Nội Quy Độc Lập Theo Kỳ (Monthly Reset 100đ)
+- Mỗi tháng nhân sự được reset tự động về 100đ tuân thủ nội quy mặc định độc lập.
+- Bổ sung thanh chọn kỳ xem lịch sử điểm nội quy giữa các tháng.
+
+---
+
 ## 📌 PHIÊN BẢN V1.003-STABLE (04/10/2026)
 **Git Tag:** `v1.003-stable`  
 **GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  
