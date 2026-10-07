@@ -29,7 +29,8 @@ import {
   ChevronRight,
   Star,
   ClipboardCheck,
-  BookOpen
+  BookOpen,
+  Bell
 } from 'lucide-react';
 
 interface Option1SummaryViewProps {
@@ -475,21 +476,10 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                 Các sự kiện khen thưởng và vi phạm đã ghi nhận trong hệ thống
               </p>
             </div>
-            <div className="flex items-center gap-2 shrink-0">
-              {onRefreshCloud && (
-                <button
-                  type="button"
-                  onClick={onRefreshCloud}
-                  disabled={isRefreshingCloud}
-                  className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-bold transition-all border border-slate-200 flex items-center gap-1.5 active:scale-95 disabled:opacity-50 cursor-pointer"
-                  title="Kéo dữ liệu mới nhất từ Firebase Cloud"
-                >
-                  <RotateCw className={`w-3.5 h-3.5 text-emerald-700 ${isRefreshingCloud ? 'animate-spin' : ''}`} />
-                  <span>Làm Mới Cloud</span>
-                </button>
-              )}
-              <span className="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-100 text-slate-700">
-                {staffIncidents.length} sự kiện
+            <div className="flex items-center shrink-0">
+              <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-amber-50/80 text-amber-900 border border-amber-200/80 text-xs font-bold shadow-2xs">
+                <Bell className="w-3.5 h-3.5 text-amber-600 fill-amber-500/20" />
+                <span>{staffIncidents.length} sự kiện</span>
               </span>
             </div>
           </div>
