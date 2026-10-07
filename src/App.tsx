@@ -80,7 +80,13 @@ export function App() {
   // State with LocalStorage Persistence
   const [staffList, setStaffList] = useState<Staff[]>(() => {
     const saved = localStorage.getItem('ncttx_staff_list');
-    return saved ? JSON.parse(saved) : initialStaffList;
+    const rawList: Staff[] = saved ? JSON.parse(saved) : initialStaffList;
+    return rawList.map(st => ({
+      ...st,
+      generalScore: 5.0,
+      techScore: st.hasCustomTechScore && typeof st.techScore === 'number' ? st.techScore : 5.0,
+      mgmtScore: st.hasCustomMgmtScore && typeof st.mgmtScore === 'number' ? st.mgmtScore : 5.0,
+    }));
   });
 
   const [lines, setLines] = useState<DepartmentLine[]>(() => {
@@ -121,8 +127,14 @@ export function App() {
     const unsubStaff = subscribeToCollection('staff_list', (cloudData) => {
       isCloudLoadedRef.current['staff_list'] = true;
       if (Array.isArray(cloudData) && cloudData.length > 0) {
-        setStaffList(cloudData);
-        localStorage.setItem('ncttx_staff_list', JSON.stringify(cloudData));
+        const sanitized = cloudData.map((st: Staff) => ({
+          ...st,
+          generalScore: 5.0,
+          techScore: st.hasCustomTechScore && typeof st.techScore === 'number' ? st.techScore : 5.0,
+          mgmtScore: st.hasCustomMgmtScore && typeof st.mgmtScore === 'number' ? st.mgmtScore : 5.0,
+        }));
+        setStaffList(sanitized);
+        localStorage.setItem('ncttx_staff_list', JSON.stringify(sanitized));
       }
     }, initialStaffList);
 

@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Staff, IncidentRecord, Question, ParameterConfig, AuthUser } from '../types';
-import { getSalaryTierBadge, isHRHeadRole, get3RecentPeriods, getVisibleStaffListForUser, getStaffScoresForPeriod, getStaffPolicyScoreForPeriod } from '../utils/calculator';
+import { getSalaryTierBadge, isHRHeadRole, get3RecentPeriods, getVisibleStaffListForUser, getStaffScoresForPeriod, getStaffPolicyScoreForPeriod, isManagementRole } from '../utils/calculator';
 import { PolicyHealthModal } from './PolicyHealthModal';
 import { 
   Sparkles, 
@@ -336,7 +336,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                   )}
 
                   <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs gap-2">
-                    <span className="text-slate-700 font-semibold flex items-center gap-1.5 shrink-0">
+                    <span className="text-slate-[#2D3748] font-semibold flex items-center gap-1.5 shrink-0">
                       <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0"></span>
                       <span>Ngạch Chuyên Môn:</span>
                     </span>
@@ -346,7 +346,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                       </span>
                     ) : (
                       <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200 truncate">
-                        Chưa có dữ liệu ngạch (Tự động 5/5)
+                        Chưa tích ngạch (Mặc định 5.0 / 5.0)
                       </span>
                     )}
                   </div>

@@ -5,12 +5,12 @@ setlocal enableextensions enabledelayedexpansion
 set "PATH=C:\Program Files\Git\cmd;%PATH%"
 
 echo ========================================================
-echo   STAFFPOINT v1.004 - DEPLOY TO GITHUB PAGES
+echo   STAFFPOINT v1.005 - DEPLOY TO GITHUB PAGES
 echo   Link: https://fongshubvn-cyber.github.io/ncttx-staffpoint/
 echo ========================================================
 echo.
 
-echo [1/3] Building production bundle (v1.004)...
+echo [1/3] Building production bundle (v1.005)...
 call npm.cmd run build
 if %errorlevel% neq 0 (
     echo.
@@ -24,7 +24,7 @@ echo [2/3] Pushing source code to GitHub main branch...
 git add .
 set "msg=%~1"
 if "%msg%"=="" (
-    set "msg=Release v1.004-stable %date% %time%"
+    set "msg=Release v1.005-stable %date% %time%"
 )
 git commit -m "%msg%"
 git push origin main
@@ -35,7 +35,7 @@ call npm.cmd run deploy
 
 echo.
 echo ========================================================
-echo SUCCESS: Deployed v1.004 successfully!
+echo SUCCESS: Deployed v1.005 successfully!
 echo Link: https://fongshubvn-cyber.github.io/ncttx-staffpoint/
 echo (Note: GitHub Pages may take 1-2 minutes to reflect updates)
 echo ========================================================

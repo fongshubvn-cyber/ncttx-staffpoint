@@ -30,7 +30,8 @@ export interface Staff {
   role: string; // Vị trí
   positionCategory: string; // Vị trí theo Danh mục
   department: string; // Phòng ban
-  line: string; // Tuyến
+  line: string; // Tuyến chính
+  assignedLines?: string[]; // Danh sách các ngạch chuyên môn được tích chọn (vd: ['Pha chế', 'Sản xuất'])
   speechCapability: SpeechType;
   location: string; // Điểm làm việc
   joinDate?: string;

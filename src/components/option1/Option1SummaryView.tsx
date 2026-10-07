@@ -414,7 +414,7 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                         </span>
                       ) : (
                         <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200 truncate">
-                          Chưa có dữ liệu ngạch (Tự động 5/5)
+                          Chưa tích ngạch (Mặc định 5.0 / 5.0)
                         </span>
                       )}
                     </div>

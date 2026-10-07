@@ -1,5 +1,17 @@
 # 📜 NHẬT KÝ PHIÊN BẢN & MỐC NGUYÊN BẢN DỰ ÁN STAFFPOINT
 
+## 📌 PHIÊN BẢN V1.005-STABLE (07/10/2026)
+**Git Tag:** `v1.005-stable`  
+**GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  
+**Trạng thái:** ✅ Đã hoàn tất nâng cấp Tính năng Tích chọn Ngạch Chuyên Môn Đa Ngạch (Checkbox Tuyến/Bộ phận làm việc).
+
+### 🌟 BẢNG TỔNG HỢP CÁC TÍNH NĂNG & CẢI TIẾN TRONG BẢN V1.005:
+- **Tích chọn Ngạch Chuyên Môn bằng Checkbox Tuyến Làm Việc:** Chuyển đổi toàn bộ ô chọn rating tùy tiện sang danh sách Checkbox các Tuyến/Bộ phận làm việc thực tế (`Pha chế`, `Sản xuất / Bếp bánh`, `Kế toán`, `Thương mại & Dịch vụ`, `E-Commerce`, v.v.). Nhân sự có thể đảm nhận đồng thời 1, 2, 3 hoặc nhiều ngạch.
+- **Tự động hóa Điểm Văn Hóa (5.0/5.0):** Điểm Văn Hóa được giữ cố định chuẩn 5.0 và chịu tác động tự động khi phát sinh sự kiện/phản hồi trong hệ thống.
+- **Cấu hình Ngạch Quản Lý minh bạch:** Tích chọn áp dụng Ngạch Quản lý cho vị trí Quản lý/Lead.
+
+---
+
 ## 📌 PHIÊN BẢN V1.004-STABLE (07/10/2026)
 **Git Tag:** `v1.004-stable`  
 **GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  

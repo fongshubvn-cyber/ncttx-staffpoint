@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Staff, DepartmentLine, ParameterConfig, AuthUser, SpeechType } from '../../types';
-import { getSalaryTierBadge, calculateTotalScoreForStaff, calculateSalaryTier, getVisibleStaffListForUser } from '../../utils/calculator';
+import { getSalaryTierBadge, calculateTotalScoreForStaff, calculateSalaryTier, getVisibleStaffListForUser, isManagementRole } from '../../utils/calculator';
 import { 
   Users, 
   Search, 
@@ -555,13 +555,33 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                 </div>
                 <div className="flex justify-between text-[#2D6A4F]">
                   <span>• Điểm Văn Hóa Chung:</span>
-                  <strong className="font-mono">{selectedStaff.generalScore || 5.0}đ</strong>
+                  <strong className="font-mono">{selectedStaff.generalScore || 5.0} / 5.0</strong>
                 </div>
-                <div className="flex justify-between text-[#2D6A4F]">
-                  <span>• Điểm Ngạch Chuyên Môn:</span>
-                  <strong className="font-mono">
-                    {selectedStaff.hasCustomTechScore ? `${selectedStaff.techScore}đ` : 'Chưa có dữ liệu ngạch (Tự động 5.0đ)'}
-                  </strong>
+                {isManagementRole(selectedStaff) && (
+                  <div className="flex justify-between text-[#2D6A4F]">
+                    <span>• Điểm Ngạch Quản Lý:</span>
+                    <strong className="font-mono">
+                      {selectedStaff.isManager ? `${selectedStaff.mgmtScore ?? 5.0} / ${selectedStaff.mgmtScore ?? 5.0}` : 'Mặc định (5.0 / 5.0)'}
+                    </strong>
+                  </div>
+                )}
+                <div className="flex flex-col gap-1 text-[#2D6A4F]">
+                  <div className="flex justify-between items-center">
+                    <span>• Ngạch Chuyên Môn đảm nhận:</span>
+                    <span className="font-bold text-[11px] font-mono">
+                      {(selectedStaff.assignedLines || [selectedStaff.line]).filter(Boolean).length} Ngạch
+                    </span>
+                  </div>
+                  <div className="flex flex-wrap gap-1 justify-end">
+                    {(selectedStaff.assignedLines && selectedStaff.assignedLines.length > 0
+                      ? selectedStaff.assignedLines
+                      : [selectedStaff.line]
+                    ).map((lName) => (
+                      <span key={lName} className="text-[10px] bg-emerald-100 text-emerald-900 font-bold px-2 py-0.5 rounded-md border border-emerald-200">
+                        {lName}
+                      </span>
+                    ))}
+                  </div>
                 </div>
               </div>
 
@@ -775,57 +795,107 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-1 text-xs">Điểm Văn Hóa (0-5.0)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="5"
-                    value={editingStaff.generalScore}
-                    onChange={(e) => setEditingStaff({ ...editingStaff, generalScore: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs"
-                  />
+              {/* 1. Điểm Văn Hóa chung: Tự động (Không chỉnh sửa thủ công) */}
+              <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl space-y-1">
+                <div className="flex items-center justify-between text-xs font-bold text-emerald-900">
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
+                    Điểm Văn Hóa & Thái Độ: <span className="text-emerald-700 font-extrabold text-sm ml-1">5.0 / 5.0</span>
+                  </span>
+                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md">Tự động (Chính xác)</span>
+                </div>
+                <p className="text-[11px] text-emerald-700/90 leading-tight">
+                  Điểm mặc định 5.0/5.0, tự động chịu tác động đúng khi phát sinh sự kiện/phản hồi nhân sự trong kỳ. Không cho phép chỉnh tay trực tiếp tránh sai lệch.
+                </p>
+              </div>
+
+              {/* 2. Tích chọn Ngạch Chuyên Môn (Các tuyến / bộ phận làm việc) */}
+              <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
+                <div className="flex items-center justify-between">
+                  <label className="block text-slate-800 font-bold text-xs">
+                    Tích chọn Ngạch Chuyên Môn (Phòng ban / Tuyến làm việc):
+                  </label>
+                  <span className="text-[10px] bg-slate-200 text-slate-700 px-2 py-0.5 rounded-full font-bold">
+                    {(editingStaff.assignedLines || [editingStaff.line]).filter(Boolean).length} Ngạch
+                  </span>
                 </div>
 
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-1 text-xs">Ngạch Chuyên Môn (0-5.0)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="5"
-                    value={editingStaff.techScore}
-                    onChange={(e) => setEditingStaff({ ...editingStaff, techScore: parseFloat(e.target.value) || 0, hasCustomTechScore: true })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs"
-                  />
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto p-2 bg-white rounded-lg border border-slate-200">
+                  {lines.map((l) => {
+                    const currentAssigned = editingStaff.assignedLines || (editingStaff.line ? [editingStaff.line] : []);
+                    const isChecked = currentAssigned.includes(l.name);
+                    return (
+                      <label
+                        key={l.id}
+                        className={`flex items-center gap-2 p-2 rounded-lg border text-xs font-semibold cursor-pointer transition-all ${
+                          isChecked
+                            ? 'bg-emerald-50 border-emerald-300 text-emerald-900 shadow-2xs font-bold'
+                            : 'bg-white border-slate-200 text-slate-600 hover:bg-slate-50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={isChecked}
+                          onChange={(e) => {
+                            let updated: string[];
+                            if (e.target.checked) {
+                              updated = Array.from(new Set([...currentAssigned, l.name]));
+                            } else {
+                              updated = currentAssigned.filter((n) => n !== l.name);
+                            }
+                            const mainLine = updated[0] || editingStaff.line || lines[0]?.name || 'Pha chế';
+                            setEditingStaff({
+                              ...editingStaff,
+                              assignedLines: updated,
+                              line: mainLine,
+                              hasCustomTechScore: updated.length > 0,
+                            });
+                          }}
+                          className="w-4 h-4 text-emerald-600 rounded cursor-pointer shrink-0"
+                        />
+                        <span className="truncate">{l.name}</span>
+                      </label>
+                    );
+                  })}
                 </div>
 
-                <div>
-                  <label className="block text-slate-700 font-semibold mb-1 text-xs">Ngạch Quản Lý (0-5.0)</label>
-                  <input
-                    type="number"
-                    step="0.1"
-                    min="0"
-                    max="5"
-                    value={editingStaff.mgmtScore ?? 5.0}
-                    onChange={(e) => setEditingStaff({ ...editingStaff, mgmtScore: parseFloat(e.target.value) || 0, hasCustomMgmtScore: true })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs"
-                  />
+                {/* Display selected ngạch tags */}
+                <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                  <span className="text-[11px] text-slate-500 font-semibold">Ngạch đang chịu tác động:</span>
+                  {(editingStaff.assignedLines && editingStaff.assignedLines.length > 0
+                    ? editingStaff.assignedLines
+                    : [editingStaff.line]
+                  ).map((lName) => (
+                    <span key={lName} className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md border border-emerald-200">
+                      {lName}
+                    </span>
+                  ))}
                 </div>
               </div>
 
-              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200/80">
+              {/* 3. Tích chọn Ngạch Quản Lý */}
+              <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl space-y-2">
                 <label className="flex items-center gap-2 cursor-pointer font-bold text-emerald-950 text-xs">
                   <input
                     type="checkbox"
                     checked={!!editingStaff.isManager}
-                    onChange={(e) => setEditingStaff({ ...editingStaff, isManager: e.target.checked })}
+                    onChange={(e) => {
+                      const checked = e.target.checked;
+                      setEditingStaff({
+                        ...editingStaff,
+                        isManager: checked,
+                        hasCustomMgmtScore: checked,
+                      });
+                    }}
                     className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
                   />
-                  <span>Chức danh Quản Lý / Lead (Tính trọng số Ngạch Quản Lý)</span>
+                  <span>Áp dụng Ngạch Quản Lý (Vị trí Quản lý / Team Lead / C-Level)</span>
                 </label>
+                <p className="text-[11px] text-emerald-800/80 leading-tight">
+                  {editingStaff.isManager
+                    ? '✓ Nhân sự đang giữ vị trí Quản lý: Chịu tác động bởi các tiêu chí Quản lý & Lãnh đạo.'
+                    : '• Không giữ vị trí Quản lý: Không tính trọng số ngạch Quản lý.'}
+                </p>
               </div>
 
               <div>

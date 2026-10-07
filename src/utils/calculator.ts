@@ -184,7 +184,9 @@ export function getStaffScoresForPeriod(
 ): {
   generalScore: number;
   techScore: number;
+  hasCustomTechScore?: boolean;
   mgmtScore: number;
+  hasCustomMgmtScore?: boolean;
   totalScore: number;
   salaryTier: number;
   violationsCount: number;
