@@ -559,7 +559,9 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                 </div>
                 <div className="flex justify-between text-[#2D6A4F]">
                   <span>• Điểm Ngạch Chuyên Môn:</span>
-                  <strong className="font-mono">{selectedStaff.techScore || 5.0}đ</strong>
+                  <strong className="font-mono">
+                    {selectedStaff.hasCustomTechScore ? `${selectedStaff.techScore}đ` : 'Chưa có dữ liệu ngạch (Tự động 5.0đ)'}
+                  </strong>
                 </div>
               </div>
 
@@ -795,7 +797,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                     min="0"
                     max="5"
                     value={editingStaff.techScore}
-                    onChange={(e) => setEditingStaff({ ...editingStaff, techScore: parseFloat(e.target.value) || 0 })}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, techScore: parseFloat(e.target.value) || 0, hasCustomTechScore: true })}
                     className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
                   />
                 </div>

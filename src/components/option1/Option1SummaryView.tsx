@@ -375,7 +375,9 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
               <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
                 <span>VH: {periodScores.generalScore}/5</span>
                 {hasMgmtRole && <span>QL: {periodScores.mgmtScore}/5</span>}
-                <span>CM: {periodScores.techScore}/5</span>
+                <span>
+                  CM: {periodScores.hasCustomTechScore ? `${periodScores.techScore}/5` : 'Chưa có dữ liệu ngạch (Tự động 5/5)'}
+                </span>
               </div>
             </div>
 

@@ -39,6 +39,7 @@ export interface Staff {
   lastQuarter?: string;
   generalScore: number; // Điểm văn hóa chung (thang 5.0)
   techScore: number; // Điểm ngạch chuyên môn
+  hasCustomTechScore?: boolean; // Flag đánh dấu đã có dữ liệu đánh giá ngạch chuyên môn tùy chỉnh hay chưa
   mgmtScore?: number; // Điểm ngạch quản lý
   totalScore: number; // Điểm làm việc / Điểm tổng (0.0 - 5.0)
   salaryTier: number; // Bậc cách làm việc (1 đến 5)
