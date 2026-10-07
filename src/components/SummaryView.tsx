@@ -314,11 +314,15 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
               </div>
               <div className="bg-white p-1.5 rounded-xl border border-slate-200">
                 <span className="text-slate-400 font-bold block">Chuyên môn</span>
-                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.techScore} / 5</strong>
+                <strong className="text-[#1B4332] font-mono text-xs">
+                  {periodScores.hasCustomTechScore ? `${periodScores.techScore} / ${periodScores.techScore}` : 'Chưa có dữ liệu (Auto 5/5)'}
+                </strong>
               </div>
               <div className="bg-white p-1.5 rounded-xl border border-slate-200">
                 <span className="text-slate-400 font-bold block">Quản lý</span>
-                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.mgmtScore > 0 ? `${periodScores.mgmtScore} / 5` : '---'}</strong>
+                <strong className="text-[#1B4332] font-mono text-xs">
+                  {periodScores.mgmtScore > 0 ? `${periodScores.mgmtScore} / ${periodScores.mgmtScore}` : '---'}
+                </strong>
               </div>
             </div>
           </div>
