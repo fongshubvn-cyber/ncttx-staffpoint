@@ -356,30 +356,71 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
           {/* DUAL SCORE SIDEBAR: 1. WORK SCORE, 2. POLICY SCORE */}
           <div className="space-y-3">
             {/* WORK SCORE CARD (BÊN TRÁI) */}
-            <div className="p-4 rounded-2xl bg-[#EDEAE3]/50 border border-slate-200 space-y-3">
-              <div className="flex items-center justify-between">
-                <span className="text-xs font-bold text-[#1B4332] flex items-center space-x-1">
-                  <Star className="w-3.5 h-3.5 text-[#52B788] fill-[#52B788]" />
-                  <span>Điểm Đánh Giá Công Việc</span>
-                </span>
-                <span className="text-xs font-mono font-bold text-[#2D6A4F]">
-                  {overallScore.toFixed(2)} <span className="text-[10px] text-slate-500 font-sans font-normal">(Điểm tối đa: 5.0)</span>
-                </span>
-              </div>
-              <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
-                <div
-                  className="bg-gradient-to-r from-emerald-600 to-teal-600 h-full rounded-full transition-all duration-500"
-                  style={{ width: `${(overallScore / 5) * 100}%` }}
-                ></div>
-              </div>
-              <div className="flex items-center justify-between text-[11px] text-slate-600 font-medium">
-                <span>VH: {periodScores.generalScore}/5</span>
-                {hasMgmtRole && <span>QL: {periodScores.mgmtScore}/{periodScores.mgmtScore}</span>}
-                <span>
-                  CM: {periodScores.hasCustomTechScore ? `${periodScores.techScore}/${periodScores.techScore}` : 'Chưa có dữ liệu ngạch (Auto 5/5)'}
-                </span>
-              </div>
-            </div>
+            {(() => {
+              const targetBaseline = staff.totalScore && staff.totalScore > 0 ? staff.totalScore : 5.0;
+              const overallScorePercent = Math.min(100, Math.round((overallScore / targetBaseline) * 100));
+              return (
+                <div className="p-4 rounded-2xl bg-[#EDEAE3]/50 border border-slate-200 space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[#1B4332] flex items-center space-x-1">
+                      <Star className="w-3.5 h-3.5 text-[#52B788] fill-[#52B788]" />
+                      <span>Điểm Đánh Giá Công Việc</span>
+                    </span>
+                    <span className="text-xs font-mono font-extrabold text-[#2D6A4F] flex items-center gap-1.5">
+                      <strong className="text-base font-black font-mono text-emerald-800">{overallScorePercent}%</strong>
+                      <span className="text-[11px] text-slate-500 font-sans font-medium">({overallScore.toFixed(2)}đ)</span>
+                    </span>
+                  </div>
+                  <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
+                    <div
+                      className="bg-gradient-to-r from-emerald-600 to-teal-600 h-full rounded-full transition-all duration-500"
+                      style={{ width: `${overallScorePercent}%` }}
+                    ></div>
+                  </div>
+                  
+                  {/* Clean Structured Breakdown Rows */}
+                  <div className="pt-1.5 space-y-1.5 border-t border-slate-200/80 text-[11px]">
+                    <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                      <span className="text-slate-700 font-semibold flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                        <span>Văn Hóa & Thái Độ:</span>
+                      </span>
+                      <span className="font-mono font-bold text-emerald-800">
+                        {periodScores.generalScore} / 5.0
+                      </span>
+                    </div>
+
+                    {hasMgmtRole && (
+                      <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                        <span className="text-slate-700 font-semibold flex items-center gap-1.5">
+                          <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                          <span>Ngạch Quản Lý:</span>
+                        </span>
+                        <span className="font-mono font-bold text-blue-800">
+                          {periodScores.mgmtScore} / {periodScores.mgmtScore}
+                        </span>
+                      </div>
+                    )}
+
+                    <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs gap-2">
+                      <span className="text-slate-700 font-semibold flex items-center gap-1.5 shrink-0">
+                        <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0"></span>
+                        <span>Ngạch Chuyên Môn:</span>
+                      </span>
+                      {periodScores.hasCustomTechScore ? (
+                        <span className="font-mono font-bold text-purple-800 shrink-0">
+                          {periodScores.techScore} / {periodScores.techScore}
+                        </span>
+                      ) : (
+                        <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200 truncate">
+                          Chưa có dữ liệu ngạch (Tự động 5/5)
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* POLICY SCORE CARD (BÊN PHẢI - ACCOUNT HEALTH) */}
             <div 

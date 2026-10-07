@@ -276,56 +276,84 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pt-2">
           
           {/* BÊN TRÁI: ĐIỂM ĐÁNH GIÁ CÔNG VIỆC (0 - 5.0) */}
-          <div className="bg-gradient-to-br from-emerald-900/5 via-emerald-800/10 to-emerald-900/5 p-4 rounded-2xl border border-emerald-700/20 space-y-2.5 relative overflow-hidden shadow-xs">
-            <div className="flex items-center justify-between">
-              <span className="text-xs font-black font-heading tracking-wide text-[#1B4332] flex items-center space-x-1.5">
-                <Star className="w-4 h-4 text-[#52B788] fill-[#52B788]" />
-                <span>BÊN TRÁI: ĐIỂM ĐÁNH GIÁ CÔNG VIỆC</span>
-              </span>
-              <span className="px-2 py-0.5 rounded-full bg-[#1B4332] text-[#52B788] text-[10px] font-black font-mono">
-                Điểm tối đa: 5.0
-              </span>
-            </div>
-            
-            <div className="flex items-baseline justify-between pt-0.5">
-              <div className="flex items-baseline space-x-1">
-                <span className="text-2xl sm:text-3xl font-black font-mono text-[#1B4332]">
-                  {periodScores.totalScore.toFixed(2)}
-                </span>
-                <span className="text-xs font-bold text-[#2D6A4F]">(Điểm tối đa: 5.0)</span>
-              </div>
-              <span className="text-xs font-bold text-[#1B4332] bg-white px-2.5 py-1 rounded-xl border border-emerald-900/10 shadow-2xs">
-                {getSalaryTierBadge(periodScores.salaryTier).label}
-              </span>
-            </div>
+          {(() => {
+            const targetBaseline = staff.totalScore && staff.totalScore > 0 ? staff.totalScore : 5.0;
+            const overallScorePercent = Math.min(100, Math.round((periodScores.totalScore / targetBaseline) * 100));
+            return (
+              <div className="bg-gradient-to-br from-emerald-900/5 via-emerald-800/10 to-emerald-900/5 p-4 rounded-2xl border border-emerald-700/20 space-y-2.5 relative overflow-hidden shadow-xs">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-black font-heading tracking-wide text-[#1B4332] flex items-center space-x-1.5">
+                    <Star className="w-4 h-4 text-[#52B788] fill-[#52B788]" />
+                    <span>ĐÁNH GIÁ CÔNG VIỆC (TỈ LỆ HOÀN THÀNH)</span>
+                  </span>
+                  <span className="px-2.5 py-0.5 rounded-full bg-[#1B4332] text-[#52B788] text-xs font-black font-mono">
+                    {overallScorePercent}%
+                  </span>
+                </div>
+                
+                <div className="flex items-baseline justify-between pt-0.5">
+                  <div className="flex items-baseline space-x-1.5">
+                    <span className="text-2xl sm:text-3xl font-black font-mono text-[#1B4332]">
+                      {overallScorePercent}%
+                    </span>
+                    <span className="text-xs font-bold text-[#2D6A4F]">({periodScores.totalScore.toFixed(2)}đ)</span>
+                  </div>
+                  <span className="text-xs font-bold text-[#1B4332] bg-white px-2.5 py-1 rounded-xl border border-emerald-900/10 shadow-2xs">
+                    {getSalaryTierBadge(periodScores.salaryTier).label}
+                  </span>
+                </div>
 
-            {/* Work score mini progress */}
-            <div className="w-full h-2.5 bg-white rounded-full overflow-hidden p-0.5 border border-emerald-900/15 shadow-inner">
-              <div 
-                className="h-full bg-gradient-to-r from-[#2D6A4F] to-[#52B788] rounded-full transition-all duration-500" 
-                style={{ width: `${(periodScores.totalScore / 5.0) * 100}%` }} 
-              />
-            </div>
+                {/* Work score mini progress */}
+                <div className="w-full h-2.5 bg-white rounded-full overflow-hidden p-0.5 border border-emerald-900/15 shadow-inner">
+                  <div 
+                    className="h-full bg-gradient-to-r from-[#2D6A4F] to-[#52B788] rounded-full transition-all duration-500" 
+                    style={{ width: `${overallScorePercent}%` }} 
+                  />
+                </div>
 
-            <div className="grid grid-cols-3 gap-1.5 text-center text-[10px] pt-0.5">
-              <div className="bg-white p-1.5 rounded-xl border border-slate-200">
-                <span className="text-slate-500 font-bold block">Văn hóa</span>
-                <strong className="text-[#1B4332] font-mono text-xs">{periodScores.generalScore} / 5</strong>
+                {/* Clean Structured Breakdown Rows */}
+                <div className="pt-1.5 space-y-1.5 text-[11px]">
+                  <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                    <span className="text-slate-700 font-semibold flex items-center gap-1.5">
+                      <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
+                      <span>Văn Hóa & Thái Độ:</span>
+                    </span>
+                    <span className="font-mono font-bold text-emerald-800">
+                      {periodScores.generalScore} / 5.0
+                    </span>
+                  </div>
+
+                  {isManagementRole(staff) && (
+                    <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                      <span className="text-slate-700 font-semibold flex items-center gap-1.5">
+                        <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
+                        <span>Ngạch Quản Lý:</span>
+                      </span>
+                      <span className="font-mono font-bold text-blue-800">
+                        {periodScores.mgmtScore > 0 ? `${periodScores.mgmtScore} / ${periodScores.mgmtScore}` : '---'}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs gap-2">
+                    <span className="text-slate-700 font-semibold flex items-center gap-1.5 shrink-0">
+                      <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0"></span>
+                      <span>Ngạch Chuyên Môn:</span>
+                    </span>
+                    {periodScores.hasCustomTechScore ? (
+                      <span className="font-mono font-bold text-purple-800 shrink-0">
+                        {periodScores.techScore} / {periodScores.techScore}
+                      </span>
+                    ) : (
+                      <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200 truncate">
+                        Chưa có dữ liệu ngạch (Tự động 5/5)
+                      </span>
+                    )}
+                  </div>
+                </div>
               </div>
-              <div className="bg-white p-1.5 rounded-xl border border-slate-200">
-                <span className="text-slate-400 font-bold block">Chuyên môn</span>
-                <strong className="text-[#1B4332] font-mono text-xs">
-                  {periodScores.hasCustomTechScore ? `${periodScores.techScore} / ${periodScores.techScore}` : 'Chưa có dữ liệu (Auto 5/5)'}
-                </strong>
-              </div>
-              <div className="bg-white p-1.5 rounded-xl border border-slate-200">
-                <span className="text-slate-400 font-bold block">Quản lý</span>
-                <strong className="text-[#1B4332] font-mono text-xs">
-                  {periodScores.mgmtScore > 0 ? `${periodScores.mgmtScore} / ${periodScores.mgmtScore}` : '---'}
-                </strong>
-              </div>
-            </div>
-          </div>
+            );
+          })()}
 
           {/* BÊN PHẢI: ĐIỂM NỘI QUY (ACCOUNT HEALTH - 0 TO 100) */}
           <div 
