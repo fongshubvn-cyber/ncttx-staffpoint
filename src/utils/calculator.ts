@@ -223,7 +223,8 @@ export function getStaffScoresForPeriod(
   const hasCustomTech = Boolean(staff.hasCustomTechScore);
   const techScore = hasCustomTech && typeof staff.techScore === 'number' ? staff.techScore : 5.0;
   const hasMgmt = isManagementRole(staff);
-  const mgmtScore = hasMgmt ? (typeof staff.mgmtScore === 'number' ? staff.mgmtScore : 4.0) : 0;
+  const hasCustomMgmt = Boolean(staff.hasCustomMgmtScore);
+  const mgmtScore = hasMgmt ? (hasCustomMgmt && typeof staff.mgmtScore === 'number' ? staff.mgmtScore : 5.0) : 0;
 
   const totalScore = calculateTotalScore(
     generalScore,
@@ -239,6 +240,7 @@ export function getStaffScoresForPeriod(
     techScore,
     hasCustomTechScore: hasCustomTech,
     mgmtScore,
+    hasCustomMgmtScore: hasCustomMgmt,
     totalScore,
     salaryTier,
     violationsCount,

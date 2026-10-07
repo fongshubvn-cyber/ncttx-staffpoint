@@ -775,9 +775,9 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                 />
               </div>
 
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Điểm Văn Hóa (0-5.0)</label>
+                  <label className="block text-slate-700 font-semibold mb-1 text-xs">Điểm Văn Hóa (0-5.0)</label>
                   <input
                     type="number"
                     step="0.1"
@@ -785,12 +785,12 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                     max="5"
                     value={editingStaff.generalScore}
                     onChange={(e) => setEditingStaff({ ...editingStaff, generalScore: parseFloat(e.target.value) || 0 })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-slate-700 font-semibold mb-1">Điểm Chuyên Môn (0-5.0)</label>
+                  <label className="block text-slate-700 font-semibold mb-1 text-xs">Ngạch Chuyên Môn (0-5.0)</label>
                   <input
                     type="number"
                     step="0.1"
@@ -798,9 +798,34 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                     max="5"
                     value={editingStaff.techScore}
                     onChange={(e) => setEditingStaff({ ...editingStaff, techScore: parseFloat(e.target.value) || 0, hasCustomTechScore: true })}
-                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs"
                   />
                 </div>
+
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1 text-xs">Ngạch Quản Lý (0-5.0)</label>
+                  <input
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    max="5"
+                    value={editingStaff.mgmtScore ?? 5.0}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, mgmtScore: parseFloat(e.target.value) || 0, hasCustomMgmtScore: true })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="p-3 bg-emerald-50 rounded-2xl border border-emerald-200/80">
+                <label className="flex items-center gap-2 cursor-pointer font-bold text-emerald-950 text-xs">
+                  <input
+                    type="checkbox"
+                    checked={!!editingStaff.isManager}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, isManager: e.target.checked })}
+                    className="w-4 h-4 text-emerald-600 rounded cursor-pointer"
+                  />
+                  <span>Chức danh Quản Lý / Lead (Tính trọng số Ngạch Quản Lý)</span>
+                </label>
               </div>
 
               <div>

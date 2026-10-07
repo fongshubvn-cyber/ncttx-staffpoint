@@ -41,6 +41,7 @@ export interface Staff {
   techScore: number; // Điểm ngạch chuyên môn
   hasCustomTechScore?: boolean; // Flag đánh dấu đã có dữ liệu đánh giá ngạch chuyên môn tùy chỉnh hay chưa
   mgmtScore?: number; // Điểm ngạch quản lý
+  hasCustomMgmtScore?: boolean; // Flag đánh dấu đã có dữ liệu đánh giá ngạch quản lý tùy chỉnh hay chưa
   totalScore: number; // Điểm làm việc / Điểm tổng (0.0 - 5.0)
   salaryTier: number; // Bậc cách làm việc (1 đến 5)
   jobLevel: string; // Tập sự, Nhân viên, Lead, Trưởng phòng, Founder, CEO...
