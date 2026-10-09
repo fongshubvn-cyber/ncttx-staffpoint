@@ -258,16 +258,14 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 
           {/* Right-side Action Buttons */}
           <div className="flex items-center gap-1.5 shrink-0">
-            {isManager && (
-              <button
-                onClick={() => setShowFeedbackChoiceModal(true)}
-                className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-extrabold shadow-sm active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
-                title="Tạo phản hồi mới (Đánh giá hoặc Phản ánh nội quy)"
-              >
-                <Plus className="w-3.5 h-3.5 shrink-0" />
-                <span>Tạo Phản Hồi</span>
-              </button>
-            )}
+            <button
+              onClick={() => setShowFeedbackChoiceModal(true)}
+              className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-extrabold shadow-sm active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
+              title="Tạo phản hồi mới (Đánh giá hoặc Phản ánh nội quy)"
+            >
+              <Plus className="w-3.5 h-3.5 shrink-0" />
+              <span>Tạo Phản Hồi</span>
+            </button>
 
             {currentUser ? (
               <div className="flex items-center gap-1 bg-slate-100/90 backdrop-blur-md p-1 rounded-2xl border border-slate-200/80 shadow-inner">
@@ -397,18 +395,16 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             </button>
           )}
 
-          {isManager && (
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                onOpenIncidentModal();
-              }}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-600/30"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tạo Ghi Nhận / Vi Phạm Mới</span>
-            </button>
-          )}
+          <button
+            onClick={() => {
+              setIsMobileMenuOpen(false);
+              onOpenIncidentModal();
+            }}
+            className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-600/30"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tạo Ghi Nhận / Vi Phạm Mới</span>
+          </button>
         </div>
       )}
 
@@ -615,15 +611,13 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
       </div>
 
       {/* Floating Action Button (FAB) on Right for Mobile */}
-      {isManager && (
-        <button
-          onClick={() => setShowFeedbackChoiceModal(true)}
-          className="md:hidden fixed right-5 bottom-5 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-xl shadow-emerald-600/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/80 backdrop-blur-md print:hidden cursor-pointer"
-          title="Tạo phản hồi mới"
-        >
-          <Plus className="w-7 h-7" />
-        </button>
-      )}
+      <button
+        onClick={() => setShowFeedbackChoiceModal(true)}
+        className="md:hidden fixed right-5 bottom-5 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-xl shadow-emerald-600/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/80 backdrop-blur-md print:hidden cursor-pointer"
+        title="Tạo phản hồi mới"
+      >
+        <Plus className="w-7 h-7" />
+      </button>
 
       {/* Modal Popup Lựa Chọn Loại Phản Hồi ("Đánh giá" vs "Phản ánh nội quy") */}
       {showFeedbackChoiceModal && (

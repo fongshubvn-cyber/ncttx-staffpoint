@@ -261,7 +261,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
           ></div>
         </div>
 
-        {onOpenIncidentModal && isManager && (
+        {onOpenIncidentModal && (
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
             <button
               onClick={() => onOpenIncidentModal(staff.id, 'ghi_nhan')}

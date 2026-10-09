@@ -242,15 +242,13 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
             <span>📮 Gửi Góp Ý Cho Admin</span>
           </button>
 
-          {isManager && (
-            <button
-              onClick={() => onOpenChoiceModal ? onOpenChoiceModal() : onOpenIncidentModal()}
-              className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
-            >
-              <Plus className="w-4 h-4" />
-              <span>Tạo Phản Hồi Mới</span>
-            </button>
-          )}
+          <button
+            onClick={() => onOpenChoiceModal ? onOpenChoiceModal() : onOpenIncidentModal()}
+            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+          >
+            <Plus className="w-4 h-4" />
+            <span>Tạo Phản Hồi Mới</span>
+          </button>
         </div>
       </div>
 
