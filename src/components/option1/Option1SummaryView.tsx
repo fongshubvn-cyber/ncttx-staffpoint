@@ -58,6 +58,7 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
   isRefreshingCloud = false,
   onAppealIncident,
 }) => {
+  const isAdmin = Boolean(currentUser?.isAdmin || (currentUser?.id || '').trim().toUpperCase() === 'ADMIN' || (currentUser?.jobLevel || '').toLowerCase() === 'admin');
   const isHRManager = isHRHeadRole(currentUser);
   const recentPeriods = get3RecentPeriods();
   const [selectedPeriodKey, setSelectedPeriodKey] = useState<string>(recentPeriods[0].key);
@@ -71,7 +72,7 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
   });
 
   const [selectedStaffId, setSelectedStaffId] = useState<string>(
-    visibleStaffList[0]?.id || currentUser?.id || ''
+    (!isAdmin && currentUser?.id) ? currentUser.id : (visibleStaffList[0]?.id || '')
   );
 
   const [isStaffDropdownOpen, setIsStaffDropdownOpen] = useState(false);
@@ -84,10 +85,10 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
   );
 
   useEffect(() => {
-    if (!isHRManager && currentUser?.id) {
+    if (!isAdmin && currentUser?.id) {
       setSelectedStaffId(currentUser.id);
     }
-  }, [currentUser, isHRManager]);
+  }, [currentUser, isAdmin]);
 
   const staff = visibleStaffList.find(s => s.id === selectedStaffId) || visibleStaffList[0];
 
@@ -170,23 +171,45 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
         {/* Quick Stats Grid */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-emerald-700/50">
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
-            <span className="text-xs text-emerald-200/80 font-medium block">Tổng Nhân Sự</span>
-            <span className="text-xl font-bold text-white mt-1 block">{staffList.length} nhân sự</span>
+            <span className="text-xs text-emerald-200/80 font-medium block">
+              {isAdmin ? 'Tổng Nhân Sự' : 'Hồ Sơ Của Bạn'}
+            </span>
+            <span className="text-xl font-bold text-white mt-1 block truncate">
+              {isAdmin ? `${staffList.length} nhân sự` : staff.name}
+            </span>
           </div>
 
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
-            <span className="text-xs text-emerald-200/80 font-medium block">Tuyên Dương ({currentPeriodObj.mStr}/{currentPeriodObj.year})</span>
-            <span className="text-xl font-bold text-emerald-300 mt-1 block">+{activePeriodIncidents.filter(i => i.type === 'ghi_nhan').length} phiếu</span>
+            <span className="text-xs text-emerald-200/80 font-medium block">
+              {isAdmin ? `Tuyên Dương (${currentPeriodObj.mStr}/${currentPeriodObj.year})` : `Tuyên Dương Của Bạn (${currentPeriodObj.mStr}/${currentPeriodObj.year})`}
+            </span>
+            <span className="text-xl font-bold text-emerald-300 mt-1 block">
+              +{isAdmin 
+                ? activePeriodIncidents.filter(i => i.type === 'ghi_nhan').length 
+                : staffIncidents.filter(i => i.type === 'ghi_nhan').length} phiếu
+            </span>
           </div>
 
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
-            <span className="text-xs text-emerald-200/80 font-medium block">Biên Bản Vi Phạm ({currentPeriodObj.mStr}/{currentPeriodObj.year})</span>
-            <span className="text-xl font-bold text-rose-300 mt-1 block">{activePeriodIncidents.filter(i => i.type === 'vi_pham').length} phiếu</span>
+            <span className="text-xs text-emerald-200/80 font-medium block">
+              {isAdmin ? `Biên Bản Vi Phạm (${currentPeriodObj.mStr}/${currentPeriodObj.year})` : `Biên Bản Của Bạn (${currentPeriodObj.mStr}/${currentPeriodObj.year})`}
+            </span>
+            <span className="text-xl font-bold text-rose-300 mt-1 block">
+              {isAdmin 
+                ? activePeriodIncidents.filter(i => i.type === 'vi_pham').length 
+                : staffIncidents.filter(i => i.type === 'vi_pham').length} phiếu
+            </span>
           </div>
 
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
-            <span className="text-xs text-emerald-200/80 font-medium block">Kháng Nghị Chờ Xử Lý</span>
-            <span className="text-xl font-bold text-amber-300 mt-1 block">{pendingAppeals.length} phiếu</span>
+            <span className="text-xs text-emerald-200/80 font-medium block">
+              {isAdmin ? 'Kháng Nghị Chờ Xử Lý' : 'Kháng Nghị Của Bạn'}
+            </span>
+            <span className="text-xl font-bold text-amber-300 mt-1 block">
+              {isAdmin 
+                ? pendingAppeals.length 
+                : staffIncidents.filter(i => i.status === 'Đang kháng nghị').length} phiếu
+            </span>
           </div>
         </div>
       </div>
@@ -199,13 +222,21 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
           <div className="relative flex items-center gap-2.5 min-w-0">
             <span className="hidden xl:inline-flex items-center gap-1.5 text-xs font-extrabold uppercase tracking-wider text-slate-400 shrink-0">
               <User className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Nhân sự ({visibleStaffList.length}):</span>
+              <span>{isAdmin ? `Nhân sự (${visibleStaffList.length}):` : 'Hồ sơ nhân sự:'}</span>
             </span>
 
             <button
               type="button"
-              onClick={() => setIsStaffDropdownOpen(!isStaffDropdownOpen)}
-              className="inline-flex items-center gap-3 p-2 px-3.5 rounded-2xl bg-emerald-50/70 hover:bg-emerald-100/70 border border-emerald-300/60 shadow-xs hover:shadow transition-all duration-200 group text-left max-w-full cursor-pointer"
+              onClick={() => {
+                if (isAdmin && visibleStaffList.length > 1) {
+                  setIsStaffDropdownOpen(!isStaffDropdownOpen);
+                }
+              }}
+              className={`inline-flex items-center gap-3 p-2 px-3.5 rounded-2xl bg-emerald-50/70 border border-emerald-300/60 shadow-xs transition-all duration-200 group text-left max-w-full ${
+                isAdmin && visibleStaffList.length > 1 
+                  ? 'hover:bg-emerald-100/70 hover:shadow cursor-pointer' 
+                  : 'cursor-default'
+              }`}
             >
               <div className="w-8 h-8 rounded-xl bg-gradient-to-tr from-emerald-600 to-teal-600 text-white font-extrabold flex items-center justify-center text-xs shadow-sm shrink-0">
                 {staff.name.substring(0, 1)}
@@ -224,18 +255,20 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                 </span>
               </div>
 
-              <div className="flex items-center gap-1.5 ml-2 pl-2.5 border-l border-emerald-300/60 shrink-0">
-                <span className="text-xs font-bold text-emerald-800 bg-white/80 px-2.5 py-0.5 rounded-lg hidden sm:inline-block border border-emerald-200/60">
-                  Đổi nhân sự
-                </span>
-                <div className="p-1 rounded-lg bg-white/80 border border-emerald-300/60 text-emerald-700 group-hover:bg-white transition-all">
-                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isStaffDropdownOpen ? 'rotate-180' : ''}`} />
+              {isAdmin && visibleStaffList.length > 1 && (
+                <div className="flex items-center gap-1.5 ml-2 pl-2.5 border-l border-emerald-300/60 shrink-0">
+                  <span className="text-xs font-bold text-emerald-800 bg-white/80 px-2.5 py-0.5 rounded-lg hidden sm:inline-block border border-emerald-200/60">
+                    Đổi nhân sự
+                  </span>
+                  <div className="p-1 rounded-lg bg-white/80 border border-emerald-300/60 text-emerald-700 group-hover:bg-white transition-all">
+                    <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${isStaffDropdownOpen ? 'rotate-180' : ''}`} />
+                  </div>
                 </div>
-              </div>
+              )}
             </button>
 
-            {/* Dropdown Menu Overlay ("Xổ danh sách") */}
-            {isStaffDropdownOpen && (
+            {/* Dropdown Menu Overlay ("Xổ danh sách" - Chỉ Admin mới có quyền mở) */}
+            {isAdmin && visibleStaffList.length > 1 && isStaffDropdownOpen && (
               <>
                 <div
                   className="fixed inset-0 z-40"
@@ -531,10 +564,14 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                         </div>
                       </div>
                       <div className="text-right flex-shrink-0">
-                        <span className={`text-xs font-bold px-2 py-1 rounded-lg ${
-                          incident.status === 'Đã duyệt'
-                            ? 'bg-slate-100 text-slate-700'
-                            : 'bg-amber-100 text-amber-800'
+                        <span className={`text-xs font-bold px-2.5 py-1 rounded-xl border ${
+                          incident.status === 'Đang xem xét' || incident.status === 'Chờ duyệt' || incident.status === 'Chờ HR duyệt'
+                            ? 'bg-amber-50 text-amber-800 border-amber-300'
+                            : incident.status === 'Đang kháng nghị'
+                            ? 'bg-orange-50 text-orange-800 border-orange-300'
+                            : incident.status === 'Kháng nghị được chấp nhận' || incident.status === 'Đã duyệt' || incident.status === 'Đã ghi nhận'
+                            ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                            : 'bg-slate-100 text-slate-700 border-slate-200'
                         }`}>
                           {incident.status}
                         </span>

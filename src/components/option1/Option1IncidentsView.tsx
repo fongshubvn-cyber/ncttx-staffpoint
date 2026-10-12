@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { IncidentRecord, Staff, Question, AuthUser, AdminFeedback } from '../../types';
+import { IncidentRecord, Staff, Question, AuthUser, AdminFeedback, IncidentStatus } from '../../types';
 import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident, get3RecentPeriods } from '../../utils/calculator';
 import { 
   Trophy, 
@@ -21,7 +21,10 @@ import {
   MessageSquare,
   Lock,
   Sparkles,
-  Eye
+  Eye,
+  Scale,
+  XCircle,
+  Check
 } from 'lucide-react';
 
 interface Option1IncidentsViewProps {
@@ -32,7 +35,7 @@ interface Option1IncidentsViewProps {
   onDeleteIncident?: (incidentId: string) => void;
   onRestoreIncident?: (incidentId: string) => void;
   onPermanentDeleteIncident?: (incidentId: string) => void;
-  onUpdateStatus: (id: string, status: 'Đã duyệt' | 'Từ chối') => void;
+  onUpdateStatus: (id: string, status: IncidentStatus) => void;
   isManager: boolean;
   onOpenIncidentModal: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham') => void;
   currentUser: AuthUser | null;
@@ -180,6 +183,8 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
       if (item.reporterId !== currentUser?.id) return false;
     } else if (filterType === 'my_received') {
       if (item.targetId !== currentUser?.id) return false;
+    } else if (filterType === 'cho_duyet') {
+      if (item.status !== 'Đang xem xét' && item.status !== 'Chờ duyệt' && item.status !== 'Chờ HR duyệt') return false;
     } else if (filterType === 'ghi_nhan') {
       if (item.type !== 'ghi_nhan') return false;
     } else if (filterType === 'vi_pham') {
@@ -357,6 +362,24 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
           >
             Tất cả phiếu ({activeIncidents.length})
           </button>
+
+          {/* Quick Filter: Chờ HR Duyệt */}
+          {activeIncidents.filter(i => i.status === 'Đang xem xét' || i.status === 'Chờ duyệt' || i.status === 'Chờ HR duyệt').length > 0 && (
+            <button
+              onClick={() => setFilterType('cho_duyet')}
+              className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-bold transition-all border flex items-center gap-1.5 whitespace-nowrap ${
+                filterType === 'cho_duyet'
+                  ? 'bg-amber-600 text-white border-amber-600 shadow-sm'
+                  : 'bg-amber-50 text-amber-800 border-amber-300 hover:bg-amber-100'
+              }`}
+            >
+              <Clock className="w-3.5 h-3.5 text-amber-600" />
+              <span>Chờ HR Duyệt</span>
+              <span className="bg-amber-600 text-white text-[10px] px-1.5 py-0.2 rounded-full font-extrabold">
+                {activeIncidents.filter(i => i.status === 'Đang xem xét' || i.status === 'Chờ duyệt' || i.status === 'Chờ HR duyệt').length}
+              </span>
+            </button>
+          )}
           
           <button
             onClick={() => setFilterType('ghi_nhan')}
@@ -582,9 +605,10 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
             filteredIncidents.map((incident) => {
               const isRecognition = incident.type === 'ghi_nhan';
               const staff = staffList.find(s => s.id === incident.targetId);
+              const isTargetUser = currentUser?.id === incident.targetId;
               const canAppeal = !isRecognition &&
-                                currentUser?.id === incident.targetId &&
-                                incident.status === 'Đã duyệt';
+                                (isTargetUser || isAdminUser || isHRManager) &&
+                                (incident.status === 'Đã ghi nhận' || incident.status === 'Đã duyệt');
               const isSubmittedByMe = currentUser?.id === incident.reporterId;
               const isReceivedByMe = currentUser?.id === incident.targetId;
 
@@ -630,13 +654,32 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                       </div>
                     </div>
 
-                    <span className={`text-xs font-bold px-2.5 py-1 rounded-xl flex-shrink-0 ${
-                      incident.status === 'Đã duyệt'
-                        ? 'bg-emerald-50 text-emerald-700 border border-emerald-200/60'
+                    <span className={`text-xs font-bold px-2.5 py-1 rounded-xl flex-shrink-0 flex items-center gap-1.5 ${
+                      incident.status === 'Đang xem xét' || incident.status === 'Chờ HR duyệt' || incident.status === 'Chờ duyệt'
+                        ? 'bg-amber-50 text-amber-800 border border-amber-300'
                         : incident.status === 'Đang kháng nghị'
-                        ? 'bg-amber-50 text-amber-700 border border-amber-200/60'
+                        ? 'bg-orange-50 text-orange-800 border border-orange-300'
+                        : incident.status === 'Kháng nghị được chấp nhận'
+                        ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                        : incident.status === 'Kháng nghị bị từ chối'
+                        ? 'bg-rose-50 text-rose-800 border border-rose-300'
+                        : incident.status === 'Đã ghi nhận' || incident.status === 'Đã duyệt'
+                        ? isRecognition
+                          ? 'bg-emerald-50 text-emerald-800 border border-emerald-300'
+                          : 'bg-rose-50 text-rose-800 border border-rose-300'
+                        : incident.status === 'Từ chối'
+                        ? 'bg-slate-100 text-slate-600 border border-slate-300'
                         : 'bg-slate-100 text-slate-700'
                     }`}>
+                      {(incident.status === 'Đang xem xét' || incident.status === 'Chờ HR duyệt' || incident.status === 'Chờ duyệt') && (
+                        <Clock className="w-3.5 h-3.5 text-amber-600 animate-pulse" />
+                      )}
+                      {incident.status === 'Đang kháng nghị' && (
+                        <Clock className="w-3.5 h-3.5 text-orange-600 animate-pulse" />
+                      )}
+                      {(incident.status === 'Đã ghi nhận' || incident.status === 'Đã duyệt' || incident.status === 'Kháng nghị được chấp nhận') && (
+                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" />
+                      )}
                       {incident.status}
                     </span>
                   </div>
@@ -708,30 +751,64 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                         )}
                       </div>
                     ) : (
-                      <>
+                      <div className="flex items-center gap-2 ml-auto flex-wrap">
+                        {/* 1. NÚT KHÁNG NGHỊ DÀNH CHO PHIẾU LẬP BIÊN BẢN */}
                         {canAppeal && (
                           <button
+                            type="button"
                             onClick={() => setSelectedIncidentForAppeal(incident)}
-                            className="px-3 py-1 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-800 text-xs font-semibold border border-amber-200/60 transition-all"
+                            className="px-3 py-1.5 rounded-xl bg-amber-50 hover:bg-amber-100 text-amber-900 border border-amber-300 text-xs font-bold transition-all shadow-2xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                            title="Gửi kháng nghị lên Trưởng phòng Nhân sự xem xét"
                           >
-                            Gửi Kháng Nghị 48h
+                            <Scale className="w-3.5 h-3.5 text-amber-700" />
+                            <span>Gửi Kháng Nghị</span>
                           </button>
                         )}
 
-                        {/* HR Manager Resolve Buttons */}
-                        {isHRManager && incident.status === 'Đang kháng nghị' && (
-                          <div className="flex items-center gap-2">
+                        {/* 2. HR XỬ LÝ KHÁNG NGHỊ BIÊN BẢN */}
+                        {(isHRManager || isAdminUser) && incident.status === 'Đang kháng nghị' && (
+                          <div className="flex items-center gap-1.5">
                             <button
+                              type="button"
                               onClick={() => onResolveAppeal(incident.id, true)}
-                              className="px-3 py-1 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-semibold transition-all shadow-sm"
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1 active:scale-95 cursor-pointer"
+                              title="HR chấp nhận kháng nghị: Hủy phạt và hoàn lại điểm"
                             >
-                              Chấp Nhận Kháng Nghị (Hủy Phiếu)
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Chấp Nhận Kháng Nghị (Hủy Phạt)</span>
                             </button>
                             <button
+                              type="button"
                               onClick={() => onResolveAppeal(incident.id, false)}
-                              className="px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-semibold transition-all shadow-sm"
+                              className="px-3 py-1.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1 active:scale-95 cursor-pointer"
+                              title="HR bác bỏ kháng nghị: Giữ nguyên mức trừ điểm"
                             >
-                              Bác Kháng Nghị (Giữ Nguyên)
+                              <XCircle className="w-3.5 h-3.5" />
+                              <span>Bác Kháng Nghị (Giữ Nguyên)</span>
+                            </button>
+                          </div>
+                        )}
+
+                        {/* 3. HR XEM XÉT & DUYỆT PHIẾU GHI NHẬN (Từ 'Đang xem xét' sang 'Đã ghi nhận') */}
+                        {isRecognition && (isHRManager || isAdminUser) && (incident.status === 'Đang xem xét' || incident.status === 'Chờ HR duyệt' || incident.status === 'Chờ duyệt') && (
+                          <div className="flex items-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => onUpdateStatus(incident.id, 'Đã ghi nhận')}
+                              className="px-3 py-1.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold transition-all shadow-sm flex items-center gap-1 active:scale-95 cursor-pointer"
+                              title="HR duyệt ghi nhận: Chuyển sang Đã ghi nhận và cộng điểm thành tích"
+                            >
+                              <CheckCircle2 className="w-3.5 h-3.5" />
+                              <span>Duyệt Ghi Nhận</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => onUpdateStatus(incident.id, 'Từ chối')}
+                              className="px-3 py-1.5 rounded-xl bg-slate-100 hover:bg-rose-50 text-slate-700 hover:text-rose-700 border border-slate-300 text-xs font-bold transition-all shadow-2xs flex items-center gap-1 active:scale-95 cursor-pointer"
+                              title="Từ chối ghi nhận thành tích này"
+                            >
+                              <XCircle className="w-3.5 h-3.5" />
+                              <span>Từ Chối</span>
                             </button>
                           </div>
                         )}
@@ -745,14 +822,14 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                                 onDeleteIncident(incident.id);
                               }
                             }}
-                            className="px-3 py-1 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 transition-all flex items-center gap-1 active:scale-95 ml-auto"
+                            className="px-2.5 py-1.5 rounded-xl bg-rose-50 hover:bg-rose-100 text-rose-700 text-xs font-bold border border-rose-200 transition-all flex items-center gap-1 active:scale-95 cursor-pointer"
                             title="Quyền Admin: Chuyển phiếu vào Thùng Rác"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
-                            <span>Chuyển vào Thùng Rác</span>
+                            <span className="hidden sm:inline">Chuyển vào Thùng Rác</span>
                           </button>
                         )}
-                      </>
+                      </div>
                     )}
                   </div>
                 </div>

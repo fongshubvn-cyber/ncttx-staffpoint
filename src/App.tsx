@@ -17,6 +17,7 @@ import {
   Question, 
   IncidentRecord, 
   IncidentType,
+  IncidentStatus,
   DepartmentLine, 
   BaselinePoint, 
   ParameterConfig,
@@ -498,8 +499,6 @@ export function App() {
       notifySync('incidents', updated);
       return updated;
     });
-    // Lưu atomic lên Firestore với Transaction để chống ghi đè khi nhiều người cùng đánh giá
-    saveIncidentAtomic(newIncident);
 
     if (newIncident.status === 'Đã duyệt' || newIncident.status === 'Đã ghi nhận' || newIncident.type === 'vi_pham') {
       applyIncidentScoreImpact(newIncident);
@@ -676,14 +675,17 @@ export function App() {
     });
   };
 
-  // Handler: Manager updates incident approval status
-  const handleUpdateIncidentStatus = (id: string, status: 'Đã duyệt' | 'Từ chối') => {
+  // Handler: HR / Manager updates incident approval status
+  const handleUpdateIncidentStatus = (id: string, status: IncidentStatus) => {
     setIncidents(prev => {
+      const targetInc = prev.find(i => i.id === id);
       const updatedList = prev.map(inc => {
         if (inc.id === id) {
           const updated = { ...inc, status };
-          if (status === 'Đã duyệt') {
+          if (status === 'Đã duyệt' || status === 'Đã ghi nhận') {
             applyIncidentScoreImpact(updated);
+          } else if (status === 'Từ chối' && (targetInc?.status === 'Đã duyệt' || targetInc?.status === 'Đã ghi nhận')) {
+            refundIncidentScoreImpact(targetInc);
           }
           return updated;
         }

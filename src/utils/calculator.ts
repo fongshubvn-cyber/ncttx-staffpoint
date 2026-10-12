@@ -208,7 +208,7 @@ export function getStaffScoresForPeriod(
   });
 
   const approvedIncidents = periodIncidents.filter(
-    i => (i.status === 'Đã duyệt' || i.status === 'Đã ghi nhận' || i.status === 'Chờ HR duyệt') || 
+    i => (i.type === 'ghi_nhan' && (i.status === 'Đã duyệt' || i.status === 'Đã ghi nhận')) || 
          (i.type === 'vi_pham' && i.status !== 'Kháng nghị được chấp nhận')
   );
 
@@ -260,7 +260,7 @@ export function getStaffScoresForPeriod(
 export function canUserViewIncident(
   user: { id?: string; isAdmin?: boolean; isManager?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined,
   incident: { reporterId?: string; targetId?: string },
-  staffList: Staff[]
+  _staffList?: Staff[]
 ): boolean {
   if (!user) return true;
 
@@ -268,60 +268,22 @@ export function canUserViewIncident(
   const cleanReporterId = (incident.reporterId || '').trim().toUpperCase();
   const cleanTargetId = (incident.targetId || '').trim().toUpperCase();
 
-  // 1. Direct involvement (User is target OR reporter) -> Always viewable
+  // 1. Liên quan trực tiếp (Người nhận phiếu HOẶC Người lập phiếu) -> Luôn thấy
   if (cleanUserId === cleanReporterId || cleanUserId === cleanTargetId) {
     return true;
   }
 
-  // 2. ONLY System Admin and HR Head (Trưởng phòng Nhân sự) can view tickets of ALL staff across the company
-  if (user.isAdmin || cleanUserId === 'ADMIN' || isHRHeadRole(user)) {
+  // 2. CHỈ Admin hệ thống mới xem được toàn bộ phiếu của mọi nhân sự
+  const isAdmin = Boolean(
+    user.isAdmin || 
+    cleanUserId === 'ADMIN' || 
+    (user.jobLevel || '').toLowerCase() === 'admin'
+  );
+  if (isAdmin) {
     return true;
   }
 
-  // 3. Other Department Heads / Managers / Leads of specific lines -> ONLY see tickets within their own line/department
-  const roleLower = (user.role || '').toLowerCase();
-  const levelLower = (user.jobLevel || '').toLowerCase();
-  const userDept = (user.department || '').trim().toLowerCase();
-
-  const isManagerOrLead = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin', 'quản lý', 'manager', 'lead', 'cửa hàng trưởng', 'trưởng ca'].some(
-    kw => levelLower.includes(kw) || roleLower.includes(kw)
-  ) || Boolean(user.isManager);
-
-  if (isManagerOrLead) {
-    const targetStaff = staffList.find(s => s.id.trim().toUpperCase() === cleanTargetId);
-    const reporterStaff = staffList.find(s => s.id.trim().toUpperCase() === cleanReporterId);
-
-    // Exclude tickets targeting superiors/upper management unless directly involved
-    if (targetStaff) {
-      const targetRoleLower = (targetStaff.role || '').toLowerCase();
-      const targetLevelLower = (targetStaff.jobLevel || '').toLowerCase();
-      const isTargetSuperior = ['founder', 'ceo', 'c-level', 'c suite', 'trưởng phòng', 'head of', 'admin'].some(
-        kw => targetLevelLower.includes(kw) || targetRoleLower.includes(kw)
-      );
-      if (isTargetSuperior) {
-        return false;
-      }
-    }
-
-    const isMatch = (s: Staff | undefined) => {
-      if (!s || !userDept) return false;
-      const sDept = (s.department || '').trim().toLowerCase();
-      const sLine = (s.line || '').trim().toLowerCase();
-      return (
-        sDept === userDept || sLine === userDept ||
-        (userDept.length > 2 && sDept.includes(userDept)) ||
-        (userDept.length > 2 && sLine.includes(userDept)) ||
-        (sDept.length > 2 && userDept.includes(sDept)) ||
-        (sLine.length > 2 && userDept.includes(sLine))
-      );
-    };
-
-    if (isMatch(targetStaff) || isMatch(reporterStaff)) {
-      return true;
-    }
-  }
-
-  // 4. Regular staff: False
+  // Mọi người dùng khác chỉ thấy phiếu của bản thân mình
   return false;
 }
 
@@ -373,50 +335,46 @@ export function getVisibleStaffListForUser(
   staffList: Staff[]
 ): Staff[] {
   if (!user) return staffList;
+  const cleanUserId = (user.id || '').trim().toUpperCase();
+  const isAdmin = Boolean(
+    user.isAdmin || 
+    cleanUserId === 'ADMIN' || 
+    (user.jobLevel || '').toLowerCase() === 'admin'
+  );
 
-  const userRank = getStaffRank(user);
-  if (userRank >= 4) {
+  // 1. Chỉ Admin mới có thể thấy nhân viên khác
+  if (isAdmin) {
     return staffList;
   }
 
-  const cleanUserId = (user.id || '').trim().toUpperCase();
-  const userStaff = staffList.find(s => s.id.trim().toUpperCase() === cleanUserId);
+  // 2. Mọi cá nhân khác chỉ thấy chính bản thân mình
+  const selfStaff = staffList.filter(s => s.id.trim().toUpperCase() === cleanUserId);
+  if (selfStaff.length > 0) {
+    return selfStaff;
+  }
 
-  const cleanText = (str: string) => str.toLowerCase().replace(/[^\w\sàáảãạăắằẳẵặâấầẩẫậèéẻẽẹêếềểễệìíỉĩịòóỏõọôốồổỗộơớờởỡợùúủũụưứừửữựỳýỷỹỵđ]/gi, '').trim();
-
-  const userDept = cleanText(userStaff?.department || user.department || '');
-  const userLine = cleanText(userStaff?.line || '');
-
-  return staffList.filter(s => {
-    const sId = s.id.trim().toUpperCase();
-    if (sId === cleanUserId) return true; // Always see self
-
-    const sRank = getStaffRank(s);
-
-    // Rule: User can ONLY see staff with STRICTLY LOWER rank than themselves (subordinates)
-    if (sRank >= userRank) {
-      return false;
-    }
-
-    // Must be in the user's department or line
-    const sDept = cleanText(s.department || '');
-    const sLine = cleanText(s.line || '');
-
-    const isMatch = Boolean(
-      (userDept && sDept && (sDept.includes(userDept) || userDept.includes(sDept))) ||
-      (userLine && sLine && (sLine.includes(userLine) || userLine.includes(sLine))) ||
-      (userDept && sLine && (sLine.includes(userDept) || userDept.includes(sLine))) ||
-      (userLine && sDept && (sDept.includes(userLine) || userLine.includes(sDept)))
-    );
-
-    return isMatch;
-  });
+  // Fallback nếu tài khoản chưa nằm trong seed
+  return [{
+    id: user.id || 'ME',
+    name: (user as any).name || 'Bản thân',
+    role: user.role || 'Nhân viên',
+    positionCategory: 'Thành viên',
+    department: user.department || '',
+    line: '',
+    speechCapability: 'Người nói',
+    location: 'Văn phòng',
+    status: 'Chính thức',
+    evaluationCount: 0,
+    generalScore: 5.0,
+    techScore: 5.0,
+    mgmtScore: 5.0,
+    totalScore: 5.0,
+    salaryTier: 5,
+    jobLevel: user.jobLevel || 'Nhân sự',
+    isManager: false,
+  }];
 }
 
-/**
- * Returns Policy Health Status object (Tốt, Cần chú ý, Nghiêm trọng, Đình chỉ vĩnh viễn)
- * based on the 100-point Internal Policy system inspired by Account Health.
- */
 export function getPolicyHealthStatus(score: number): PolicyHealthStatus {
   const safeScore = Math.max(0, Math.min(100, score));
 

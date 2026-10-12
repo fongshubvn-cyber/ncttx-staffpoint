@@ -3,6 +3,7 @@ import logoImg from '../../assets/logo.png';
 import { 
   Staff, 
   IncidentRecord, 
+  IncidentStatus,
   Question, 
   DepartmentLine, 
   ParameterConfig, 
@@ -45,7 +46,8 @@ import {
   ShieldCheck,
   Star,
   ShieldAlert,
-  ClipboardCheck
+  ClipboardCheck,
+  ChevronRight
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole } from '../../utils/calculator';
@@ -80,7 +82,7 @@ interface Option1LayoutProps {
   onDeleteIncident?: (incidentId: string) => void;
   onRestoreIncident?: (incidentId: string) => void;
   onPermanentDeleteIncident?: (incidentId: string) => void;
-  onUpdateStatus: (id: string, status: 'Đã duyệt' | 'Từ chối') => void;
+  onUpdateStatus: (id: string, status: IncidentStatus) => void;
   onAppealIncident: (incidentId: string, reason: string) => void;
   onResolveAppeal: (incidentId: string, approved: boolean) => void;
   uiOption?: 'default' | 'option1';
@@ -175,52 +177,47 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
       
       {/* Glassmorphic Floating Top Header */}
       <header className="sticky top-2 z-40 px-3 sm:px-6 max-w-7xl w-full mx-auto print:hidden">
-        <div className="backdrop-blur-xl bg-white/85 border border-white/80 shadow-[0_8px_30px_rgb(0,0,0,0.06)] rounded-3xl px-3.5 sm:px-5 py-2 flex items-center justify-between transition-all duration-300 gap-2 overflow-hidden">
+        <div className="backdrop-blur-xl bg-white/90 border border-slate-200/70 shadow-[0_4px_24px_rgba(0,0,0,0.06)] rounded-3xl px-3 sm:px-5 py-2 flex items-center justify-between transition-all duration-300 gap-2">
           
-          {/* Brand Logo & Cloud Status */}
-          <div className="flex items-center gap-2.5 shrink-0">
-            <img 
-              src={logoImg} 
-              alt="Nhà Của Thời Thanh Xuân Logo" 
-              className="w-9 h-9 object-contain rounded-2xl bg-white p-1 shadow-sm ring-1 ring-emerald-500/20 shrink-0 border border-emerald-100" 
-            />
-            <div className="min-w-0">
-              <div className="flex items-center gap-1.5">
-                <h1 className="font-extrabold text-sm sm:text-base tracking-tight text-slate-900 flex items-center gap-1.5 whitespace-nowrap font-sans">
-                  StaffPoint 
-                  <span className="text-emerald-700 font-mono text-[10px] font-extrabold bg-emerald-50 px-1.5 py-0.2 rounded-md border border-emerald-200 shrink-0">
-                    v1.006
-                  </span>
-                </h1>
+          {/* Brand Logo & Cloud Status Pill (Clean & No "StaffPoint" App Name) */}
+          <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
+            <button
+              type="button"
+              onClick={() => setActiveTab('summary')}
+              className="group flex items-center gap-2 p-0.5 rounded-2xl hover:scale-105 transition-transform duration-200 cursor-pointer"
+              title="Nhà Của Thời Thanh Xuân — Về trang tổng quan"
+            >
+              <img 
+                src={logoImg} 
+                alt="Logo Nhà Của Thời Thanh Xuân" 
+                className="w-9 h-9 sm:w-10 sm:h-10 object-contain rounded-2xl bg-white p-1 shadow-xs ring-1 ring-emerald-500/25 border border-emerald-100 group-hover:ring-emerald-500/50 transition-all shrink-0" 
+              />
+            </button>
 
-                {/* Cloud Status Dot Indicator: Green (Online) / Red (Offline) */}
-                <div 
-                  className={`flex items-center justify-center w-5 h-5 rounded-full border transition-all shrink-0 ${
-                    cloudSyncInfo.status === 'connected'
-                      ? 'bg-emerald-50 border-emerald-300'
-                      : 'bg-rose-50 border-rose-300'
-                  }`}
-                  title={cloudSyncInfo.status === 'connected' ? "Firebase Cloud Sync: Online (Đang hoạt động)" : "Firebase Cloud Sync: Offline"}
+            {/* Cloud Status Pill & Quick Refresh (Minimal & Modern) */}
+            <div className="flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-slate-50 border border-slate-200/80 shadow-2xs">
+              <span 
+                className="flex items-center justify-center shrink-0"
+                title={cloudSyncInfo.status === 'connected' ? "Firebase Cloud: Đang kết nối Realtime" : "Firebase Cloud: Mất kết nối"}
+              >
+                <span className={`w-2 h-2 rounded-full ${cloudSyncInfo.status === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`} />
+              </span>
+
+              {onRefreshCloud && (
+                <button
+                  type="button"
+                  onClick={onRefreshCloud}
+                  disabled={isRefreshingCloud}
+                  className="text-slate-400 hover:text-emerald-700 transition-colors cursor-pointer disabled:opacity-50 flex items-center justify-center"
+                  title="Làm mới dữ liệu từ Firebase Cloud"
                 >
-                  <span className={`w-2 h-2 rounded-full ${cloudSyncInfo.status === 'connected' ? 'bg-emerald-500 animate-pulse' : 'bg-rose-500'}`}></span>
-                </div>
+                  <RotateCw className={`w-3.5 h-3.5 ${isRefreshingCloud ? 'animate-spin text-emerald-600' : ''}`} />
+                </button>
+              )}
 
-                {/* Refresh Cloud Button (Gọn gàng với Icon Refresh) */}
-                {onRefreshCloud && (
-                  <button
-                    type="button"
-                    onClick={onRefreshCloud}
-                    disabled={isRefreshingCloud}
-                    className="p-1 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200 transition-all cursor-pointer shadow-2xs active:scale-95 disabled:opacity-50 shrink-0 flex items-center justify-center"
-                    title="Làm mới dữ liệu từ Firebase Cloud Firestore"
-                  >
-                    <RotateCw className={`w-3.5 h-3.5 text-emerald-700 ${isRefreshingCloud ? 'animate-spin' : ''}`} />
-                  </button>
-                )}
-              </div>
-              <p className="text-[10px] text-slate-400 font-medium hidden 2xl:block leading-tight">
-                Nhà Của Thời Thanh Xuân
-              </p>
+              <span className="text-[10px] font-mono font-bold text-slate-400 border-l border-slate-200 pl-1.5 shrink-0 select-none">
+                v1.006
+              </span>
             </div>
           </div>
 
@@ -257,7 +254,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           </nav>
 
           {/* Right-side Action Buttons */}
-          <div className="flex items-center gap-1.5 shrink-0">
+          <div className="flex items-center gap-2 shrink-0">
             <button
               onClick={() => setShowFeedbackChoiceModal(true)}
               className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-extrabold shadow-sm active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
@@ -318,94 +315,244 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 
             <button
               onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-              className="md:hidden p-2 text-slate-600 hover:text-slate-900 rounded-2xl hover:bg-slate-200/50 transition-all"
+              className="md:hidden p-2 text-slate-700 hover:text-slate-900 rounded-2xl hover:bg-slate-100 transition-all border border-slate-200/80 active:scale-95 cursor-pointer shadow-2xs"
               aria-label="Toggle Mobile Menu"
             >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+              {isMobileMenuOpen ? <X className="w-5 h-5 text-slate-700" /> : <Menu className="w-5 h-5 text-slate-700" />}
             </button>
           </div>
         </div>
       </header>
 
+      {/* Mobile Drawer Backdrop & Modular Block Menu */}
       {isMobileMenuOpen && (
-        <div className="md:hidden fixed inset-x-3 top-20 z-50 backdrop-blur-2xl bg-white/90 border border-white/80 shadow-2xl rounded-3xl p-4 transition-all duration-300 animate-in fade-in slide-in-from-top-4">
-          <div className="flex items-center justify-between border-b border-slate-200/60 pb-3 mb-3">
-            <div className="flex items-center gap-2">
-              <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-              <span className="font-extrabold text-sm text-slate-900">Danh Mục Menu</span>
-            </div>
-            {currentUser && (
-              <span className="text-xs text-emerald-700 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
-                {currentUser.name} ({currentUser.role})
-              </span>
-            )}
-          </div>
-          <div className="grid grid-cols-2 gap-2">
-            {navItems.map((item) => {
-              const Icon = item.icon;
-              const isActive = 
-                activeTab === item.id ||
-                (item.id === 'config' && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline')) ||
-                (item.id === 'analytics' && (activeTab === 'analytics' || activeTab === 'report' || activeTab === 'guide'));
-              return (
+        <>
+          {/* Backdrop Overlay to close when clicking outside */}
+          <div 
+            className="md:hidden fixed inset-0 z-40 bg-slate-900/40 backdrop-blur-xs transition-opacity duration-200"
+            onClick={() => setIsMobileMenuOpen(false)}
+          />
+
+          <div className="md:hidden fixed inset-x-3 top-20 z-50 max-h-[calc(100vh-5.5rem)] overflow-y-auto backdrop-blur-2xl bg-white/95 border border-white/90 shadow-2xl rounded-3xl p-3.5 space-y-3.5 transition-all duration-300 animate-in fade-in slide-in-from-top-4">
+            
+            {/* KHỐI 1: THÔNG TIN NGƯỜI DÙNG */}
+            {currentUser ? (
+              <div className="p-3 rounded-2xl bg-gradient-to-r from-emerald-50/90 via-teal-50/60 to-slate-50 border border-emerald-100 shadow-2xs flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3 min-w-0">
+                  <div className="relative shrink-0">
+                    <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-600 to-teal-700 text-white font-black text-xs flex items-center justify-center shadow-xs">
+                      {currentUser.name.split(' ').slice(-2).map(n => n[0]).join('') || 'U'}
+                    </div>
+                    <span className="absolute -bottom-0.5 -right-0.5 w-3 h-3 rounded-full bg-emerald-500 ring-2 ring-white"></span>
+                  </div>
+                  <div className="min-w-0">
+                    <div className="text-xs font-black text-slate-900 truncate">
+                      {currentUser.name}
+                    </div>
+                    <div className="text-[10px] font-semibold text-emerald-800 bg-emerald-100/70 border border-emerald-200/60 px-1.5 py-0.5 rounded-md inline-block max-w-full truncate mt-0.5">
+                      {currentUser.role}
+                    </div>
+                  </div>
+                </div>
+
+                <div className="flex items-center gap-1 shrink-0">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onOpenLoginModal();
+                    }}
+                    className="p-2 rounded-xl bg-white text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-200 shadow-2xs active:scale-95 transition-all text-xs cursor-pointer"
+                    title="Xem thông tin / Đổi mật khẩu"
+                  >
+                    <User className="w-4 h-4 text-emerald-700" />
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onLogout();
+                    }}
+                    className="p-2 rounded-xl bg-white text-slate-400 hover:text-rose-600 hover:bg-rose-50 border border-slate-200 shadow-2xs active:scale-95 transition-all text-xs cursor-pointer"
+                    title="Đăng xuất"
+                  >
+                    <LogOut className="w-4 h-4 text-rose-500" />
+                  </button>
+                </div>
+              </div>
+            ) : (
+              <div className="p-3 rounded-2xl bg-slate-50 border border-slate-200 flex items-center justify-between">
+                <div>
+                  <div className="text-xs font-black text-slate-800">Chưa Đăng Nhập</div>
+                  <div className="text-[10px] text-slate-500 font-medium">Đăng nhập để xem điểm và gửi phản hồi</div>
+                </div>
                 <button
-                  key={item.id}
+                  type="button"
                   onClick={() => {
-                    setActiveTab(item.id);
                     setIsMobileMenuOpen(false);
+                    onOpenLoginModal();
                   }}
-                  className={`flex items-center gap-2.5 p-3 rounded-2xl text-xs font-bold transition-all ${
-                    isActive
-                      ? 'bg-emerald-600 text-white shadow-md shadow-emerald-600/30'
-                      : 'bg-slate-100/70 text-slate-700 hover:bg-slate-200/70'
-                  }`}
+                  className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-xs active:scale-95 cursor-pointer"
                 >
-                  <Icon className="w-4 h-4" />
-                  <span className="whitespace-nowrap">{item.label}</span>
+                  Đăng Nhập
                 </button>
-              );
-            })}
+              </div>
+            )}
+
+            {/* KHỐI 2: DANH MỤC ĐIỀU HƯỚNG */}
+            <div className="space-y-1.5">
+              <div className="flex items-center justify-between px-1">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                  Danh Mục Chức Năng
+                </span>
+                <span className="text-[10px] font-bold text-slate-400">
+                  5 phân hệ
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-2">
+                {navItems.map((item, idx) => {
+                  const Icon = item.icon;
+                  const isActive = 
+                    activeTab === item.id ||
+                    (item.id === 'config' && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline')) ||
+                    (item.id === 'analytics' && (activeTab === 'analytics' || activeTab === 'report' || activeTab === 'guide'));
+                  
+                  const isFullWidth = idx === 4;
+
+                  return (
+                    <button
+                      key={item.id}
+                      onClick={() => {
+                        setActiveTab(item.id);
+                        setIsMobileMenuOpen(false);
+                      }}
+                      className={`group relative flex items-center gap-2.5 p-2.5 rounded-2xl text-xs font-bold transition-all text-left cursor-pointer ${
+                        isFullWidth ? 'col-span-2' : ''
+                      } ${
+                        isActive
+                          ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25 border border-emerald-600'
+                          : 'bg-slate-50/90 hover:bg-slate-100 text-slate-700 border border-slate-200/70 shadow-2xs'
+                      }`}
+                    >
+                      <div className={`p-1.5 rounded-xl shrink-0 transition-colors ${
+                        isActive ? 'bg-white/20 text-white' : 'bg-white text-emerald-800 shadow-2xs border border-slate-200/60'
+                      }`}>
+                        <Icon className="w-4 h-4" />
+                      </div>
+                      
+                      <div className="min-w-0 flex-1">
+                        <div className="truncate text-xs font-bold leading-tight">
+                          {item.label}
+                        </div>
+                        {isFullWidth && (
+                          <div className={`text-[10px] font-medium leading-tight truncate mt-0.5 ${isActive ? 'text-emerald-100' : 'text-slate-400'}`}>
+                            Xuất báo cáo, ma trận chuẩn & cẩm nang
+                          </div>
+                        )}
+                      </div>
+
+                      {item.badge && (
+                        <span className={`px-1.5 py-0.5 rounded-full text-[10px] font-extrabold shrink-0 ${
+                          isActive ? 'bg-white text-emerald-800' : 'bg-rose-500 text-white'
+                        }`}>
+                          {item.badge}
+                        </span>
+                      )}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* KHỐI 3: TÁC VỤ NHANH */}
+            <div className="space-y-1.5 pt-1 border-t border-slate-100">
+              <div className="px-1">
+                <span className="text-[10px] font-extrabold uppercase tracking-wider text-slate-400">
+                  Tác Vụ Nhanh
+                </span>
+              </div>
+
+              {/* Nút Tạo Phản Hồi Mới (Chính) */}
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setShowFeedbackChoiceModal(true);
+                }}
+                className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-emerald-600 via-teal-600 to-emerald-700 text-white shadow-md shadow-emerald-600/25 active:scale-[0.99] transition-all cursor-pointer group"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                    <Plus className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="text-left">
+                    <div className="text-xs font-black leading-tight">Tạo Ghi Nhận / Vi Phạm Mới</div>
+                    <div className="text-[10px] text-emerald-100 font-medium leading-tight">Khen thưởng hoặc lập biên bản</div>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+
+              {/* Grid Các Tiện Ích Phụ (Đồng Bộ Cloud & Quản Lý Mật Khẩu / AI) */}
+              <div className="grid grid-cols-2 gap-2 pt-0.5">
+                {onRefreshCloud && (
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onRefreshCloud();
+                    }}
+                    disabled={isRefreshingCloud}
+                    className="flex items-center gap-2 p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-700 font-bold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer disabled:opacity-50 text-left"
+                  >
+                    <div className="p-1.5 rounded-xl bg-white text-emerald-700 border border-slate-200/60 shadow-2xs shrink-0">
+                      <RotateCw className={`w-3.5 h-3.5 ${isRefreshingCloud ? 'animate-spin' : ''}`} />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-slate-800 truncate">Đồng Bộ Cloud</div>
+                      <div className="text-[9px] text-slate-400 font-medium truncate">Làm mới dữ liệu</div>
+                    </div>
+                  </button>
+                )}
+
+                {currentUser?.isAdmin ? (
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setAdminPasswordTargetId(undefined);
+                      setShowAdminPasswordModal(true);
+                    }}
+                    className="flex items-center gap-2 p-2.5 rounded-2xl bg-amber-50/80 hover:bg-amber-100/80 border border-amber-200 text-amber-900 font-bold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer text-left"
+                  >
+                    <div className="p-1.5 rounded-xl bg-amber-500 text-white shadow-2xs shrink-0">
+                      <Key className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-amber-950 truncate">Mật Khẩu</div>
+                      <div className="text-[9px] text-amber-700 font-medium truncate">Quản trị toàn bộ</div>
+                    </div>
+                  </button>
+                ) : (
+                  <button
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setShowNotebookLmModal(true);
+                    }}
+                    className="flex items-center gap-2 p-2.5 rounded-2xl bg-teal-50/80 hover:bg-teal-100/80 border border-teal-200 text-teal-900 font-bold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer text-left"
+                  >
+                    <div className="p-1.5 rounded-xl bg-teal-600 text-white shadow-2xs shrink-0">
+                      <Sparkles className="w-3.5 h-3.5" />
+                    </div>
+                    <div className="min-w-0">
+                      <div className="text-[11px] font-bold text-teal-950 truncate">Trợ Lý AI</div>
+                      <div className="text-[9px] text-teal-700 font-medium truncate">Hỏi đáp nội quy</div>
+                    </div>
+                  </button>
+                )}
+              </div>
+            </div>
+
           </div>
-
-          {onRefreshCloud && (
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                onRefreshCloud();
-              }}
-              disabled={isRefreshingCloud}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-md shadow-emerald-600/20"
-            >
-              <RotateCw className={`w-4 h-4 ${isRefreshingCloud ? 'animate-spin' : ''}`} />
-              <span>Làm Mới Dữ Liệu Cloud</span>
-            </button>
-          )}
-
-          {currentUser?.isAdmin && (
-            <button
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                setAdminPasswordTargetId(undefined);
-                setShowAdminPasswordModal(true);
-              }}
-              className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-amber-500 text-white font-bold text-xs shadow-md shadow-amber-500/20"
-            >
-              <Key className="w-4 h-4" />
-              <span>Quản Lý Mật Khẩu Tất Cả Thành Viên</span>
-            </button>
-          )}
-
-          <button
-            onClick={() => {
-              setIsMobileMenuOpen(false);
-              onOpenIncidentModal();
-            }}
-            className="mt-3 w-full flex items-center justify-center gap-2 py-2.5 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 text-white font-bold text-xs shadow-md shadow-emerald-600/30"
-          >
-            <Plus className="w-4 h-4" />
-            <span>Tạo Ghi Nhận / Vi Phạm Mới</span>
-          </button>
-        </div>
+        </>
       )}
 
       <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
