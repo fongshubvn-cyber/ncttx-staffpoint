@@ -243,7 +243,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
       severity: mappedSeverity,
       date: realtimeStr,
       createdAt: now.toISOString(),
-      status: isPolicy ? 'Đã ghi nhận' : (isMinusWork ? 'Đã ghi nhận' : 'Chờ HR duyệt'),
+      status: 'Đã ghi nhận',
       impactPoints,
       policyPenaltyPoints: isPolicy
         ? (selectedPolicyRule ? selectedPolicyRule.penaltyPoints : 5)

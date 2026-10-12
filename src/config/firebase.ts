@@ -4,7 +4,8 @@ import {
   doc, 
   onSnapshot, 
   setDoc,
-  getDoc
+  getDoc,
+  runTransaction
 } from 'firebase/firestore';
 
 // ----------------------------------------------------------------------
@@ -132,6 +133,114 @@ export const saveToCloud = async (docName: string, data: any) => {
     } else {
       updateCloudState('error', errMessage);
     }
+  }
+};
+
+/**
+ * Lưu 1 phiếu ghi nhận / đánh giá mới lên Firestore sử dụng Transaction để đảm bảo
+ * khi nhiều người cùng đánh giá cùng lúc không bao giờ bị ghi đè hay mất dữ liệu.
+ */
+export const saveIncidentAtomic = async (incident: any): Promise<boolean> => {
+  if (!isFirebaseConfigured() || !incident || !incident.id) return false;
+  try {
+    const docRef = doc(db, 'ncttx_data', 'incidents');
+    await runTransaction(db, async (transaction) => {
+      const snapshot = await transaction.get(docRef);
+      let currentList: any[] = [];
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && Array.isArray(data.payload)) {
+          currentList = data.payload;
+        }
+      }
+
+      // Kiểm tra xem incident đã tồn tại hay chưa
+      const existingIdx = currentList.findIndex(item => item && item.id === incident.id);
+      let updatedList: any[];
+      if (existingIdx >= 0) {
+        updatedList = [...currentList];
+        updatedList[existingIdx] = incident;
+      } else {
+        updatedList = [incident, ...currentList];
+      }
+
+      transaction.set(docRef, {
+        payload: updatedList,
+        updatedAt: new Date().toISOString()
+      });
+    });
+    updateCloudState('connected', null);
+    return true;
+  } catch (error: any) {
+    console.error('Lỗi ghi incident atomic transaction:', error);
+    updateCloudState('error', error?.message || String(error));
+    return false;
+  }
+};
+
+/**
+ * Đồng bộ danh sách incidents lên Firestore với cơ chế Merge an toàn:
+ * Không ghi đè mù quáng, mà lấy dữ liệu mới nhất trên Cloud rồi gộp với local.
+ */
+export const syncIncidentsToCloudAtomic = async (incidentsToSync: any[]): Promise<any[]> => {
+  if (!isFirebaseConfigured() || !Array.isArray(incidentsToSync)) return incidentsToSync;
+  try {
+    const docRef = doc(db, 'ncttx_data', 'incidents');
+    let finalMerged: any[] = incidentsToSync;
+    await runTransaction(db, async (transaction) => {
+      const snapshot = await transaction.get(docRef);
+      let cloudList: any[] = [];
+      if (snapshot.exists()) {
+        const data = snapshot.data();
+        if (data && Array.isArray(data.payload)) {
+          cloudList = data.payload;
+        }
+      }
+
+      const map = new Map<string, any>();
+      // 1. Đưa tất cả phiếu trên Cloud vào Map
+      cloudList.forEach(item => {
+        if (item && item.id) map.set(item.id, item);
+      });
+
+      // 2. Gộp phiếu từ máy local: ưu tiên trạng thái mới nhất
+      incidentsToSync.forEach(localItem => {
+        if (!localItem || !localItem.id) return;
+        const cloudItem = map.get(localItem.id);
+        if (!cloudItem) {
+          // Cloud chưa có -> bổ sung thêm
+          map.set(localItem.id, localItem);
+        } else {
+          // Cả 2 đều có -> giữ bản ghi có xóa/khôi phục mới hơn
+          if (localItem.isDeleted && !cloudItem.isDeleted) {
+            map.set(localItem.id, localItem);
+          } else if (!localItem.isDeleted && cloudItem.isDeleted) {
+            if (!localItem.deletedAt && cloudItem.deletedAt) {
+              map.set(localItem.id, localItem);
+            }
+          } else {
+            map.set(localItem.id, { ...cloudItem, ...localItem });
+          }
+        }
+      });
+
+      finalMerged = Array.from(map.values()).sort((a, b) => {
+        const dateA = a.createdAt || a.date || a.id || '';
+        const dateB = b.createdAt || b.date || b.id || '';
+        return dateB.localeCompare(dateA);
+      });
+
+      transaction.set(docRef, {
+        payload: finalMerged,
+        updatedAt: new Date().toISOString()
+      });
+    });
+
+    updateCloudState('connected', null);
+    return finalMerged;
+  } catch (error: any) {
+    console.error('Lỗi syncIncidentsToCloudAtomic:', error);
+    return incidentsToSync;
   }
 };
 

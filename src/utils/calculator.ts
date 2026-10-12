@@ -208,7 +208,8 @@ export function getStaffScoresForPeriod(
   });
 
   const approvedIncidents = periodIncidents.filter(
-    i => i.status === 'Đã duyệt' || (i.type === 'vi_pham' && i.status !== 'Kháng nghị được chấp nhận')
+    i => (i.status === 'Đã duyệt' || i.status === 'Đã ghi nhận' || i.status === 'Chờ HR duyệt') || 
+         (i.type === 'vi_pham' && i.status !== 'Kháng nghị được chấp nhận')
   );
 
   const violationsCount = approvedIncidents.filter(i => i.type === 'vi_pham').length;

@@ -32,7 +32,14 @@ import {
   defaultParameters,
   initialPolicyRules
 } from './data/seedData';
-import { isFirebaseConfigured, subscribeToCollection, saveToCloud, fetchDocFromCloud } from './config/firebase';
+import { 
+  isFirebaseConfigured, 
+  subscribeToCollection, 
+  saveToCloud, 
+  fetchDocFromCloud,
+  saveIncidentAtomic,
+  syncIncidentsToCloudAtomic
+} from './config/firebase';
 import { isDeptHeadOrAboveRole } from './utils/calculator';
 
 export function App() {
@@ -148,9 +155,11 @@ export function App() {
             if (item && item.id) map.set(item.id, item);
           });
           // Preserve local items created during runtime if not in cloudData yet
+          let hasMissingInCloud = false;
           prevIncidents.forEach((item: IncidentRecord) => {
             if (item && item.id && !map.has(item.id)) {
               map.set(item.id, item);
+              hasMissingInCloud = true;
             }
           });
           const merged = Array.from(map.values()).sort((a, b) => {
@@ -159,6 +168,9 @@ export function App() {
             return dateB.localeCompare(dateA);
           });
           localStorage.setItem('ncttx_incidents', JSON.stringify(merged));
+          if (hasMissingInCloud) {
+            syncIncidentsToCloudAtomic(merged);
+          }
           return merged;
         });
       }
@@ -344,7 +356,11 @@ export function App() {
       }
     }
 
-    saveToCloud(key, payload);
+    if (key === 'incidents' && Array.isArray(payload)) {
+      syncIncidentsToCloudAtomic(payload);
+    } else {
+      saveToCloud(key, payload);
+    }
   };
 
   // Sync state to local storage
@@ -418,20 +434,41 @@ export function App() {
       ]);
 
       if (Array.isArray(staffData) && staffData.length > 0) {
-        setStaffList(staffData);
-        localStorage.setItem('ncttx_staff_list', JSON.stringify(staffData));
+        const sanitized = staffData.map((st: Staff) => ({
+          ...st,
+          generalScore: typeof st.generalScore === 'number' && !isNaN(st.generalScore) ? st.generalScore : 5.0,
+          techScore: st.hasCustomTechScore && typeof st.techScore === 'number' ? st.techScore : 5.0,
+          mgmtScore: st.hasCustomMgmtScore && typeof st.mgmtScore === 'number' ? st.mgmtScore : 5.0,
+        }));
+        setStaffList(sanitized);
+        localStorage.setItem('ncttx_staff_list', JSON.stringify(sanitized));
       }
 
-      if (Array.isArray(incidentData)) {
-        const sorted = [...incidentData].sort((a, b) => {
-          if (a.date && b.date && a.date !== b.date) {
-            return b.date.localeCompare(a.date);
+      setIncidents(prevIncidents => {
+        const map = new Map<string, IncidentRecord>();
+        if (Array.isArray(incidentData)) {
+          incidentData.forEach((item: IncidentRecord) => {
+            if (item && item.id) map.set(item.id, item);
+          });
+        }
+        let hasMissingInCloud = false;
+        prevIncidents.forEach((item: IncidentRecord) => {
+          if (item && item.id && !map.has(item.id)) {
+            map.set(item.id, item);
+            hasMissingInCloud = true;
           }
-          return (b.id || '').localeCompare(a.id || '');
         });
-        setIncidents(sorted);
+        const sorted = Array.from(map.values()).sort((a, b) => {
+          const dateA = a.createdAt || a.date || a.id || '';
+          const dateB = b.createdAt || b.date || b.id || '';
+          return dateB.localeCompare(dateA);
+        });
         localStorage.setItem('ncttx_incidents', JSON.stringify(sorted));
-      }
+        if (hasMissingInCloud) {
+          syncIncidentsToCloudAtomic(sorted);
+        }
+        return sorted;
+      });
 
       if (Array.isArray(questionData) && questionData.length > 0) {
         setQuestions(questionData);
@@ -461,7 +498,10 @@ export function App() {
       notifySync('incidents', updated);
       return updated;
     });
-    if (newIncident.status === 'Đã duyệt' || newIncident.type === 'vi_pham') {
+    // Lưu atomic lên Firestore với Transaction để chống ghi đè khi nhiều người cùng đánh giá
+    saveIncidentAtomic(newIncident);
+
+    if (newIncident.status === 'Đã duyệt' || newIncident.status === 'Đã ghi nhận' || newIncident.type === 'vi_pham') {
       applyIncidentScoreImpact(newIncident);
     }
   };
@@ -589,7 +629,7 @@ export function App() {
   };
 
   // Helper: Safe number parser
-  const safeNum = (val: any, fallback = 4.0): number => {
+  const safeNum = (val: any, fallback = 5.0): number => {
     const num = Number(val);
     return isNaN(num) ? fallback : num;
   };
@@ -606,13 +646,13 @@ export function App() {
     setStaffList(prev => {
       const updated = prev.map(staff => {
         if (staff.id === incident.targetId) {
-          const curGen = safeNum(staff.generalScore, 4.0);
-          const curTech = safeNum(staff.techScore, 4.0);
-          const curMgmt = safeNum(staff.mgmtScore, 4.0);
+          const curGen = safeNum(staff.generalScore, 5.0);
+          const curTech = safeNum(staff.techScore, 5.0);
+          const curMgmt = safeNum(staff.mgmtScore, 5.0);
           const refundedPoints = Math.abs(safeNum(incident.impactPoints, 0));
 
           const newGeneralScore = Math.max(0, Math.min(5, Number((curGen + refundedPoints).toFixed(2))));
-          let newTotalScore = 4.0;
+          let newTotalScore = 5.0;
           if (typeof staff.mgmtScore === 'number' && !isNaN(staff.mgmtScore)) {
             newTotalScore = Math.max(0, Math.min(5, Number((
               newGeneralScore * wGenMgmt + curMgmt * wMgmtMgmt + curTech * wTechMgmt
@@ -625,8 +665,8 @@ export function App() {
 
           return {
             ...staff,
-            generalScore: isNaN(newGeneralScore) ? 4.0 : newGeneralScore,
-            totalScore: isNaN(newTotalScore) ? 4.0 : newTotalScore,
+            generalScore: isNaN(newGeneralScore) ? 5.0 : newGeneralScore,
+            totalScore: isNaN(newTotalScore) ? 5.0 : newTotalScore,
           };
         }
         return staff;
@@ -666,13 +706,13 @@ export function App() {
     setStaffList(prev => {
       const updated = prev.map(staff => {
         if (staff.id === incident.targetId) {
-          const curGen = safeNum(staff.generalScore, 4.0);
-          const curTech = safeNum(staff.techScore, 4.0);
-          const curMgmt = safeNum(staff.mgmtScore, 4.0);
+          const curGen = safeNum(staff.generalScore, 5.0);
+          const curTech = safeNum(staff.techScore, 5.0);
+          const curMgmt = safeNum(staff.mgmtScore, 5.0);
           const impact = safeNum(incident.impactPoints, 0);
 
           const newGeneralScore = Math.max(0, Math.min(5, Number((curGen + impact).toFixed(2))));
-          let newTotalScore = 4.0;
+          let newTotalScore = 5.0;
           if (typeof staff.mgmtScore === 'number' && !isNaN(staff.mgmtScore)) {
             newTotalScore = Math.max(0, Math.min(5, Number((
               newGeneralScore * wGenMgmt + curMgmt * wMgmtMgmt + curTech * wTechMgmt
@@ -685,8 +725,8 @@ export function App() {
 
           return {
             ...staff,
-            generalScore: isNaN(newGeneralScore) ? 4.0 : newGeneralScore,
-            totalScore: isNaN(newTotalScore) ? 4.0 : newTotalScore,
+            generalScore: isNaN(newGeneralScore) ? 5.0 : newGeneralScore,
+            totalScore: isNaN(newTotalScore) ? 5.0 : newTotalScore,
           };
         }
         return staff;

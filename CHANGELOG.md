@@ -1,5 +1,18 @@
 # 📜 NHẬT KÝ PHIÊN BẢN & MỐC NGUYÊN BẢN DỰ ÁN STAFFPOINT
 
+## 📌 PHIÊN BẢN V1.006-STABLE (12/10/2026)
+**Git Tag:** `v1.006-stable`  
+**GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  
+**Trạng thái:** ✅ Đã hoàn tất khắc phục triệt để Lỗi Xung đột Đánh giá Đồng thời (Concurrent Evaluations) & Cơ chế Làm Mới Cloud An Toàn 2 Chiều.
+
+### 🌟 BẢNG TỔNG HỢP CÁC TÍNH NĂNG & CẢI TIẾN TRONG BẢN V1.006:
+- **Đồng bộ Giao dịch Nguyên tử (Firestore Transaction `runTransaction`):** Khắc phục triệt để hiện tượng nhiều người đánh giá/gửi phản hồi cùng một lúc bị ghi đè mất phiếu. Mọi phiếu tạo mới đều được xếp hàng và gộp an toàn vào Cloud mà không bị ghi đè.
+- **Cơ chế "Làm Mới Cloud" Thông Minh (Smart 2-Way Merge):** Khi người dùng bấm nút làm mới, hệ thống tự động gộp các phiếu trên Cloud với phiếu local theo ID. Tuyệt đối không xóa nhầm dữ liệu trên máy, không làm tụt số lượng đánh giá hay reset điểm về 0.
+- **Tính điểm & Tuyên dương Tức thì:** Phiếu ghi nhận tuyên dương và đánh giá công việc được kích hoạt ngay (`Đã ghi nhận`) và được tính lập tức vào bộ đếm phản hồi và điểm số kỳ hiện tại.
+- **Bảo toàn Điểm Sàn Chuẩn 5.0:** Điểm số nền tảng của nhân sự được chốt chuẩn 5.0, không bị rơi về mốc 4.0 hay 0 khi làm mới hay tải lại trang.
+
+---
+
 ## 📌 PHIÊN BẢN V1.005-STABLE (07/10/2026)
 **Git Tag:** `v1.005-stable`  
 **GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  
