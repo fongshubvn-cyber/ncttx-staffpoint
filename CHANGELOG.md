@@ -1,5 +1,32 @@
 # 📜 NHẬT KÝ PHIÊN BẢN & MỐC NGUYÊN BẢN DỰ ÁN STAFFPOINT
 
+## 📌 PHIÊN BẢN V1.007-STABLE (12/10/2026)
+**Git Tag:** `v1.007-stable`  
+**GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  
+**Trạng thái:** ✅ Đã hoàn tất nâng cấp Tái thiết kế Menu Di động theo 3 Khối Card chuẩn, Phân quyền Bảo mật Tuyệt đối (Chỉ Admin thấy người khác) & Chuẩn hóa Luồng Duyệt Phiếu/Kháng nghị 48h.
+
+### 🌟 BẢNG TỔNG HỢP CÁC TÍNH NĂNG & CẢI TIẾN TRONG BẢN V1.007:
+1. **Thiết Kế Menu Di Động Dạng Khối (Modular Block Drawer):**
+   - **Khối 1 – Thông Tin Người Dùng:** Avatar chữ cái với chấm xanh online, Tên & Chức danh rõ ràng, nút xem tài khoản/đổi mật khẩu và đăng xuất nhanh.
+   - **Khối 2 – Danh Mục Chức Năng 5 Phân Hệ:** Chia lưới 2 cột chuẩn, phân hệ thứ 5 (*Báo Cáo & Hướng Dẫn*) trải rộng toàn hàng (`col-span-2`) kèm dòng mô tả phụ, không còn khoảng trống bị lệch.
+   - **Khối 3 – Tác Vụ Nhanh:** Nút nổi bật gradient *"Tạo Ghi Nhận / Vi Phạm Mới"*, lưới 2 tiện ích phụ *"Đồng Bộ Cloud"* và *"Quản Lý Mật Khẩu / Trợ Lý AI"*.
+   - **Lớp Phủ Nền (Backdrop Overlay):** Chạm bất kỳ đâu bên ngoài để đóng menu nhanh chóng.
+
+2. **Cơ Chế Phân Quyền Bảo Mật Tuyệt Đối (Privacy & Security Scoping):**
+   - **Chỉ duy nhất Admin** mới có quyền xem toàn bộ nhân sự công ty, tìm kiếm và chuyển đổi xem nhân sự khác.
+   - **Mọi tài khoản khác (kể cả Trưởng phòng / Quản lý / Nhân sự):** Khóa cứng chỉ xem được duy nhất bản thân mình (`[selfStaff]`).
+   - Khóa thanh chọn nhân sự trên trang Tổng quan: Ẩn nút "Đổi nhân sự" và dropdown khi không phải Admin.
+   - Khoanh vùng chỉ số Banner KPI theo đúng hồ sơ cá nhân ("Hồ Sơ Của Bạn", "Tuyên Dương Của Bạn", "Biên Bản Của Bạn", "Kháng Nghị Của Bạn"), không còn cộng dồn vi phạm của toàn công ty.
+
+3. **Chuẩn Hóa Luồng Duyệt Ghi Nhận & Kháng Nghị 48h:**
+   - Phiếu ghi nhận (Tuyên dương): Khởi tạo ở trạng thái `'Đang xem xét'`, HR xem xét phê duyệt chuyển sang `'Đã ghi nhận'` mới được tính điểm.
+   - Phiếu lập biên bản (Vi phạm): Người bị lập biên bản hoặc HR có quyền gửi `'Kháng nghị'`, HR xem xét chấp nhận (hủy phạt hoàn điểm) hoặc bác kháng nghị.
+
+4. **Tinh Gọn Header Ứng Dụng:**
+   - Loại bỏ chữ "StaffPoint" trên thanh tiêu đề, thay bằng capsule pill trạng thái Cloud Realtime, nút làm mới và mã phiên bản `v1.007`.
+
+---
+
 ## 📌 PHIÊN BẢN V1.006-STABLE (12/10/2026)
 **Git Tag:** `v1.006-stable`  
 **GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  
