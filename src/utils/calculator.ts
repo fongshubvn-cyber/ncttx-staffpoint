@@ -51,7 +51,8 @@ export function calculateTotalScore(
   generalScore: number,
   techScore: number,
   mgmtScore?: number,
-  params?: ParameterConfig
+  params?: ParameterConfig,
+  isManager?: boolean
 ): number {
   const p = params || {
     weightGeneralNoMgmt: 0.65,
@@ -61,16 +62,18 @@ export function calculateTotalScore(
     weightTechWithMgmt: 0.20,
   };
 
-  if (mgmtScore !== undefined && mgmtScore > 0) {
+  const hasMgmt = isManager ?? (mgmtScore !== undefined && mgmtScore > 0);
+
+  if (hasMgmt) {
     return Number((
-      generalScore * p.weightGeneralWithMgmt +
-      mgmtScore * p.weightMgmtWithMgmt +
-      techScore * p.weightTechWithMgmt
+      generalScore * (p.weightGeneralWithMgmt ?? 0.50) +
+      (mgmtScore ?? 0) * (p.weightMgmtWithMgmt ?? 0.30) +
+      techScore * (p.weightTechWithMgmt ?? 0.20)
     ).toFixed(2));
   } else {
     return Number((
-      generalScore * p.weightGeneralNoMgmt +
-      techScore * p.weightTechNoMgmt
+      generalScore * (p.weightGeneralNoMgmt ?? 0.65) +
+      techScore * (p.weightTechNoMgmt ?? 0.35)
     ).toFixed(2));
   }
 }
@@ -82,42 +85,120 @@ export function calculateTotalScoreForStaff(
   staff: Staff,
   params?: ParameterConfig
 ): number {
-  const hasMgmt = isManagementRole(staff);
-  return calculateTotalScore(
-    staff.generalScore,
-    staff.techScore,
-    hasMgmt ? staff.mgmtScore : undefined,
-    params
-  );
+  const baselines = getStaffBaselineScores(staff, params);
+  return baselines.totalScore;
 }
 
-export function getDepartmentTrackName(departmentOrLine?: string): { fullName: string; shortName: string } {
+/**
+ * Kiểm tra xem một ngạch chuyên môn có được gán cụ thể hay chưa
+ */
+export function isTrackAssigned(trackName?: string): boolean {
+  if (!trackName) return false;
+  const s = trackName.toLowerCase().trim();
+  if (
+    s === '' ||
+    s === 'chưa xếp ngạch' ||
+    s === 'chưa phân ngạch' ||
+    s === 'chưa xếp' ||
+    s === 'tuyến chưa có ngạch riêng' ||
+    s === 'none' ||
+    s === 'null' ||
+    s === 'undefined'
+  ) {
+    return false;
+  }
+  return true;
+}
+
+export function getDepartmentTrackName(departmentOrLine?: string): { fullName: string; shortName: string; isAssigned: boolean } {
+  if (!isTrackAssigned(departmentOrLine)) {
+    return { fullName: 'Chưa xếp ngạch', shortName: 'Chưa xếp ngạch', isAssigned: false };
+  }
   const s = (departmentOrLine || '').toLowerCase().trim();
   if (s.includes('thương mại') || s.includes('dịch vụ')) {
-    return { fullName: 'Ngạch Thương Mại & Dịch Vụ', shortName: 'Ngạch Thương Mại' };
+    return { fullName: 'Ngạch Thương Mại & Dịch Vụ', shortName: 'Ngạch Thương Mại', isAssigned: true };
   }
   if (s.includes('nhân sự') || s.includes('hành chính') || s.includes('pháp chế')) {
-    return { fullName: 'Ngạch Nhân Sự - Hành Chính - Pháp Chế', shortName: 'Ngạch Nhân Sự - HC - PC' };
+    return { fullName: 'Ngạch Nhân Sự - Hành Chính - Pháp Chế', shortName: 'Ngạch Nhân Sự - HC - PC', isAssigned: true };
   }
   if (s.includes('kế toán')) {
-    return { fullName: 'Ngạch Kế Toán', shortName: 'Ngạch Kế Toán' };
+    return { fullName: 'Ngạch Kế Toán', shortName: 'Ngạch Kế Toán', isAssigned: true };
   }
   if (s.includes('pha chế')) {
-    return { fullName: 'Ngạch Pha Chế', shortName: 'Ngạch Pha Chế' };
+    return { fullName: 'Ngạch Pha Chế', shortName: 'Ngạch Pha Chế', isAssigned: true };
   }
   if (s.includes('bếp bánh') || s.includes('bánh')) {
-    return { fullName: 'Ngạch Bếp Bánh', shortName: 'Ngạch Bếp Bánh' };
+    return { fullName: 'Ngạch Bếp Bánh', shortName: 'Ngạch Bếp Bánh', isAssigned: true };
   }
   if (s.includes('sản xuất')) {
-    return { fullName: 'Ngạch Sản Xuất', shortName: 'Ngạch Sản Xuất' };
+    return { fullName: 'Ngạch Sản Xuất', shortName: 'Ngạch Sản Xuất', isAssigned: true };
   }
   if (s.includes('kho') || s.includes('đóng gói')) {
-    return { fullName: 'Ngạch Kho & Đóng Gói', shortName: 'Ngạch Kho & Đóng Gói' };
+    return { fullName: 'Ngạch Kho & Đóng Gói', shortName: 'Ngạch Kho & Đóng Gói', isAssigned: true };
   }
-  if (s.includes('kinh doanh') || s.includes('e-commerce') || s.includes('sàn')) {
-    return { fullName: 'Ngạch Phát Triển Kinh Doanh / E-Commerce', shortName: 'Ngạch Kinh Doanh' };
+  if (s.includes('kinh doanh') || s.includes('e-commerce') || s.includes('sàn') || s.includes('phần mềm')) {
+    return { fullName: 'Ngạch Phát Triển Kinh Doanh / E-Commerce', shortName: 'Ngạch Kinh Doanh', isAssigned: true };
   }
-  return { fullName: 'Ngạch Phòng Ban', shortName: 'Ngạch Phòng Ban' };
+  return { fullName: 'Chưa xếp ngạch', shortName: 'Chưa xếp ngạch', isAssigned: false };
+}
+
+/**
+ * Xác định thông tin Ngạch Quản Lý của nhân sự
+ */
+export function getManagementTrackInfo(staff: Staff): { fullName: string; shortName: string; isAssigned: boolean } {
+  const isMgmt = isManagementRole(staff);
+  if (!isMgmt) {
+    return { fullName: 'Chưa xếp ngạch', shortName: 'Chưa xếp ngạch', isAssigned: false };
+  }
+
+  const explicitMgmt = (staff.managementTrack || '').toLowerCase().trim();
+  if (explicitMgmt === 'chưa xếp ngạch' || explicitMgmt === 'chưa phân ngạch' || explicitMgmt === 'none') {
+    return { fullName: 'Chưa xếp ngạch', shortName: 'Chưa xếp ngạch', isAssigned: false };
+  }
+
+  // Nếu đã được gán ngạch quản lý cụ thể
+  if (explicitMgmt) {
+    if (explicitMgmt.includes('thương mại') || explicitMgmt.includes('dịch vụ')) {
+      return { fullName: 'Ngạch Quản Lý Thương Mại & Dịch Vụ', shortName: 'Ngạch QL Thương Mại', isAssigned: true };
+    }
+    if (explicitMgmt.includes('nhân sự') || explicitMgmt.includes('hành chính') || explicitMgmt.includes('pháp chế')) {
+      return { fullName: 'Ngạch Quản Lý Nhân Sự - HC - PC', shortName: 'Ngạch QL Nhân Sự', isAssigned: true };
+    }
+    if (explicitMgmt.includes('sản xuất')) {
+      return { fullName: 'Ngạch Quản Lý Sản Xuất', shortName: 'Ngạch QL Sản Xuất', isAssigned: true };
+    }
+    if (explicitMgmt.includes('kế toán')) {
+      return { fullName: 'Ngạch Quản Lý Kế Toán', shortName: 'Ngạch QL Kế Toán', isAssigned: true };
+    }
+    if (explicitMgmt.includes('pha chế') || explicitMgmt.includes('bánh')) {
+      return { fullName: 'Ngạch Quản Lý Pha Chế & Bếp', shortName: 'Ngạch QL Pha Chế', isAssigned: true };
+    }
+    return { fullName: 'Ngạch Quản Lý Chung', shortName: 'Ngạch QL Chung', isAssigned: true };
+  }
+
+  // Nếu chưa gán explicit: phụ thuộc vào ngạch làm việc staff.line
+  const lineTrack = getDepartmentTrackName(staff.line);
+  if (!lineTrack.isAssigned) {
+    return { fullName: 'Chưa xếp ngạch', shortName: 'Chưa xếp ngạch', isAssigned: false };
+  }
+
+  const lineLower = (staff.line || '').toLowerCase().trim();
+  const deptLower = (staff.department || '').toLowerCase().trim();
+
+  if (lineLower.includes('thương mại') || deptLower.includes('thương mại')) {
+    return { fullName: 'Ngạch Quản Lý Thương Mại & Dịch Vụ', shortName: 'Ngạch QL Thương Mại', isAssigned: true };
+  }
+  if (lineLower.includes('nhân sự') || deptLower.includes('nhân sự')) {
+    return { fullName: 'Ngạch Quản Lý Nhân Sự - HC - PC', shortName: 'Ngạch QL Nhân Sự', isAssigned: true };
+  }
+  if (lineLower.includes('sản xuất')) {
+    return { fullName: 'Ngạch Quản Lý Sản Xuất', shortName: 'Ngạch QL Sản Xuất', isAssigned: true };
+  }
+  if (lineLower.includes('kế toán')) {
+    return { fullName: 'Ngạch Quản Lý Kế Toán', shortName: 'Ngạch QL Kế Toán', isAssigned: true };
+  }
+
+  return { fullName: 'Ngạch Quản Lý Chung', shortName: 'Ngạch QL Chung', isAssigned: true };
 }
 
 export interface StaffBaselineInfo {
@@ -128,7 +209,11 @@ export interface StaffBaselineInfo {
   salaryTier: number;
   departmentTrackName: string;
   departmentTrackShortName: string;
+  managementTrackName?: string;
+  managementTrackShortName?: string;
   isManager: boolean;
+  isTechAssigned: boolean;
+  isMgmtAssigned: boolean;
   weights: {
     general: number;
     tech: number;
@@ -141,8 +226,8 @@ export interface StaffBaselineInfo {
  * Tính toán điểm nền chuẩn ước tính theo sheet 📊 Điểm nền & ⚙️ Tham số của Phiếu đánh giá.xlsx:
  * Phân tách rõ ràng:
  * - Văn hóa:
- * - Ngạch phòng ban: (Ngạch TM&DV, Ngạch NSHC, Ngạch Pha chế, v.v.)
- * - Ngạch quản lý: (Áp dụng cho Quản lý)
+ * - Ngạch phòng ban: (Ngạch TM&DV, Ngạch NSHC, Ngạch Pha chế, v.v. Chưa xếp ngạch thì mặc định điểm là 0)
+ * - Ngạch quản lý: (Áp dụng cho Quản lý. Chưa xếp ngạch quản lý thì mặc định điểm là 0)
  * 
  * Tiêu chí chuẩn hóa:
  * - Nhân viên: Văn hóa + Ngạch phòng ban (VD: 65% / 35%)
@@ -150,7 +235,9 @@ export interface StaffBaselineInfo {
  */
 export function getStaffBaselineScores(staff: Staff, params?: ParameterConfig): StaffBaselineInfo {
   const isMgmt = isManagementRole(staff);
-  const trackInfo = getDepartmentTrackName(staff.line || staff.department);
+  const trackInfo = getDepartmentTrackName(staff.line);
+  const mgmtTrackInfo = getManagementTrackInfo(staff);
+
   const lineLower = (staff.line || '').toLowerCase().trim();
   const deptLower = (staff.department || '').toLowerCase().trim();
 
@@ -166,26 +253,30 @@ export function getStaffBaselineScores(staff: Staff, params?: ParameterConfig): 
   // 1. Trụ cột Văn Hóa & Thái Độ: THỐNG NHẤT TOÀN NHÀ (Ưu tiên baselineCultureCommon)
   const generalScore = params?.baselineCultureCommon ?? 4.08;
 
-  // 2. Trụ cột Ngạch Chuyên Môn Phòng Ban & 3. Trụ cột Ngạch Quản Lý
+  // 2. Trụ cột Ngạch Chuyên Môn Phòng Ban:
+  // Nếu nhân sự chưa được xếp vào ngạch nào thì cứ hiển thị là "Chưa xếp ngạch" mà mặc định điểm của nó là 0
   let techScore: number;
-  let mgmtScore: number | undefined = undefined;
-
-  if (isTMDV) {
+  if (!trackInfo.isAssigned) {
+    techScore = 0;
+  } else if (isTMDV) {
     techScore = params?.baselineTmdvTech ?? 4.06;
-    if (isMgmt) {
-      mgmtScore = params?.baselineTmdvMgmt ?? 4.44;
-    }
   } else if (isNSHC) {
     techScore = params?.baselineNshcTech ?? 5.00;
-    if (isMgmt) {
-      mgmtScore = params?.baselineNshcMgmt ?? 5.00;
-    }
   } else {
-    // Tuyến khác
     techScore = params?.baselineOtherTech ?? 4.08;
-    if (isMgmt) {
-      mgmtScore = params?.baselineOtherMgmt ?? 4.08;
-    }
+  }
+
+  // 3. Trụ cột Ngạch Quản Lý:
+  // Tương tự đối với quản lý: nếu chưa được xếp vào ngạch quản lý (hoặc không phải quản lý) thì mặc định điểm là 0
+  let mgmtScore: number | undefined = undefined;
+  if (!isMgmt || !mgmtTrackInfo.isAssigned) {
+    mgmtScore = 0;
+  } else if (isTMDV || mgmtTrackInfo.fullName.includes('Thương Mại')) {
+    mgmtScore = params?.baselineTmdvMgmt ?? 4.44;
+  } else if (isNSHC || mgmtTrackInfo.fullName.includes('Nhân Sự')) {
+    mgmtScore = params?.baselineNshcMgmt ?? 5.00;
+  } else {
+    mgmtScore = params?.baselineOtherMgmt ?? 4.08;
   }
 
   // Tính điểm tổng chuẩn hóa từ điểm thành phần
@@ -198,13 +289,16 @@ export function getStaffBaselineScores(staff: Staff, params?: ParameterConfig): 
       techScore * wTech +
       (mgmtScore ?? 0) * wMgmt
     ).toFixed(2));
-    formulaStr = `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%) + Ngạch Quản Lý (${Math.round(wMgmt * 100)}%)`;
+    const techLabel = trackInfo.isAssigned ? trackInfo.shortName : 'Chưa xếp ngạch';
+    const mgmtLabel = mgmtTrackInfo.isAssigned ? mgmtTrackInfo.shortName : 'Chưa xếp ngạch';
+    formulaStr = `Văn hóa (${Math.round(wGen * 100)}%) + ${techLabel} (${Math.round(wTech * 100)}%) + ${mgmtLabel} (${Math.round(wMgmt * 100)}%)`;
   } else {
     totalScore = Number((
       generalScore * wGen +
       techScore * wTech
     ).toFixed(2));
-    formulaStr = `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%)`;
+    const techLabel = trackInfo.isAssigned ? trackInfo.shortName : 'Chưa xếp ngạch';
+    formulaStr = `Văn hóa (${Math.round(wGen * 100)}%) + ${techLabel} (${Math.round(wTech * 100)}%)`;
   }
 
   const salaryTier = calculateSalaryTier(totalScore, params);
@@ -217,7 +311,11 @@ export function getStaffBaselineScores(staff: Staff, params?: ParameterConfig): 
     salaryTier,
     departmentTrackName: trackInfo.fullName,
     departmentTrackShortName: trackInfo.shortName,
+    managementTrackName: mgmtTrackInfo.fullName,
+    managementTrackShortName: mgmtTrackInfo.shortName,
     isManager: isMgmt,
+    isTechAssigned: trackInfo.isAssigned,
+    isMgmtAssigned: mgmtTrackInfo.isAssigned,
     weights: {
       general: wGen,
       tech: wTech,
@@ -577,6 +675,10 @@ export function getStaffScoresForPeriod(
   recognitionsCount: number;
   departmentTrackName?: string;
   departmentTrackShortName?: string;
+  managementTrackName?: string;
+  managementTrackShortName?: string;
+  isTechAssigned?: boolean;
+  isMgmtAssigned?: boolean;
   hasMgmt?: boolean;
   weights?: { general: number; tech: number; mgmt: number };
   formulaStr?: string;
@@ -610,7 +712,7 @@ export function getStaffScoresForPeriod(
   // Scores start from baseline
   let generalScore = baselines.generalScore;
   let techScore = baselines.techScore;
-  let mgmtScore = hasMgmt ? (baselines.mgmtScore ?? 0) : 0;
+  let mgmtScore = baselines.mgmtScore ?? 0;
 
   // Distribute impact points into the EXACT pillar
   approvedIncidents.forEach(inc => {
@@ -638,7 +740,8 @@ export function getStaffScoresForPeriod(
         generalScore,
         techScore,
         hasMgmt ? mgmtScore : undefined,
-        params
+        params,
+        hasMgmt
       );
 
   const salaryTier = calculateSalaryTier(totalScore, params);
@@ -655,6 +758,10 @@ export function getStaffScoresForPeriod(
     recognitionsCount,
     departmentTrackName: baselines.departmentTrackName,
     departmentTrackShortName: baselines.departmentTrackShortName,
+    managementTrackName: baselines.managementTrackName,
+    managementTrackShortName: baselines.managementTrackShortName,
+    isTechAssigned: baselines.isTechAssigned,
+    isMgmtAssigned: baselines.isMgmtAssigned,
     hasMgmt,
     weights: baselines.weights,
     formulaStr: baselines.formulaStr,

@@ -582,12 +582,13 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
               </div>
 
               {(() => {
-                const trackInfo = getDepartmentTrackName(selectedStaff.line || selectedStaff.department);
-                const isMgmt = isManagementRole(selectedStaff);
-                const wGen = isMgmt ? (params.weightGeneralWithMgmt ?? 0.50) : (params.weightGeneralNoMgmt ?? 0.65);
-                const wTech = isMgmt ? (params.weightTechWithMgmt ?? 0.20) : (params.weightTechNoMgmt ?? 0.35);
-                const wMgmt = isMgmt ? (params.weightMgmtWithMgmt ?? 0.30) : 0;
-                const totalScore = calculateTotalScoreForStaff(selectedStaff, params);
+                const baselines = getStaffBaselineScores(selectedStaff, params);
+                const trackInfo = getDepartmentTrackName(selectedStaff.line);
+                const isMgmt = baselines.isManager;
+                const wGen = baselines.weights.general;
+                const wTech = baselines.weights.tech;
+                const wMgmt = baselines.weights.mgmt;
+                const totalScore = baselines.totalScore;
 
                 return (
                   <div className="p-4 bg-emerald-50/80 rounded-2xl border border-emerald-200 space-y-2">
@@ -602,21 +603,19 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                       <strong className="font-mono">{selectedStaff.generalScore?.toFixed(2) ?? '4.08'}</strong>
                     </div>
                     <div className="flex justify-between text-[#2D6A4F]">
-                      <span>• {trackInfo.fullName} ({Math.round(wTech * 100)}%):</span>
-                      <strong className="font-mono">{selectedStaff.techScore?.toFixed(2) ?? '4.08'}</strong>
+                      <span>• {baselines.isTechAssigned ? `${trackInfo.fullName} (${Math.round(wTech * 100)}%):` : `Chưa xếp ngạch (${Math.round(wTech * 100)}%):`}</span>
+                      <strong className={`font-mono ${baselines.isTechAssigned ? '' : 'text-slate-400'}`}>{baselines.techScore.toFixed(2)}</strong>
                     </div>
-                    {isMgmt && (
-                      <div className="flex justify-between text-[#2D6A4F]">
-                        <span>• Ngạch Quản Lý ({Math.round(wMgmt * 100)}%):</span>
-                        <strong className="font-mono">
-                          {selectedStaff.mgmtScore?.toFixed(2) ?? '4.08'}
-                        </strong>
-                      </div>
-                    )}
+                    <div className="flex justify-between text-[#2D6A4F]">
+                      <span>• Ngạch Quản Lý ({isMgmt ? Math.round(wMgmt * 100) : 0}%):</span>
+                      <strong className={`font-mono ${isMgmt && baselines.isMgmtAssigned ? '' : 'text-slate-400'}`}>
+                        {isMgmt && baselines.isMgmtAssigned
+                          ? (selectedStaff.mgmtScore?.toFixed(2) ?? baselines.mgmtScore?.toFixed(2) ?? '0.00')
+                          : '0.00 (Chưa xếp ngạch)'}
+                      </strong>
+                    </div>
                     <div className="pt-1 text-[10px] text-slate-500 font-medium">
-                      💡 Tiêu chí: {isMgmt 
-                        ? `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%) + Ngạch QL (${Math.round(wMgmt * 100)}%)`
-                        : `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%)`}
+                      💡 Tiêu chí: {baselines.formulaStr}
                     </div>
                     <div className="flex flex-col gap-1 text-[#2D6A4F] pt-1 border-t border-emerald-200/60">
                       <div className="flex justify-between items-center">
@@ -743,7 +742,8 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                   onChange={(e) => setNewLine(e.target.value)}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
                 >
-                  {lines.map((l) => (
+                  <option value="Chưa xếp ngạch">Chưa xếp ngạch (Điểm = 0.00)</option>
+                  {lines.filter(l => l.name !== 'Chưa xếp ngạch').map((l) => (
                     <option key={l.id} value={l.name}>{l.name}</option>
                   ))}
                 </select>
@@ -830,11 +830,12 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Ngạch Làm Việc</label>
                 <select
-                  value={editingStaff.line}
+                  value={editingStaff.line || 'Chưa xếp ngạch'}
                   onChange={(e) => setEditingStaff({ ...editingStaff, line: e.target.value })}
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
                 >
-                  {lines.map((l) => (
+                  <option value="Chưa xếp ngạch">Chưa xếp ngạch (Điểm = 0.00)</option>
+                  {lines.filter(l => l.name !== 'Chưa xếp ngạch').map((l) => (
                     <option key={l.id} value={l.name}>{l.name}</option>
                   ))}
                 </select>
@@ -849,6 +850,25 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                   className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
                 />
               </div>
+
+              {(editingStaff.isManager || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý', 'Lead'].includes(editingStaff.jobLevel)) && (
+                <div>
+                  <label className="block text-slate-700 font-semibold mb-1">Ngạch Quản Lý</label>
+                  <select
+                    value={editingStaff.managementTrack || (editingStaff.line && editingStaff.line !== 'Chưa xếp ngạch' ? `Quản lý ${editingStaff.line}` : 'Chưa xếp ngạch')}
+                    onChange={(e) => setEditingStaff({ ...editingStaff, managementTrack: e.target.value })}
+                    className="w-full px-3 py-2 bg-slate-50 border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 font-bold"
+                  >
+                    <option value="Chưa xếp ngạch">Chưa xếp ngạch (Điểm = 0.00)</option>
+                    <option value="Quản lý Thương Mại & Dịch Vụ">Quản lý Thương Mại & Dịch Vụ</option>
+                    <option value="Quản lý Nhân Sự - HC - PC">Quản lý Nhân Sự - HC - PC</option>
+                    <option value="Quản lý Kế Toán">Quản lý Kế Toán</option>
+                    <option value="Quản lý Sản Xuất">Quản lý Sản Xuất</option>
+                    <option value="Quản lý Pha Chế & Bếp">Quản lý Pha Chế & Bếp</option>
+                    <option value="Quản lý Chung">Quản lý Chung / Tuyến khác</option>
+                  </select>
+                </div>
+              )}
 
               {/* Điểm Nền Tự Động Từ Hệ Thống (Đã tắt tùy chỉnh riêng lẻ) */}
               {(() => {
@@ -918,7 +938,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                             } else {
                               updated = currentAssigned.filter((n) => n !== l.name);
                             }
-                            const mainLine = updated[0] || editingStaff.line || lines[0]?.name || 'Pha chế';
+                            const mainLine = updated[0] || 'Chưa xếp ngạch';
                             setEditingStaff({
                               ...editingStaff,
                               assignedLines: updated,

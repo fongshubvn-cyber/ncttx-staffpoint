@@ -350,43 +350,45 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
                     </span>
                   </div>
 
-                  {/* 2. Ngạch Phòng Ban */}
+                  {/* 2. Ngạch Phòng Ban / Ngạch Chuyên Môn */}
                   <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs gap-2">
                     <span className="text-slate-700 font-semibold flex items-center gap-1.5 min-w-0">
-                      <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0"></span>
-                      <span className="truncate">{trackInfo.fullName}:</span>
-                      <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200 font-bold shrink-0">
+                      <span className={`w-2 h-2 rounded-full ${periodScores.isTechAssigned ?? trackInfo.isAssigned ? 'bg-purple-500' : 'bg-slate-300'} shrink-0`}></span>
+                      <span className="truncate">
+                        {(periodScores.isTechAssigned ?? trackInfo.isAssigned) ? `${trackInfo.fullName}:` : 'Chưa xếp ngạch:'}
+                      </span>
+                      <span className={`text-[10px] ${(periodScores.isTechAssigned ?? trackInfo.isAssigned) ? 'text-purple-700 bg-purple-50 border-purple-200' : 'text-slate-500 bg-slate-100 border-slate-200'} px-1.5 py-0.2 rounded border font-bold shrink-0`}>
                         {Math.round(wTech * 100)}%
                       </span>
                     </span>
-                    <span className="font-mono font-bold text-purple-800 shrink-0">
+                    <span className={`font-mono font-bold shrink-0 ${(periodScores.isTechAssigned ?? trackInfo.isAssigned) ? 'text-purple-800' : 'text-slate-400'}`}>
                       {periodScores.techScore.toFixed(2)}
                     </span>
                   </div>
 
-                  {/* 3. Ngạch Quản Lý (Chỉ dành cho Cấp Quản Lý) */}
-                  {hasMgmtRole && (
-                    <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
-                      <span className="text-slate-700 font-semibold flex items-center gap-1.5">
-                        <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
-                        <span>Ngạch Quản Lý:</span>
-                        <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 font-bold">
-                          {Math.round(wMgmt * 100)}%
-                        </span>
+                  {/* 3. Ngạch Quản Lý */}
+                  <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
+                    <span className="text-slate-700 font-semibold flex items-center gap-1.5">
+                      <span className={`w-2 h-2 rounded-full ${hasMgmtRole && (periodScores.isMgmtAssigned ?? true) ? 'bg-blue-500' : 'bg-slate-300'} shrink-0`}></span>
+                      <span>Ngạch Quản Lý:</span>
+                      <span className={`text-[10px] ${hasMgmtRole ? 'text-blue-700 bg-blue-50 border-blue-200' : 'text-slate-500 bg-slate-100 border-slate-200'} px-1.5 py-0.2 rounded border font-bold`}>
+                        {hasMgmtRole ? `${Math.round(wMgmt * 100)}%` : '0%'}
                       </span>
-                      <span className="font-mono font-bold text-blue-800">
-                        {periodScores.mgmtScore.toFixed(2)}
-                      </span>
-                    </div>
-                  )}
+                    </span>
+                    <span className={`font-mono font-bold ${hasMgmtRole && (periodScores.isMgmtAssigned ?? true) && periodScores.mgmtScore > 0 ? 'text-blue-800' : 'text-slate-400'}`}>
+                      {hasMgmtRole && (periodScores.isMgmtAssigned ?? true) && periodScores.mgmtScore > 0
+                        ? periodScores.mgmtScore.toFixed(2)
+                        : '0.00 (Chưa xếp ngạch)'}
+                    </span>
+                  </div>
 
                   {/* Tiêu chí cấu thành điểm đánh giá */}
                   <div className="pt-1 text-[10px] text-slate-500 font-medium flex items-center gap-1">
                     <span className="font-bold text-[#1B4332]">💡 Tiêu chí:</span>
                     <span className="truncate">
-                      {hasMgmtRole
-                        ? `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%) + Ngạch QL (${Math.round(wMgmt * 100)}%)`
-                        : `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%)`}
+                      {periodScores.formulaStr || (hasMgmtRole
+                        ? `Văn hóa (${Math.round(wGen * 100)}%) + ${(periodScores.isTechAssigned ?? trackInfo.isAssigned) ? trackInfo.shortName : 'Chưa xếp ngạch'} (${Math.round(wTech * 100)}%) + Ngạch QL (${Math.round(wMgmt * 100)}%)`
+                        : `Văn hóa (${Math.round(wGen * 100)}%) + ${(periodScores.isTechAssigned ?? trackInfo.isAssigned) ? trackInfo.shortName : 'Chưa xếp ngạch'} (${Math.round(wTech * 100)}%)`)}
                     </span>
                   </div>
                 </div>

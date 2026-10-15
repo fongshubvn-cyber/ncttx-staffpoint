@@ -29,6 +29,12 @@
    - Xây dựng động cơ nhận diện từ khóa tự nhiên siêu tốc (Offline & Online): hỗ trợ tra cứu chi tiết Khiếu nại 48h, Quy định tiền tips, Bảo mật lương, Giờ giấc, Két quỹ, Bí mật kinh doanh xưởng, 3 Ranh giới đỏ không thỏa hiệp, 5 Yếu tố không gian...
    - Bổ sung thanh Gợi ý nhanh (Quick Suggestion Chips) 8 chủ đề then chốt 1-chạm giúp nhân sự dễ dàng tương tác.
 
+5. **Cơ Chế "Chưa Xếp Ngạch" & Điểm Mặc Định Bằng 0 (Cả Ngạch Chuyên Môn & Quản Lý):**
+   - Nếu nhân sự chưa được phân bổ vào ngạch chuyên môn cụ thể (`staff.line` để trống hoặc chọn "Chưa xếp ngạch"): Hệ thống hiển thị rõ ràng là **"Chưa xếp ngạch"** và **mặc định điểm thành phần = 0.00** (thay vì tự động gán điểm ngạch dự phòng).
+   - Tương tự đối với ngạch quản lý: Nếu nhân sự không giữ vai trò quản lý hoặc chưa được phân ngạch quản lý (`managementTrack` là "Chưa xếp ngạch"): Hệ thống hiển thị rõ ràng **"Chưa xếp ngạch"** và **mặc định điểm thành phần = 0.00**.
+   - Bổ sung tùy chọn "Chưa xếp ngạch" vào danh mục ngạch hệ thống và các dropdown form Tạo mới / Sửa nhân sự.
+   - Thể hiện minh bạch trên toàn bộ giao diện Bảng Tổng Kết (SummaryView & Option1SummaryView) và Hồ sơ nhân sự (StaffView & Option1StaffView).
+
 ---
 
 ## 📌 PHIÊN BẢN V1.007-STABLE (12/10/2026)

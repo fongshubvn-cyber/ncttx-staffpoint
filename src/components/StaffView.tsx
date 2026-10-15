@@ -104,12 +104,10 @@ export const StaffView: React.FC<StaffViewProps> = ({
   const [role, setRole] = useState<string>('');
   const [jobLevel, setJobLevel] = useState<string>('Nhân viên');
   const [department, setDepartment] = useState<string>('Thương mại & Dịch vụ');
-  const [line, setLine] = useState<string>('Thương mại & Dịch vụ');
+  const [line, setLine] = useState<string>('Chưa xếp ngạch');
+  const [managementTrack, setManagementTrack] = useState<string>('Chưa xếp ngạch');
   const [speechCapability, setSpeechCapability] = useState<'Người nói' | 'Người điếc/ khiếm thính'>('Người nói');
   const [location, setLocation] = useState<string>('Văn phòng');
-  const [generalScore, setGeneralScore] = useState<number>(4.08);
-  const [techScore, setTechScore] = useState<number>(4.08);
-  const [mgmtScore, setMgmtScore] = useState<number>(0);
   const [isStaffManager, setIsStaffManager] = useState<boolean>(false);
   const [isNewAdmin, setIsNewAdmin] = useState<boolean>(false);
   const [initialPassword, setInitialPassword] = useState<string>('123456');
@@ -121,15 +119,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
       return;
     }
 
-    const computedTotalScore = calculateTotalScore(
-      generalScore,
-      techScore,
-      isStaffManager && mgmtScore > 0 ? mgmtScore : undefined,
-      params
-    );
-    const computedSalaryTier = calculateSalaryTier(computedTotalScore, params);
-
-    const newStaff: Staff = {
+    const tempStaff: Staff = {
       id: id.trim() || `TTX${String(staffList.length + 1).padStart(3, '0')}`,
       name,
       role,
@@ -140,14 +130,25 @@ export const StaffView: React.FC<StaffViewProps> = ({
       location,
       status: 'Chính thức',
       evaluationCount: 0,
-      generalScore,
-      techScore,
-      mgmtScore: isStaffManager ? mgmtScore : undefined,
-      totalScore: computedTotalScore,
-      salaryTier: computedSalaryTier,
+      generalScore: 4.08,
+      techScore: 0,
+      totalScore: 0,
+      salaryTier: 1,
       jobLevel: isNewAdmin ? 'Admin' : (isStaffManager ? 'Quản lý' : 'Nhân viên'),
       isManager: isStaffManager || isNewAdmin,
       isAdmin: isNewAdmin,
+      managementTrack: isStaffManager ? managementTrack : 'Chưa xếp ngạch',
+    };
+
+    const baselines = getStaffBaselineScores(tempStaff, params);
+
+    const newStaff: Staff = {
+      ...tempStaff,
+      generalScore: baselines.generalScore,
+      techScore: baselines.techScore,
+      mgmtScore: isStaffManager ? baselines.mgmtScore : undefined,
+      totalScore: baselines.totalScore,
+      salaryTier: baselines.salaryTier,
       joinDate: new Date().toISOString().split('T')[0],
     };
 
@@ -155,6 +156,8 @@ export const StaffView: React.FC<StaffViewProps> = ({
     setShowModal(false);
     setName('');
     setRole('');
+    setLine('Chưa xếp ngạch');
+    setManagementTrack('Chưa xếp ngạch');
     setIsNewAdmin(false);
   };
 
@@ -366,11 +369,12 @@ export const StaffView: React.FC<StaffViewProps> = ({
                   <strong className="text-[#1B4332] font-bold">{selectedStaff.jobLevel}</strong>
                 </div>
                 {(() => {
-                  const trackInfo = getDepartmentTrackName(selectedStaff.line || selectedStaff.department);
-                  const isMgmt = isManagementRole(selectedStaff);
-                  const wGen = isMgmt ? (params.weightGeneralWithMgmt ?? 0.50) : (params.weightGeneralNoMgmt ?? 0.65);
-                  const wTech = isMgmt ? (params.weightTechWithMgmt ?? 0.20) : (params.weightTechNoMgmt ?? 0.35);
-                  const wMgmt = isMgmt ? (params.weightMgmtWithMgmt ?? 0.30) : 0;
+                  const baselines = getStaffBaselineScores(selectedStaff, params);
+                  const trackInfo = getDepartmentTrackName(selectedStaff.line);
+                  const isMgmt = baselines.isManager;
+                  const wGen = baselines.weights.general;
+                  const wTech = baselines.weights.tech;
+                  const wMgmt = baselines.weights.mgmt;
 
                   return (
                     <>
@@ -381,23 +385,23 @@ export const StaffView: React.FC<StaffViewProps> = ({
                         </strong>
                       </div>
                       <div className="flex justify-between text-slate-700">
-                        <span className="truncate mr-2">{trackInfo.fullName} ({Math.round(wTech * 100)}%):</span>
-                        <strong className="text-[#1B4332] font-mono font-bold shrink-0">
-                          {selectedStaff.techScore?.toFixed(2) || '4.08'}
+                        <span className="truncate mr-2">
+                          {baselines.isTechAssigned ? `${trackInfo.fullName} (${Math.round(wTech * 100)}%):` : `Chưa xếp ngạch (${Math.round(wTech * 100)}%):`}
+                        </span>
+                        <strong className={`font-mono font-bold shrink-0 ${baselines.isTechAssigned ? 'text-[#1B4332]' : 'text-slate-400'}`}>
+                          {baselines.techScore.toFixed(2)}
                         </strong>
                       </div>
-                      {isMgmt && (
-                        <div className="flex justify-between text-slate-700">
-                          <span>Ngạch Quản Lý ({Math.round(wMgmt * 100)}%):</span>
-                          <strong className="text-[#1B4332] font-mono font-bold">
-                            {selectedStaff.mgmtScore?.toFixed(2) ?? '4.08'}
-                          </strong>
-                        </div>
-                      )}
+                      <div className="flex justify-between text-slate-700">
+                        <span>Ngạch Quản Lý ({isMgmt ? Math.round(wMgmt * 100) : 0}%):</span>
+                        <strong className={`font-mono font-bold ${isMgmt && baselines.isMgmtAssigned ? 'text-[#1B4332]' : 'text-slate-400'}`}>
+                          {isMgmt && baselines.isMgmtAssigned
+                            ? (selectedStaff.mgmtScore?.toFixed(2) ?? baselines.mgmtScore?.toFixed(2) ?? '0.00')
+                            : '0.00 (Chưa xếp ngạch)'}
+                        </strong>
+                      </div>
                       <div className="text-[10px] text-slate-500 font-medium">
-                        💡 Tiêu chí: {isMgmt 
-                          ? `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%) + Ngạch QL (${Math.round(wMgmt * 100)}%)`
-                          : `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%)`}
+                        💡 Tiêu chí: {baselines.formulaStr}
                       </div>
                     </>
                   );
@@ -631,7 +635,8 @@ export const StaffView: React.FC<StaffViewProps> = ({
                     onChange={(e) => setLine(e.target.value)}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium"
                   >
-                    {lines.map((l) => (
+                    <option value="Chưa xếp ngạch">Chưa xếp ngạch (Điểm = 0.00)</option>
+                    {lines.filter(l => l.name !== 'Chưa xếp ngạch').map((l) => (
                       <option key={l.id} value={l.name}>
                         {l.name}
                       </option>
@@ -657,6 +662,25 @@ export const StaffView: React.FC<StaffViewProps> = ({
                     <option value="Founder">Founder</option>
                   </select>
                 </div>
+
+                {isStaffManager && (
+                  <div className="col-span-2">
+                    <label className="block text-slate-600 font-bold mb-1">Ngạch Quản Lý</label>
+                    <select
+                      value={managementTrack}
+                      onChange={(e) => setManagementTrack(e.target.value)}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium"
+                    >
+                      <option value="Chưa xếp ngạch">Chưa xếp ngạch (Điểm = 0.00)</option>
+                      <option value="Quản lý Thương Mại & Dịch Vụ">Quản lý Thương Mại & Dịch Vụ</option>
+                      <option value="Quản lý Nhân Sự - HC - PC">Quản lý Nhân Sự - HC - PC</option>
+                      <option value="Quản lý Kế Toán">Quản lý Kế Toán</option>
+                      <option value="Quản lý Sản Xuất">Quản lý Sản Xuất</option>
+                      <option value="Quản lý Pha Chế & Bếp">Quản lý Pha Chế & Bếp</option>
+                      <option value="Quản lý Chung">Quản lý Chung / Tuyến khác</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               <div>
@@ -794,11 +818,12 @@ export const StaffView: React.FC<StaffViewProps> = ({
                 <div>
                   <label className="block text-slate-600 font-bold mb-1">Tuyến / Ngạch</label>
                   <select
-                    value={editingStaff.line}
+                    value={editingStaff.line || 'Chưa xếp ngạch'}
                     onChange={(e) => setEditingStaff({ ...editingStaff, line: e.target.value })}
                     className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium"
                   >
-                    {lines.map((l) => (
+                    <option value="Chưa xếp ngạch">Chưa xếp ngạch (Điểm = 0.00)</option>
+                    {lines.filter(l => l.name !== 'Chưa xếp ngạch').map((l) => (
                       <option key={l.id} value={l.name}>
                         {l.name}
                       </option>
@@ -835,6 +860,25 @@ export const StaffView: React.FC<StaffViewProps> = ({
                     <option value="Admin">Admin</option>
                   </select>
                 </div>
+
+                {(editingStaff.isManager || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý', 'Lead'].includes(editingStaff.jobLevel)) && (
+                  <div className="col-span-2">
+                    <label className="block text-slate-600 font-bold mb-1">Ngạch Quản Lý</label>
+                    <select
+                      value={editingStaff.managementTrack || (editingStaff.line && editingStaff.line !== 'Chưa xếp ngạch' ? `Quản lý ${editingStaff.line}` : 'Chưa xếp ngạch')}
+                      onChange={(e) => setEditingStaff({ ...editingStaff, managementTrack: e.target.value })}
+                      className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium"
+                    >
+                      <option value="Chưa xếp ngạch">Chưa xếp ngạch (Điểm = 0.00)</option>
+                      <option value="Quản lý Thương Mại & Dịch Vụ">Quản lý Thương Mại & Dịch Vụ</option>
+                      <option value="Quản lý Nhân Sự - HC - PC">Quản lý Nhân Sự - HC - PC</option>
+                      <option value="Quản lý Kế Toán">Quản lý Kế Toán</option>
+                      <option value="Quản lý Sản Xuất">Quản lý Sản Xuất</option>
+                      <option value="Quản lý Pha Chế & Bếp">Quản lý Pha Chế & Bếp</option>
+                      <option value="Quản lý Chung">Quản lý Chung / Tuyến khác</option>
+                    </select>
+                  </div>
+                )}
               </div>
 
               {/* Điểm Nền Tự Động Từ Hệ Thống (Đã tắt tùy chỉnh riêng lẻ) */}
@@ -905,7 +949,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
                             } else {
                               updated = currentAssigned.filter((n) => n !== l.name);
                             }
-                            const mainLine = updated[0] || editingStaff.line || lines[0]?.name || 'Pha chế';
+                            const mainLine = updated[0] || 'Chưa xếp ngạch';
                             setEditingStaff({
                               ...editingStaff,
                               assignedLines: updated,

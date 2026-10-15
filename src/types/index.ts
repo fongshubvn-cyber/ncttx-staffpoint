@@ -33,6 +33,7 @@ export interface Staff {
   department: string; // Phòng ban
   line: string; // Tuyến chính
   assignedLines?: string[]; // Danh sách các ngạch chuyên môn được tích chọn (vd: ['Pha chế', 'Sản xuất'])
+  managementTrack?: string; // Ngạch quản lý (vd: 'Quản lý Thương Mại & Dịch Vụ', 'Chưa xếp ngạch')
   speechCapability: SpeechType;
   location: string; // Điểm làm việc
   joinDate?: string;

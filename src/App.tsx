@@ -12,41 +12,41 @@ import { IncidentFormModal } from './components/IncidentFormModal';
 import { LoginModal } from './components/LoginModal';
 import { Option1Layout } from './components/option1/Option1Layout';
 
-import { 
-  Staff, 
-  Question, 
-  IncidentRecord, 
+import {
+  Staff,
+  Question,
+  IncidentRecord,
   IncidentType,
   IncidentStatus,
-  DepartmentLine, 
-  BaselinePoint, 
+  DepartmentLine,
+  BaselinePoint,
   ParameterConfig,
   AuthUser
 } from './types';
 
-import { 
-  initialStaffList, 
-  initialLines, 
-  initialQuestions, 
-  initialIncidents, 
-  initialBaselinePoints, 
+import {
+  initialStaffList,
+  initialLines,
+  initialQuestions,
+  initialIncidents,
+  initialBaselinePoints,
   defaultParameters,
   initialPolicyRules
 } from './data/seedData';
-import { 
-  isFirebaseConfigured, 
-  subscribeToCollection, 
-  saveToCloud, 
+import {
+  isFirebaseConfigured,
+  subscribeToCollection,
+  saveToCloud,
   fetchDocFromCloud,
   saveIncidentAtomic,
   syncIncidentsToCloudAtomic
 } from './config/firebase';
-import { 
-  isDeptHeadOrAboveRole, 
-  getStaffBaselineScores, 
-  getCalculatedBaselinePoints, 
-  calculateTotalScore, 
-  calculateSalaryTier, 
+import {
+  isDeptHeadOrAboveRole,
+  getStaffBaselineScores,
+  getCalculatedBaselinePoints,
+  calculateTotalScore,
+  calculateSalaryTier,
   isManagementRole,
   getIncidentTargetPillar
 } from './utils/calculator';
@@ -70,7 +70,7 @@ export function App() {
         localStorage.setItem('ncttx_ui_option', queryUi);
         return queryUi;
       }
-    } catch (e) {}
+    } catch (e) { }
 
     const saved = localStorage.getItem('ncttx_ui_option');
     return (saved === 'default' || saved === 'option1') ? saved : 'option1';
@@ -236,8 +236,8 @@ export function App() {
       if (data && typeof data === 'object') {
         setParams(prev => {
           const isOldPolicy = !data.policyVersion || data.policyVersion !== '2026_v2' || !data.policyRules || data.policyRules.length < 20 || !data.policyRules.some((r: any) => r.track);
-          const updated = { 
-            ...prev, 
+          const updated = {
+            ...prev,
             ...data,
             policyVersion: '2026_v2',
             policyRules: isOldPolicy ? initialPolicyRules : data.policyRules,
@@ -375,7 +375,7 @@ export function App() {
           const parsed = JSON.parse(e.newValue);
           if (parsed) setParams(parsed);
         }
-      } catch (err) {}
+      } catch (err) { }
     };
 
     window.addEventListener('storage', handleStorageChange);
@@ -692,7 +692,8 @@ export function App() {
     return isNaN(num) ? fallback : num;
   };
 
-  // Helper: Refund points upon approved appeal or deleted incident
+  // Helper: Refund points upon approved appeal
+  // Helper: Refund score impact when ticket is rejected/deleted
   const refundIncidentScoreImpact = (incident: IncidentRecord) => {
     if (!incident || typeof incident.impactPoints !== 'number' || incident.impactPoints === 0) return;
     const impact = safeNum(incident.impactPoints, 0);
@@ -716,7 +717,7 @@ export function App() {
             curGen = Math.max(0, Math.min(5, Number((curGen - impact).toFixed(2))));
           }
 
-          const newTotalScore = calculateTotalScore(curGen, curTech, curMgmt, params);
+          const newTotalScore = calculateTotalScore(curGen, curTech, curMgmt, params, isMgmt);
           const salaryTier = calculateSalaryTier(newTotalScore, params);
 
           return {
@@ -779,7 +780,7 @@ export function App() {
             curGen = Math.max(0, Math.min(5, Number((curGen + impact).toFixed(2))));
           }
 
-          const newTotalScore = calculateTotalScore(curGen, curTech, curMgmt, params);
+          const newTotalScore = calculateTotalScore(curGen, curTech, curMgmt, params, isMgmt);
           const salaryTier = calculateSalaryTier(newTotalScore, params);
 
           return {
@@ -898,14 +899,14 @@ export function App() {
       const updated = prev.map(st => {
         const baselines = getStaffBaselineScores(st, newParams);
         const approvedIncidents = incidents.filter(
-          i => i.targetId === st.id && 
-               !i.isDeleted && 
-               (i.status === 'Đã duyệt' || i.status === 'Đã ghi nhận')
+          i => i.targetId === st.id &&
+            !i.isDeleted &&
+            (i.status === 'Đã duyệt' || i.status === 'Đã ghi nhận')
         );
         let curGen = baselines.generalScore;
         let curTech = baselines.techScore;
         const isMgmt = isManagementRole(st);
-        let curMgmt = isMgmt ? baselines.mgmtScore : undefined;
+        let curMgmt = isMgmt ? (baselines.mgmtScore ?? 0) : undefined;
 
         approvedIncidents.forEach(inc => {
           if (typeof inc.impactPoints === 'number' && !isNaN(inc.impactPoints) && inc.impactPoints !== 0) {
@@ -926,7 +927,7 @@ export function App() {
           curMgmt = Math.max(0, Math.min(5, Number(curMgmt.toFixed(2))));
         }
 
-        const totalScore = calculateTotalScore(curGen, curTech, curMgmt, newParams);
+        const totalScore = calculateTotalScore(curGen, curTech, curMgmt, newParams, isMgmt);
         const salaryTier = calculateSalaryTier(totalScore, newParams);
 
         return {
@@ -952,7 +953,7 @@ export function App() {
       <LoginModal
         isOpen={true}
         isStandalone={true}
-        onClose={() => {}}
+        onClose={() => { }}
         staffList={staffList}
         currentUser={currentUser}
         onLogin={(user) => setCurrentUser(user)}

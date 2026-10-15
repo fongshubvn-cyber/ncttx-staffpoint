@@ -540,6 +540,18 @@ export const initialStaffList: Staff[] = [
 
 export const initialLines: DepartmentLine[] = [
   {
+    id: 'CHUA_XEP_NGACH',
+    name: 'Chưa xếp ngạch',
+    status: '⬜ khung rỗng',
+    applyTrack: 'Chưa xếp',
+    scopeDescription: 'Nhân sự chưa được phân vào ngạch phòng ban cụ thể. Mặc định điểm ngạch = 0.',
+    criteriaType: 'Chưa áp dụng tiêu chí ngạch',
+    levels: 'Mặc định điểm ngạch = 0.00',
+    hasSalesPoint: false,
+    matrixSheetName: '',
+    questionCount: 0,
+  },
+  {
     id: 'KE_TOAN',
     name: 'Kế Toán',
     status: '✅ đủ nội dung',
