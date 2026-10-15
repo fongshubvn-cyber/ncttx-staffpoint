@@ -19,7 +19,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [policyRules, setPolicyRules] = useState<PolicyRule[]>(
-    (params.policyRules && params.policyRules.length >= 3)
+    (params.policyRules && params.policyRules.length >= 6)
       ? params.policyRules
       : initialPolicyRules
   );
@@ -130,7 +130,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
     if (!onUpdateParams) return;
     onUpdateParams({
       ...params,
-      policyVersion: '2026_v3',
+      policyVersion: '2026_v4',
       policyRules,
       defaultPolicyScore: 100,
       baselineCultureCommon: bCultureCommon,
@@ -937,7 +937,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
             <ShieldCheck className="w-5 h-5 text-[#2D6A4F] shrink-0" />
             <div>
               <h3 className="text-sm font-extrabold font-heading text-[#1B4332]">
-                Cấu Hình 10 Nội Quy Công Ty & Điểm Phạt (Mặc Định 100 Điểm) 🛡️
+                Cấu Hình Quy Định Mức Độ Chấp Hành & Hoàn Thành Công Việc (100 Điểm Gốc) 🛡️
               </h3>
               <p className="text-xs text-slate-500 font-medium">
                 Admin tùy chỉnh quy tắc và mức trừ điểm dựa theo severity

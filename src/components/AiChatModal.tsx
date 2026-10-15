@@ -55,7 +55,7 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
 
   const userName = currentUser?.name || 'bạn';
 
-  const policyRulesList: PolicyRule[] = (params.policyRules && params.policyRules.length >= 3) 
+  const policyRulesList: PolicyRule[] = (params.policyRules && params.policyRules.length >= 6) 
     ? params.policyRules 
     : initialPolicyRules;
 
@@ -63,7 +63,7 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
     {
       id: 'welcome-msg',
       sender: 'ai',
-      text: `Chào ${userName} nhé! 🌿 Mình là **Thanh Xuân** — người bạn trợ lý AI đồng hành cùng bạn tại Nhà Của Thời Thanh Xuân.\n\nHôm nay công việc của bạn thế nào? Cần trò chuyện hay tra cứu về các nội quy lao động (Trễ giờ, Điều phối, Deadline), tiền tips, cách khiếu nại 48h, công thức tính điểm hay tiêu chí cứ nhắn cho mình nhé!`,
+      text: `Chào ${userName} nhé! 🌿 Mình là **Thanh Xuân** — người bạn trợ lý AI đồng hành cùng bạn tại Nhà Của Thời Thanh Xuân.\n\nHôm nay công việc của bạn thế nào? Cần trò chuyện hay tra cứu về quy định Mức độ chấp hành & hoàn thành công việc (Trễ giờ, Điều phối, Deadline, Đồng phục, Vệ sinh, Điện thoại), tiền tips, cách khiếu nại 48h, công thức tính điểm hay tiêu chí cứ nhắn cho mình nhé!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -277,6 +277,33 @@ ${staffSummary}`;
         `• Không hoàn thành các nhiệm vụ, công việc được giao hoặc chậm trễ nộp báo cáo đúng thời hạn cam kết (deadline) mà không có lý do chính đáng hoặc không báo trước.\n` +
         `• **Mức phạt:** Trừ **-10đ nội quy** (Mức Vừa).\n` +
         `• **Biện pháp xử lý:** Nhắc nhở, đôn đốc tiến độ và trừ điểm chuyên cần/tiến độ công việc.`;
+    }
+
+    // NQ-04: Mặc đúng đồng phục & Diện mạo gọn gàng
+    if (/đồng phục|diện mạo|bảng tên|tạp dề|đầu tóc|quần áo/i.test(rawLower)) {
+      return `Chào ${userName}! 👕 Về quy định đồng phục và diện mạo:\n\n` +
+        `Theo quy định của Nhà, nội dung này thuộc mã **[NQ-04] - Mặc đúng đồng phục & Diện mạo gọn gàng**:\n\n` +
+        `• Mặc đồng phục sạch sẽ, đeo bảng tên đúng vị trí, đầu tóc gọn gàng khi trong ca làm việc và giao tiếp với khách hàng.\n` +
+        `• **Mức phạt:** Trừ **-5đ** khỏi quỹ 100đ chấp hành (Mức Nhẹ).\n` +
+        `• **Biện pháp xử lý:** Nhắc nhở chỉnh sửa tác phong trước khi vào ca.`;
+    }
+
+    // NQ-05: Vệ sinh sạch sẽ & Sắp xếp khu vực làm việc
+    if (/vệ sinh|dọn dẹp|lau bàn|sắp xếp|rác|khu vực làm việc/i.test(rawLower)) {
+      return `Chào ${userName}! 🧹 Về vệ sinh và sắp xếp nơi làm việc:\n\n` +
+        `Theo quy định của Nhà, nội dung này thuộc mã **[NQ-05] - Vệ sinh sạch sẽ & Sắp xếp khu vực làm việc**:\n\n` +
+        `• Vệ sinh sạch sẽ bàn ghế, dụng cụ pha chế/sản xuất, phân loại rác đúng quy định và dọn dẹp gọn gàng trước khi bàn giao ca.\n` +
+        `• **Mức phạt:** Trừ **-10đ** khỏi quỹ 100đ chấp hành (Mức Vừa).\n` +
+        `• **Biện pháp xử lý:** Yêu cầu khắc phục vệ sinh ngay trong ca & tạm khóa khen thưởng tuần.`;
+    }
+
+    // NQ-06: Không sử dụng điện thoại việc riêng trong ca
+    if (/điện thoại|lướt mạng|chơi game|việc riêng trong ca/i.test(rawLower)) {
+      return `Chào ${userName}! 📱 Về việc sử dụng điện thoại trong giờ làm việc:\n\n` +
+        `Theo quy định của Nhà, nội dung này thuộc mã **[NQ-06] - Không sử dụng điện thoại việc riêng trong ca**:\n\n` +
+        `• Không làm việc riêng, xem video hay chơi game trên điện thoại cá nhân trong giờ phục vụ khách hàng.\n` +
+        `• **Mức phạt:** Trừ **-10đ** khỏi quỹ 100đ chấp hành (Mức Nhẹ).\n` +
+        `• **Biện pháp xử lý:** Tạm giữ thiết bị cá nhân trong ca & nhắc nhở trực tiếp.`;
     }
 
     // 8. PQ-02: Bảo mật tiền lương / Hỏi lương / So sánh lương

@@ -48,7 +48,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
   const [filterTrack, setFilterTrack] = useState<'all' | 'Pháp quy & Kỷ luật' | 'Văn hóa & Tác phong'>('all');
   const [isEditingRules, setIsEditingRules] = useState(false);
   const [rules, setRules] = useState<PolicyRule[]>(() => {
-    if (params.policyRules && Array.isArray(params.policyRules) && params.policyRules.length >= 3) {
+    if (params.policyRules && Array.isArray(params.policyRules) && params.policyRules.length >= 6) {
       return params.policyRules;
     }
     return initialPolicyRules;
@@ -62,12 +62,12 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
     if (!onUpdateParams) return;
     onUpdateParams({
       ...params,
-      policyVersion: '2026_v3',
+      policyVersion: '2026_v4',
       policyRules: rules,
       defaultPolicyScore: 100,
     });
     setIsEditingRules(false);
-    alert('Đã lưu cấu hình Hệ Thống Nội Quy & Điểm Phạt thành công!');
+    alert('Đã lưu cấu hình Mức Độ Chấp Hành & Hoàn Thành Công Việc thành công!');
   };
 
   const filteredStaffList = staffList.filter(s => 
@@ -100,13 +100,13 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
           <div className="space-y-1">
             <div className="inline-flex items-center space-x-2 bg-emerald-950/80 px-3 py-1 rounded-full border border-emerald-500/40 text-[#52B788] text-xs font-bold">
               <ShieldCheck className="w-4 h-4 text-[#52B788]" />
-              <span>Hệ Thống Nội Quy & Tình Trạng Nhân Sự (Account Health)</span>
+              <span>Mức Độ Chấp Hành & Hoàn Thành Công Việc (Account Health)</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black font-heading text-white tracking-tight">
-              Hệ Thống Nội Quy & Kỷ Luật Lao Động (100 Điểm Gốc) 🛡️
+              Mức Độ Chấp Hành & Hoàn Thành Công Việc (100 Điểm Gốc) 🛡️
             </h2>
             <p className="text-xs sm:text-sm text-emerald-100/90 max-w-2xl font-medium leading-relaxed">
-              Quy định kỷ luật giờ giấc (Trễ giờ), điều phối công việc và hạn hoàn thành (Deadline). Mỗi tháng nhân sự được cấp <strong className="text-amber-300">100 điểm tuân thủ độc lập</strong>.
+              Quy định kỷ luật giờ giấc (Trễ giờ), điều phối công việc, hoàn thành deadline, diện mạo đồng phục, vệ sinh và sử dụng thiết bị. Mỗi tháng nhân sự được cấp <strong className="text-amber-300">100 điểm tuân thủ độc lập</strong>.
             </p>
           </div>
 
@@ -119,7 +119,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
               className="px-4 py-2 rounded-2xl bg-white hover:bg-emerald-100 text-[#1B4332] font-black text-xs shadow-md transition-all active:scale-95 shrink-0 flex items-center space-x-1.5 cursor-pointer border border-emerald-200"
             >
               <Edit3 className="w-4 h-4 text-[#2D6A4F]" />
-              <span>{isEditingRules ? "💾 Lưu Cấu Hình Điểm Phạt" : "✏️ Chỉnh Sửa Nội Quy"}</span>
+              <span>{isEditingRules ? "💾 Lưu Cấu Hình Quy Định" : "✏️ Chỉnh Sửa Quy Định"}</span>
             </button>
           )}
         </div>
@@ -182,7 +182,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
-          <span>📋 Hệ Thống Nội Quy 2 Ngạch ({rules.length})</span>
+          <span>📋 Quy Định Chấp Hành & Hoàn Thành ({rules.length})</span>
         </button>
 
         <button
@@ -194,20 +194,20 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
           }`}
         >
           <User className="w-4 h-4" />
-          <span>📊 Điểm Tuân Thủ Của Nhân Sự</span>
+          <span>📊 Điểm Chấp Hành Của Nhân Sự</span>
         </button>
       </div>
 
-      {/* TAB 1: 20 POLICY RULES & PENALTY POINTS ACROSS 2 TRACKS */}
+      {/* TAB 1: 6 POLICY RULES & PENALTY POINTS */}
       {activeTab === 'rules' && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
               <h3 className="text-sm font-extrabold font-heading text-[#1B4332] uppercase tracking-wider">
-                Hệ Thống Quy Định Nội Quy ({rules.length} Nội Quy • 2 Ngạch)
+                Mức Độ Chấp Hành & Hoàn Thành Công Việc ({rules.length} Quy Định)
               </h3>
               <p className="text-xs text-slate-500 font-medium">
-                Ngạch 1: Pháp quy lao động & kỷ luật • Ngạch 2: Văn hóa & tác phong vận hành
+                Kỷ luật giờ giấc, điều phối công việc, hoàn thành deadline, diện mạo đồng phục, vệ sinh và sử dụng thiết bị
               </p>
             </div>
             {isEditingRules && (
@@ -591,7 +591,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
                   <th className="p-3">Mã NV</th>
                   <th className="p-3">Họ và Tên</th>
                   <th className="p-3">Vị trí & Phòng ban</th>
-                  <th className="p-3 text-center">Điểm Nội Quy Kỳ {activePeriodObj.mStr}/{activePeriodObj.year} (Gốc 100đ)</th>
+                  <th className="p-3 text-center">Điểm Chấp Hành Kỳ {activePeriodObj.mStr}/{activePeriodObj.year} (Gốc 100đ)</th>
                   <th className="p-3 text-center">Trạng Thái Health</th>
                   <th className="p-3 text-right">Thao tác</th>
                 </tr>
@@ -629,7 +629,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
                             <button
                               onClick={() => onOpenIncidentModal(st.id, 'vi_pham')}
                               className="px-2.5 py-1.5 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 border border-rose-200 text-xs font-bold transition-all inline-flex items-center space-x-1 cursor-pointer"
-                              title="Lập biên bản vi phạm nội quy cho nhân sự này"
+                              title="Lập biên bản vi phạm cho nhân sự này"
                             >
                               <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
                               <span>Lập vi phạm</span>
@@ -639,7 +639,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
                             onClick={() => setSelectedStaffForModal(st)}
                             className="px-3 py-1.5 rounded-xl bg-[#2D6A4F] hover:bg-[#1B4332] text-white text-xs font-bold transition-all shadow-2xs inline-flex items-center space-x-1 cursor-pointer"
                           >
-                            <span>Xem điểm nội quy</span>
+                            <span>Xem điểm chấp hành</span>
                             <ChevronRight className="w-3.5 h-3.5" />
                           </button>
                         </div>

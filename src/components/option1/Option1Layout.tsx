@@ -624,7 +624,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 }`}
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>🛡️ Nội Quy 2 Ngạch (100đ)</span>
+                <span>🛡️ Chấp Hành & Hoàn Thành (100đ)</span>
               </button>
 
               <button
@@ -829,14 +829,14 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-extrabold text-rose-950 group-hover:text-rose-900">
-                      📜 Nội quy
+                      📋 Mức độ chấp hành & hoàn thành công việc
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-rose-200/80 text-rose-900 text-[10px] font-black font-mono">
-                      100đ Nội quy
+                      100đ Chấp hành
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Lập biên bản phản ánh vi phạm 10 điều khoản nội quy tổ chức (Quỹ điểm 100đ tuân thủ).
+                    Lập biên bản phản ánh vi phạm mức độ chấp hành & hoàn thành công việc (Quỹ điểm 100đ).
                   </p>
                 </div>
               </button>

@@ -160,7 +160,7 @@ export interface ParameterConfig {
 
   // Internal Policy Settings
   defaultPolicyScore?: number; // Default 100 points
-  policyVersion?: string; // Phiên bản nội quy (vd: '2026_v3')
+  policyVersion?: string; // Phiên bản quy định chấp hành & hoàn thành công việc (vd: '2026_v4')
   policyRules?: PolicyRule[];
   
   // Configurable Incident / Ticket Point Impacts

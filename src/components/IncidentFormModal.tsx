@@ -396,7 +396,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                   {formCategory === 'policy' ? (
                     <>
                       <BookOpen className="w-5 h-5 text-rose-600" />
-                      <span>Phiếu Phản Ánh Nội Quy (Quỹ điểm 100đ)</span>
+                      <span>Phiếu Phản Ánh Chấp Hành & Hoàn Thành Công Việc (Quỹ 100đ)</span>
                     </>
                   ) : (
                     <>
@@ -422,10 +422,10 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
               <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-xs text-rose-950 font-bold shadow-2xs">
                 <span className="flex items-center gap-2">
                   <BookOpen className="w-4.5 h-4.5 text-rose-600 shrink-0" />
-                  <span>Loại Phiếu: <strong>Phản Ánh Nội Quy</strong> (Trừ quỹ 100đ Tuân thủ)</span>
+                  <span>Loại Phiếu: <strong>Mức độ chấp hành & hoàn thành công việc</strong> (Trừ quỹ 100đ)</span>
                 </span>
                 <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black font-mono">
-                  100đ Account Health
+                  100đ Chấp hành
                 </span>
               </div>
             ) : (
@@ -549,10 +549,10 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
               <div className="flex items-center justify-between">
                 <label className="block text-rose-950 font-extrabold font-heading text-xs flex items-center gap-1.5">
                   <ShieldAlert className="w-4 h-4 text-rose-600" />
-                  <span>4. Chọn Điều Khoản Nội Quy Vi Phạm (Thang 100đ)</span>
+                  <span>4. Chọn Điều Khoản Quy Định Vi Phạm (Thang 100đ)</span>
                 </label>
                 <span className="text-[10px] text-rose-700 font-bold bg-white px-2 py-0.5 rounded-full border border-rose-200">
-                  {policyRulesList.length} Nội quy quy định
+                  {policyRulesList.length} Quy định
                 </span>
               </div>
 
@@ -569,7 +569,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 }}
                 className="w-full p-2.5 bg-white border border-rose-300 rounded-xl text-slate-900 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer"
               >
-                <option value="">-- Chọn Điều Khoản Nội Quy Vi Phạm --</option>
+                <option value="">-- Chọn Điều Khoản Quy Định Vi Phạm --</option>
                 {policyRulesList.some(r => r.active !== false && (r.track === 'Văn hóa & Tác phong' || r.id.startsWith('VH'))) ? (
                   <>
                     <optgroup label="🔴 NGẠCH 1: PHÁP QUY & KỶ LUẬT (KHUNG TUÂN THỦ CỨNG)">
@@ -588,7 +588,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                     </optgroup>
                   </>
                 ) : (
-                  <optgroup label="📋 NỘI QUY & KỶ LUẬT LAO ĐỘNG (THANG 100 ĐIỂM)">
+                  <optgroup label="📋 MỨC ĐỘ CHẤP HÀNH & HOÀN THÀNH CÔNG VIỆC (THANG 100 ĐIỂM)">
                     {policyRulesList.filter(r => r.active !== false).map((rule) => (
                       <option key={rule.id} value={rule.id}>
                         [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})

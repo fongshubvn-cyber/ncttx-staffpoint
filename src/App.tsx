@@ -155,8 +155,8 @@ export function App() {
       baselineScoreNshcMgmt: (typeof parsed.baselineScoreNshcMgmt === 'number' && parsed.baselineScoreNshcMgmt > 0)
         ? parsed.baselineScoreNshcMgmt
         : defaultParameters.baselineScoreNshcMgmt,
-      policyVersion: '2026_v3',
-      policyRules: (parsed.policyRules && Array.isArray(parsed.policyRules) && parsed.policyVersion === '2026_v3' && parsed.policyRules.length >= 3)
+      policyVersion: '2026_v4',
+      policyRules: (parsed.policyRules && Array.isArray(parsed.policyRules) && parsed.policyVersion === '2026_v4' && parsed.policyRules.length >= 6)
         ? parsed.policyRules
         : initialPolicyRules,
     };
@@ -235,11 +235,11 @@ export function App() {
       isCloudLoadedRef.current['params'] = true;
       if (data && typeof data === 'object') {
         setParams(prev => {
-          const isOldPolicy = !data.policyVersion || data.policyVersion !== '2026_v3' || !data.policyRules || data.policyRules.length < 3;
+          const isOldPolicy = !data.policyVersion || data.policyVersion !== '2026_v4' || !data.policyRules || data.policyRules.length < 6;
           const updated = {
             ...prev,
             ...data,
-            policyVersion: '2026_v3',
+            policyVersion: '2026_v4',
             policyRules: isOldPolicy ? initialPolicyRules : data.policyRules,
           };
           localStorage.setItem('ncttx_params', JSON.stringify(updated));

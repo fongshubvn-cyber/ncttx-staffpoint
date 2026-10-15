@@ -83,7 +83,7 @@ export const PolicyHealthModal: React.FC<PolicyHealthModalProps> = ({
             </div>
             <div>
               <h2 className="text-base sm:text-lg font-black font-heading tracking-tight flex items-center space-x-2">
-                <span>Chi tiết Điểm tình trạng nội quy</span>
+                <span>Chi tiết Điểm Chấp Hành & Hoàn Thành Công Việc</span>
               </h2>
               <p className="text-xs text-emerald-200/90 font-medium">
                 Nhân sự: <span className="font-bold text-white">{staff.name}</span> ({staff.id})
@@ -317,7 +317,7 @@ export const PolicyHealthModal: React.FC<PolicyHealthModalProps> = ({
             <div className="space-y-3">
               <div className="flex items-center justify-between">
                 <h3 className="text-sm font-black text-[#1B4332] font-heading">
-                  Hồ Sơ Các Lần Vi Phạm Nội Quy (Kỳ {periodKey})
+                  Hồ Sơ Các Lần Vi Phạm Quy Định (Kỳ {periodKey})
                 </h3>
                 <span className="text-xs text-slate-500 font-bold">
                   Tổng điểm bị trừ: <span className="text-rose-600 font-mono font-black">-{totalDeduction} điểm</span>
@@ -327,8 +327,8 @@ export const PolicyHealthModal: React.FC<PolicyHealthModalProps> = ({
               {violations.length === 0 ? (
                 <div className="p-8 text-center bg-emerald-50/50 rounded-2xl border border-emerald-200 space-y-2">
                   <CheckCircle2 className="w-10 h-10 text-[#2D6A4F] mx-auto" />
-                  <p className="text-sm font-bold text-[#1B4332]">Không có vi phạm nội quy nào!</p>
-                  <p className="text-xs text-slate-500">Bạn đang chấp hành cực kỳ tốt hệ thống nội quy Nhà Của Thời Thanh Xuân.</p>
+                  <p className="text-sm font-bold text-[#1B4332]">Không có vi phạm quy định nào!</p>
+                  <p className="text-xs text-slate-500">Bạn đang chấp hành cực kỳ tốt các quy định của Nhà Của Thời Thanh Xuân.</p>
                 </div>
               ) : (
                 <div className="space-y-2.5">

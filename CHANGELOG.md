@@ -1,12 +1,15 @@
 # 📜 NHẬT KÝ PHIÊN BẢN & MỐC NGUYÊN BẢN DỰ ÁN STAFFPOINT
 
-## 📌 CẬP NHẬT TINH GỌN HỆ THỐNG NỘI QUY (POLICY VERSION 2026_V3) (15/10/2026)
-**Trạng thái:** ✅ Đã hoàn tất Tinh gọn danh mục Nội quy thành 3 quy định trọng tâm theo chỉ đạo vận hành thực tế:
+## 📌 CẬP NHẬT QUY ĐỊNH: MỨC ĐỘ CHẤP HÀNH & HOÀN THÀNH CÔNG VIỆC (POLICY VERSION 2026_V4) (15/10/2026)
+**Trạng thái:** ✅ Đã hoàn tất Chuẩn hóa và Đổi tên quy định thành **"Mức độ chấp hành & hoàn thành công việc"**, loại bỏ NQ-04, 05, 06, 07, 08, 10 cũ của v1.006 và hợp nhất các quy định không trùng lặp thành 6 điều khoản chuẩn:
 1. **NQ-01: Đi làm đúng giờ & Chấm công đầy đủ (Trễ giờ)** – Trừ 5 điểm (Mức Nhẹ).
 2. **NQ-02: Không chấp hành điều phối của quản lý** – Trừ 15 điểm (Mức Vừa).
 3. **NQ-03: Không hoàn thành công việc đúng deadline** – Trừ 10 điểm (Mức Vừa).
-- Nâng cấp `policyVersion` lên `'2026_v3'` để tự động đồng bộ và xóa cache cũ trên LocalStorage & Firebase Cloud Realtime.
-- Cập nhật toàn diện giao diện Quản lý Nội quy (`PolicyView.tsx`), Thiết lập Tham số (`BaselineView.tsx`), Lập biên bản vi phạm (`IncidentFormModal.tsx`) và Trợ lý AI Chat (`AiChatModal.tsx`).
+4. **NQ-04: Mặc đúng đồng phục & Diện mạo gọn gàng** – Trừ 5 điểm (Mức Nhẹ).
+5. **NQ-05: Vệ sinh sạch sẽ & Sắp xếp khu vực làm việc** – Trừ 10 điểm (Mức Vừa).
+6. **NQ-06: Không sử dụng điện thoại việc riêng trong ca** – Trừ 10 điểm (Mức Nhẹ).
+- Đổi tên quy chế trên toàn bộ giao diện sang **"Mức độ chấp hành & hoàn thành công việc"** (Navbar, Option1Layout, PolicyView, BaselineView, IncidentFormModal, SummaryView, PolicyHealthModal, AiChatModal).
+- Nâng cấp `policyVersion` lên `'2026_v4'` để tự động đồng bộ và làm mới bộ nhớ cache LocalStorage & Firebase Realtime Cloud.
 
 ---
 

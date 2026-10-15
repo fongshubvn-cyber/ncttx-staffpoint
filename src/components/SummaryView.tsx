@@ -93,9 +93,9 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
 
     if (policyData.policyScore < 80) {
       tips.push({
-        title: `Cải thiện Điểm Nội Quy & Tuân Thủ (${policyData.policyScore}/100 đ)`,
+        title: `Cải thiện Điểm Chấp Hành & Hoàn Thành (${policyData.policyScore}/100 đ)`,
         type: 'vi_pham',
-        description: `Điểm nội quy hiện tại là ${policyData.policyScore}/100 đ (${policyData.statusObj.level}). Đã bị trừ -${policyData.totalDeduction} đ do ${policyData.violations.length} vi phạm trong kỳ. Hãy rà soát các điều khoản nội quy để lấy lại mốc Tốt (80+ điểm).`,
+        description: `Điểm chấp hành hiện tại là ${policyData.policyScore}/100 đ (${policyData.statusObj.level}). Đã bị trừ -${policyData.totalDeduction} đ do ${policyData.violations.length} vi phạm trong kỳ. Hãy rà soát các quy định chấp hành & hoàn thành công việc để lấy lại mốc Tốt (80+ điểm).`,
         priority: 'Cần chú ý',
       });
     }
@@ -404,7 +404,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
             <div className="flex items-center justify-between">
               <span className="text-xs font-black font-heading tracking-wide text-[#1B4332] flex items-center space-x-1.5">
                 <ShieldCheck className="w-4 h-4 text-[#2D6A4F]" />
-                <span>BÊN PHẢI: ĐIỂM NỘI QUY (TÌNH TRẠNG)</span>
+                <span>BÊN PHẢI: ĐIỂM CHẤP HÀNH & HOÀN THÀNH</span>
               </span>
               <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black border ${policyData.statusObj.badgeClass}`}>
                 {policyData.statusObj.level}

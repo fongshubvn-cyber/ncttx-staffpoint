@@ -501,7 +501,7 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
               <div className="flex items-center justify-between">
                 <span className="text-xs font-bold text-[#1B4332] flex items-center space-x-1">
                   <ShieldCheck className="w-4 h-4 text-[#2D6A4F]" />
-                  <span>Điểm Nội Quy (Tình Trạng)</span>
+                  <span>Điểm Chấp Hành & Hoàn Thành</span>
                 </span>
                 <span className={`px-2 py-0.5 rounded-full text-[10px] font-black border ${policyData.statusObj.badgeClass}`}>
                   {policyData.statusObj.level}
