@@ -1,4 +1,4 @@
-import { ParameterConfig, Staff, IncidentRecord, PolicyRule, PolicyHealthStatus } from '../types';
+import { ParameterConfig, Staff, IncidentRecord, PolicyRule, PolicyHealthStatus, BaselinePoint } from '../types';
 
 /**
  * Checks if a staff member holds a management position.
@@ -23,14 +23,24 @@ export function isManagementRole(staff: Staff): boolean {
 }
 
 /**
- * Calculates Bậc cách làm việc (Salary Tier 1..5) from total score (0..5)
+ * Calculates Bậc cách làm việc / Bậc lương P2 (Bậc 1..5) from total score (0..5.0)
+ * Dựa vào bảng: "ĐƠN GIÁ P2 - QUY ĐIỂM PHIẾU ĐÁNH GIÁ RA TIỀN"
+ * - Bậc 5 (HS 1.10): 4.8 đến 5.0 (Vượt chuẩn rõ rệt, rất khó đạt)
+ * - Bậc 4 (HS 1.00): 4.0 đến dưới 4.8 (ĐẠT CHUẨN - mức Công ty dự định trả)
+ * - Bậc 3 (HS 0.90): 3.5 đến dưới 4.0 (Gần đạt chuẩn)
+ * - Bậc 2 (HS 0.40): 2.5 đến dưới 3.5 (Đạt một phần)
+ * - Bậc 1 (HS 0.10): 1.0 đến dưới 2.5 (Chưa đạt chuẩn vị trí)
  */
-export function calculateSalaryTier(score: number, params: ParameterConfig): number {
-  const ratio = Math.max(0, Math.min(1, score / 5.0));
-  if (ratio >= params.tier5Threshold) return 5;
-  if (ratio >= params.tier4Threshold) return 4;
-  if (ratio >= params.tier3Threshold) return 3;
-  if (ratio >= params.tier2Threshold) return 2;
+export function calculateSalaryTier(score: number, params?: ParameterConfig): number {
+  const t5 = params?.tier5Threshold ? (params.tier5Threshold <= 1.0 ? params.tier5Threshold * 5.0 : params.tier5Threshold) : 4.8;
+  const t4 = params?.tier4Threshold ? (params.tier4Threshold <= 1.0 ? params.tier4Threshold * 5.0 : params.tier4Threshold) : 4.0;
+  const t3 = params?.tier3Threshold ? (params.tier3Threshold <= 1.0 ? params.tier3Threshold * 5.0 : params.tier3Threshold) : 3.5;
+  const t2 = params?.tier2Threshold ? (params.tier2Threshold <= 1.0 ? params.tier2Threshold * 5.0 : params.tier2Threshold) : 2.5;
+
+  if (score >= t5 - 0.001) return 5;
+  if (score >= t4 - 0.001) return 4;
+  if (score >= t3 - 0.001) return 3;
+  if (score >= t2 - 0.001) return 2;
   return 1;
 }
 
@@ -81,19 +91,344 @@ export function calculateTotalScoreForStaff(
   );
 }
 
-export function getSalaryTierBadge(tier: number): { label: string; bgClass: string; textClass: string; borderClass: string } {
+export function getDepartmentTrackName(departmentOrLine?: string): { fullName: string; shortName: string } {
+  const s = (departmentOrLine || '').toLowerCase().trim();
+  if (s.includes('thương mại') || s.includes('dịch vụ')) {
+    return { fullName: 'Ngạch Thương Mại & Dịch Vụ', shortName: 'Ngạch Thương Mại' };
+  }
+  if (s.includes('nhân sự') || s.includes('hành chính') || s.includes('pháp chế')) {
+    return { fullName: 'Ngạch Nhân Sự - Hành Chính - Pháp Chế', shortName: 'Ngạch Nhân Sự - HC - PC' };
+  }
+  if (s.includes('kế toán')) {
+    return { fullName: 'Ngạch Kế Toán', shortName: 'Ngạch Kế Toán' };
+  }
+  if (s.includes('pha chế')) {
+    return { fullName: 'Ngạch Pha Chế', shortName: 'Ngạch Pha Chế' };
+  }
+  if (s.includes('bếp bánh') || s.includes('bánh')) {
+    return { fullName: 'Ngạch Bếp Bánh', shortName: 'Ngạch Bếp Bánh' };
+  }
+  if (s.includes('sản xuất')) {
+    return { fullName: 'Ngạch Sản Xuất', shortName: 'Ngạch Sản Xuất' };
+  }
+  if (s.includes('kho') || s.includes('đóng gói')) {
+    return { fullName: 'Ngạch Kho & Đóng Gói', shortName: 'Ngạch Kho & Đóng Gói' };
+  }
+  if (s.includes('kinh doanh') || s.includes('e-commerce') || s.includes('sàn')) {
+    return { fullName: 'Ngạch Phát Triển Kinh Doanh / E-Commerce', shortName: 'Ngạch Kinh Doanh' };
+  }
+  return { fullName: 'Ngạch Phòng Ban', shortName: 'Ngạch Phòng Ban' };
+}
+
+export interface StaffBaselineInfo {
+  generalScore: number;
+  techScore: number;
+  mgmtScore?: number;
+  totalScore: number;
+  salaryTier: number;
+  departmentTrackName: string;
+  departmentTrackShortName: string;
+  isManager: boolean;
+  weights: {
+    general: number;
+    tech: number;
+    mgmt: number;
+  };
+  formulaStr: string;
+}
+
+/**
+ * Tính toán điểm nền chuẩn ước tính theo sheet 📊 Điểm nền & ⚙️ Tham số của Phiếu đánh giá.xlsx:
+ * Phân tách rõ ràng:
+ * - Văn hóa:
+ * - Ngạch phòng ban: (Ngạch TM&DV, Ngạch NSHC, Ngạch Pha chế, v.v.)
+ * - Ngạch quản lý: (Áp dụng cho Quản lý)
+ * 
+ * Tiêu chí chuẩn hóa:
+ * - Nhân viên: Văn hóa + Ngạch phòng ban (VD: 65% / 35%)
+ * - Quản lý: Văn hóa + Ngạch phòng ban + Ngạch quản lý (VD: 50% / 20% / 30%)
+ */
+export function getStaffBaselineScores(staff: Staff, params?: ParameterConfig): StaffBaselineInfo {
+  const isMgmt = isManagementRole(staff);
+  const trackInfo = getDepartmentTrackName(staff.line || staff.department);
+  const lineLower = (staff.line || '').toLowerCase().trim();
+  const deptLower = (staff.department || '').toLowerCase().trim();
+
+  const isTMDV = lineLower.includes('thương mại') || deptLower.includes('thương mại');
+  const isNSHC = lineLower.includes('nhân sự') || deptLower.includes('nhân sự');
+
+  // Trọng số cấu hình
+  const wGen = isMgmt ? (params?.weightGeneralWithMgmt ?? 0.50) : (params?.weightGeneralNoMgmt ?? 0.65);
+  const wTech = isMgmt ? (params?.weightTechWithMgmt ?? 0.20) : (params?.weightTechNoMgmt ?? 0.35);
+  const wMgmt = isMgmt ? (params?.weightMgmtWithMgmt ?? 0.30) : 0;
+
+  // Điểm thành phần từ tham số hệ thống
+  let generalScore: number;
+  let techScore: number;
+  let mgmtScore: number | undefined = undefined;
+
+  if (isTMDV) {
+    generalScore = params?.baselineTmdvGeneral ?? 4.26;
+    techScore = params?.baselineTmdvTech ?? 5.00;
+    if (isMgmt) {
+      mgmtScore = params?.baselineTmdvMgmt ?? 3.54;
+    }
+  } else if (isNSHC) {
+    generalScore = params?.baselineNshcGeneral ?? 4.08;
+    techScore = params?.baselineNshcTech ?? 5.00;
+    if (isMgmt) {
+      mgmtScore = params?.baselineNshcMgmt ?? 5.00;
+    }
+  } else {
+    // Tuyến khác
+    generalScore = params?.baselineCultureCommon ?? 4.08;
+    techScore = params?.baselineOtherTech ?? 4.08;
+    if (isMgmt) {
+      mgmtScore = params?.baselineOtherMgmt ?? 4.08;
+    }
+  }
+
+  // Tính điểm tổng chuẩn hóa từ điểm thành phần
+  let totalScore: number;
+  let formulaStr: string;
+
+  if (isMgmt) {
+    totalScore = Number((
+      generalScore * wGen +
+      techScore * wTech +
+      (mgmtScore ?? 0) * wMgmt
+    ).toFixed(2));
+    formulaStr = `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%) + Ngạch Quản Lý (${Math.round(wMgmt * 100)}%)`;
+  } else {
+    totalScore = Number((
+      generalScore * wGen +
+      techScore * wTech
+    ).toFixed(2));
+    formulaStr = `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%)`;
+  }
+
+  const salaryTier = calculateSalaryTier(totalScore, params);
+
+  return {
+    generalScore,
+    techScore,
+    mgmtScore,
+    totalScore,
+    salaryTier,
+    departmentTrackName: trackInfo.fullName,
+    departmentTrackShortName: trackInfo.shortName,
+    isManager: isMgmt,
+    weights: {
+      general: wGen,
+      tech: wTech,
+      mgmt: wMgmt,
+    },
+    formulaStr,
+  };
+}
+
+/**
+ * Tính toán danh sách bảng điểm nền ước tính chuẩn theo tham số hệ thống
+ * Phân tách rõ ràng:
+ * - Văn hóa:
+ * - Ngạch phòng ban:
+ * - Ngạch quản lý:
+ */
+export function getCalculatedBaselinePoints(params?: ParameterConfig): BaselinePoint[] {
+  const cfg = params || {} as ParameterConfig;
+  const wGenNo = cfg.weightGeneralNoMgmt ?? 0.65;
+  const wTechNo = cfg.weightTechNoMgmt ?? 0.35;
+  const wGenWith = cfg.weightGeneralWithMgmt ?? 0.50;
+  const wTechWith = cfg.weightTechWithMgmt ?? 0.20;
+  const wMgmtWith = cfg.weightMgmtWithMgmt ?? 0.30;
+
+  // Điểm thành phần
+  const bCultureCommon = cfg.baselineCultureCommon ?? 4.08;
+  const bTmdvGen = cfg.baselineTmdvGeneral ?? 4.26;
+  const bTmdvTech = cfg.baselineTmdvTech ?? 5.00;
+  const bTmdvMgmt = cfg.baselineTmdvMgmt ?? 3.54;
+
+  const bNshcGen = cfg.baselineNshcGeneral ?? 4.08;
+  const bNshcTech = cfg.baselineNshcTech ?? 5.00;
+  const bNshcMgmt = cfg.baselineNshcMgmt ?? 5.00;
+
+  const bOtherTech = cfg.baselineOtherTech ?? 4.08;
+  const bOtherMgmt = cfg.baselineOtherMgmt ?? 4.08;
+
+  // Tính tổng
+  const scoreTmdvStaff = Number((bTmdvGen * wGenNo + bTmdvTech * wTechNo).toFixed(2));
+  const scoreTmdvMgmt = Number((bTmdvGen * wGenWith + bTmdvTech * wTechWith + bTmdvMgmt * wMgmtWith).toFixed(2));
+  const scoreNshcStaff = Number((bNshcGen * wGenNo + bNshcTech * wTechNo).toFixed(2));
+  const scoreNshcMgmt = Number((bNshcGen * wGenWith + bNshcTech * wTechWith + bNshcMgmt * wMgmtWith).toFixed(2));
+  const scoreCommonStaff = Number((bCultureCommon * wGenNo + bOtherTech * wTechNo).toFixed(2));
+  const scoreCommonMgmt = Number((bCultureCommon * wGenWith + bOtherTech * wTechWith + bOtherMgmt * wMgmtWith).toFixed(2));
+
+  return [
+    {
+      lineFormName: 'Thương mại & Dịch vụ, nhân viên',
+      baselineScore: scoreTmdvStaff,
+      salaryTier: calculateSalaryTier(scoreTmdvStaff, params),
+      roleType: 'Nhân viên',
+      trackName: 'Ngạch Thương Mại & Dịch Vụ',
+      generalScore: bTmdvGen,
+      techScore: bTmdvTech,
+      formulaStr: `Văn hóa (${bTmdvGen.toFixed(2)}) × ${Math.round(wGenNo * 100)}% + Ngạch TM (${bTmdvTech.toFixed(2)}) × ${Math.round(wTechNo * 100)}%`,
+      weightsStr: `${Math.round(wGenNo * 100)}% VH / ${Math.round(wTechNo * 100)}% TM`,
+      note: 'Áp dụng Khung chung + Tiêu chí chuyên môn TM&DV (TC1 - TC7).'
+    },
+    {
+      lineFormName: 'Thương mại & Dịch vụ, quản lý',
+      baselineScore: scoreTmdvMgmt,
+      salaryTier: calculateSalaryTier(scoreTmdvMgmt, params),
+      roleType: 'Quản lý',
+      trackName: 'Ngạch Thương Mại & Dịch Vụ',
+      generalScore: bTmdvGen,
+      techScore: bTmdvTech,
+      mgmtScore: bTmdvMgmt,
+      formulaStr: `Văn hóa (${bTmdvGen.toFixed(2)}) × ${Math.round(wGenWith * 100)}% + Ngạch TM (${bTmdvTech.toFixed(2)}) × ${Math.round(wTechWith * 100)}% + Ngạch QL (${bTmdvMgmt.toFixed(2)}) × ${Math.round(wMgmtWith * 100)}%`,
+      weightsStr: `${Math.round(wGenWith * 100)}% VH / ${Math.round(wTechWith * 100)}% TM / ${Math.round(wMgmtWith * 100)}% QL`,
+      note: 'Áp dụng Khung chung + Chuyên môn + Ngạch Quản lý (QH1 - QH4).'
+    },
+    {
+      lineFormName: 'Nhân sự - Hành chính - Pháp chế, nhân viên',
+      baselineScore: scoreNshcStaff,
+      salaryTier: calculateSalaryTier(scoreNshcStaff, params),
+      roleType: 'Nhân viên',
+      trackName: 'Ngạch Nhân Sự - HC - PC',
+      generalScore: bNshcGen,
+      techScore: bNshcTech,
+      formulaStr: `Văn hóa (${bNshcGen.toFixed(2)}) × ${Math.round(wGenNo * 100)}% + Ngạch NS (${bNshcTech.toFixed(2)}) × ${Math.round(wTechNo * 100)}%`,
+      weightsStr: `${Math.round(wGenNo * 100)}% VH / ${Math.round(wTechNo * 100)}% NS`,
+      note: 'Áp dụng Khung chung + Tiêu chí chuyên môn Nhân sự.'
+    },
+    {
+      lineFormName: 'Nhân sự - Hành chính - Pháp chế, quản lý',
+      baselineScore: scoreNshcMgmt,
+      salaryTier: calculateSalaryTier(scoreNshcMgmt, params),
+      roleType: 'Quản lý',
+      trackName: 'Ngạch Nhân Sự - HC - PC',
+      generalScore: bNshcGen,
+      techScore: bNshcTech,
+      mgmtScore: bNshcMgmt,
+      formulaStr: `Văn hóa (${bNshcGen.toFixed(2)}) × ${Math.round(wGenWith * 100)}% + Ngạch NS (${bNshcTech.toFixed(2)}) × ${Math.round(wTechWith * 100)}% + Ngạch QL (${bNshcMgmt.toFixed(2)}) × ${Math.round(wMgmtWith * 100)}%`,
+      weightsStr: `${Math.round(wGenWith * 100)}% VH / ${Math.round(wTechWith * 100)}% NS / ${Math.round(wMgmtWith * 100)}% QL`,
+      note: 'Áp dụng Khung chung + Chuyên môn + Ngạch Quản lý.'
+    },
+    {
+      lineFormName: 'Tuyến chưa có ngạch riêng, nhân viên',
+      baselineScore: scoreCommonStaff,
+      salaryTier: calculateSalaryTier(scoreCommonStaff, params),
+      roleType: 'Nhân viên',
+      trackName: 'Ngạch Phòng Ban',
+      generalScore: bCultureCommon,
+      techScore: bOtherTech,
+      formulaStr: `Văn hóa (${bCultureCommon.toFixed(2)}) × ${Math.round(wGenNo * 100)}% + Ngạch PB (${bOtherTech.toFixed(2)}) × ${Math.round(wTechNo * 100)}%`,
+      weightsStr: `${Math.round(wGenNo * 100)}% VH / ${Math.round(wTechNo * 100)}% PB`,
+      note: 'Pha chế, Sản xuất, Kho & Đóng gói, Kinh doanh... chưa có ngạch riêng.'
+    },
+    {
+      lineFormName: 'Tuyến chưa có ngạch riêng, quản lý',
+      baselineScore: scoreCommonMgmt,
+      salaryTier: calculateSalaryTier(scoreCommonMgmt, params),
+      roleType: 'Quản lý',
+      trackName: 'Ngạch Phòng Ban',
+      generalScore: bCultureCommon,
+      techScore: bOtherTech,
+      mgmtScore: bOtherMgmt,
+      formulaStr: `Văn hóa (${bCultureCommon.toFixed(2)}) × ${Math.round(wGenWith * 100)}% + Ngạch PB (${bOtherTech.toFixed(2)}) × ${Math.round(wTechWith * 100)}% + Ngạch QL (${bOtherMgmt.toFixed(2)}) × ${Math.round(wMgmtWith * 100)}%`,
+      weightsStr: `${Math.round(wGenWith * 100)}% VH / ${Math.round(wTechWith * 100)}% PB / ${Math.round(wMgmtWith * 100)}% QL`,
+      note: 'Quản lý các tuyến kế thừa Khung chung + Quản lý.'
+    }
+  ];
+}
+
+export interface SalaryTierBadgeInfo {
+  tier: number;
+  name: string;
+  label: string;
+  shortLabel: string;
+  coefficient: number;
+  coefficientStr: string;
+  meaning: string;
+  scoreRange: string;
+  bgClass: string;
+  textClass: string;
+  borderClass: string;
+}
+
+export function getSalaryTierBadge(tier: number): SalaryTierBadgeInfo {
   switch (tier) {
     case 5:
-      return { label: 'Bậc 5 (Xuất sắc)', bgClass: 'bg-[#1B4332]', textClass: 'text-[#52B788]', borderClass: 'border-[#2D6A4F]' };
+      return {
+        tier: 5,
+        name: 'Bậc 5',
+        label: 'Bậc 5 (HS: 1.10 - Vượt chuẩn)',
+        shortLabel: 'Bậc 5',
+        coefficient: 1.10,
+        coefficientStr: '1,10',
+        meaning: 'Vượt chuẩn rõ rệt, rất khó đạt',
+        scoreRange: '4,8 đến 5,0',
+        bgClass: 'bg-[#1B4332]',
+        textClass: 'text-[#52B788]',
+        borderClass: 'border-[#2D6A4F]',
+      };
     case 4:
-      return { label: 'Bậc 4 (Đạt chuẩn)', bgClass: 'bg-emerald-100', textClass: 'text-[#1B4332]', borderClass: 'border-emerald-300' };
+      return {
+        tier: 4,
+        name: 'Bậc 4',
+        label: 'Bậc 4 (HS: 1.00 - Đạt chuẩn)',
+        shortLabel: 'Bậc 4',
+        coefficient: 1.00,
+        coefficientStr: '1,00',
+        meaning: 'ĐẠT CHUẨN - mức Công ty dự định trả',
+        scoreRange: '4,0 đến dưới 4,8',
+        bgClass: 'bg-emerald-100',
+        textClass: 'text-[#1B4332]',
+        borderClass: 'border-emerald-300',
+      };
     case 3:
-      return { label: 'Bậc 3 (Khá)', bgClass: 'bg-[#EDEAE3]', textClass: 'text-[#2D3748]', borderClass: 'border-slate-300' };
+      return {
+        tier: 3,
+        name: 'Bậc 3',
+        label: 'Bậc 3 (HS: 0.90 - Gần đạt chuẩn)',
+        shortLabel: 'Bậc 3',
+        coefficient: 0.90,
+        coefficientStr: '0,90',
+        meaning: 'Gần đạt chuẩn',
+        scoreRange: '3,5 đến dưới 4,0',
+        bgClass: 'bg-sky-100',
+        textClass: 'text-sky-900',
+        borderClass: 'border-sky-300',
+      };
     case 2:
-      return { label: 'Bậc 2 (Cần cố gắng)', bgClass: 'bg-orange-100', textClass: 'text-[#DD6B20]', borderClass: 'border-orange-300' };
+      return {
+        tier: 2,
+        name: 'Bậc 2',
+        label: 'Bậc 2 (HS: 0.40 - Đạt một phần)',
+        shortLabel: 'Bậc 2',
+        coefficient: 0.40,
+        coefficientStr: '0,40',
+        meaning: 'Đạt một phần',
+        scoreRange: '2,5 đến dưới 3,5',
+        bgClass: 'bg-orange-100',
+        textClass: 'text-[#DD6B20]',
+        borderClass: 'border-orange-300',
+      };
     case 1:
     default:
-      return { label: 'Bậc 1 (Chưa đạt)', bgClass: 'bg-rose-100', textClass: 'text-rose-700', borderClass: 'border-rose-300' };
+      return {
+        tier: 1,
+        name: 'Bậc 1',
+        label: 'Bậc 1 (HS: 0.10 - Chưa đạt chuẩn)',
+        shortLabel: 'Bậc 1',
+        coefficient: 0.10,
+        coefficientStr: '0,10',
+        meaning: 'Chưa đạt chuẩn vị trí',
+        scoreRange: '1,0 đến dưới 2,5',
+        bgClass: 'bg-rose-100',
+        textClass: 'text-rose-700',
+        borderClass: 'border-rose-300',
+      };
   }
 }
 
@@ -191,6 +526,11 @@ export function getStaffScoresForPeriod(
   salaryTier: number;
   violationsCount: number;
   recognitionsCount: number;
+  departmentTrackName?: string;
+  departmentTrackShortName?: string;
+  hasMgmt?: boolean;
+  weights?: { general: number; tech: number; mgmt: number };
+  formulaStr?: string;
 } {
   const [yStr, mStr] = periodKey.split('-');
   const patternSlash = `${mStr}/${yStr}`; // "10/2026"
@@ -215,7 +555,10 @@ export function getStaffScoresForPeriod(
   const violationsCount = approvedIncidents.filter(i => i.type === 'vi_pham').length;
   const recognitionsCount = approvedIncidents.filter(i => i.type === 'ghi_nhan').length;
 
-  let generalScore = 5.0;
+  const baselines = getStaffBaselineScores(staff, params);
+
+  // General Score starts from baseline
+  let generalScore = baselines.generalScore;
   approvedIncidents.forEach(inc => {
     if (typeof inc.impactPoints === 'number' && !isNaN(inc.impactPoints)) {
       generalScore += inc.impactPoints;
@@ -223,31 +566,37 @@ export function getStaffScoresForPeriod(
   });
 
   generalScore = Math.max(0, Math.min(5, Number(generalScore.toFixed(2))));
-  const hasCustomTech = Boolean(staff.hasCustomTechScore);
-  const techScore = hasCustomTech && typeof staff.techScore === 'number' ? staff.techScore : 5.0;
-  const hasMgmt = isManagementRole(staff);
-  const hasCustomMgmt = Boolean(staff.hasCustomMgmtScore);
-  const mgmtScore = hasMgmt ? (hasCustomMgmt && typeof staff.mgmtScore === 'number' ? staff.mgmtScore : 5.0) : 0;
+  const techScore = baselines.techScore;
 
-  const totalScore = calculateTotalScore(
-    generalScore,
-    techScore,
-    hasMgmt ? mgmtScore : undefined,
-    params
-  );
+  const hasMgmt = isManagementRole(staff);
+  const mgmtScore = hasMgmt ? (baselines.mgmtScore ?? 0) : 0;
+
+  const totalScore = approvedIncidents.length === 0
+    ? baselines.totalScore
+    : calculateTotalScore(
+        generalScore,
+        techScore,
+        hasMgmt ? mgmtScore : undefined,
+        params
+      );
 
   const salaryTier = calculateSalaryTier(totalScore, params);
 
   return {
     generalScore,
     techScore,
-    hasCustomTechScore: hasCustomTech,
+    hasCustomTechScore: false,
     mgmtScore,
-    hasCustomMgmtScore: hasCustomMgmt,
+    hasCustomMgmtScore: false,
     totalScore,
     salaryTier,
     violationsCount,
     recognitionsCount,
+    departmentTrackName: baselines.departmentTrackName,
+    departmentTrackShortName: baselines.departmentTrackShortName,
+    hasMgmt,
+    weights: baselines.weights,
+    formulaStr: baselines.formulaStr,
   };
 }
 

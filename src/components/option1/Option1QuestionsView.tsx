@@ -37,6 +37,7 @@ export const Option1QuestionsView: React.FC<Option1QuestionsViewProps> = ({
   currentUser,
 }) => {
   const [activeTab, setActiveTab] = useState<'Chung' | 'Phòng ban' | 'Quản lý' | 'Ranh giới'>('Chung');
+  const [measurementFilter, setMeasurementFilter] = useState<'all' | 'ghi_nhan' | 'vi_pham'>('all');
   const [selectedLineId, setSelectedLineId] = useState<string>('TM_DV');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [expandedGroups, setExpandedGroups] = useState<Record<string, boolean>>({
@@ -169,6 +170,10 @@ export const Option1QuestionsView: React.FC<Option1QuestionsViewProps> = ({
       } else if (activeTab === 'Ranh giới') {
         if (!isBoundaryQuestion(q)) return false;
       }
+
+      // Bộ lọc Ghi nhận vs Vi phạm
+      if (measurementFilter === 'ghi_nhan' && q.measurementType !== 'ghi nhận') return false;
+      if (measurementFilter === 'vi_pham' && q.measurementType !== 'vi phạm') return false;
 
       if (term) {
         return (
@@ -314,6 +319,50 @@ export const Option1QuestionsView: React.FC<Option1QuestionsViewProps> = ({
         </div>
       )}
 
+      {/* Sub-filter: Ghi nhận vs Vi phạm */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200/80">
+        <div className="flex items-center gap-1.5 text-xs flex-wrap">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">Phân loại:</span>
+          <button
+            type="button"
+            onClick={() => setMeasurementFilter('all')}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${
+              measurementFilter === 'all'
+                ? 'bg-slate-900 text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-200/60 bg-white border border-slate-200'
+            }`}
+          >
+            Tất cả
+          </button>
+          <button
+            type="button"
+            onClick={() => setMeasurementFilter('ghi_nhan')}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs cursor-pointer flex items-center gap-1.5 ${
+              measurementFilter === 'ghi_nhan'
+                ? 'bg-emerald-700 text-white shadow-sm ring-2 ring-emerald-500/20'
+                : 'text-emerald-800 bg-emerald-50 hover:bg-emerald-100 border border-emerald-300'
+            }`}
+          >
+            <span>🌟 Tiêu Chí Ghi Nhận</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMeasurementFilter('vi_pham')}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs cursor-pointer flex items-center gap-1.5 ${
+              measurementFilter === 'vi_pham'
+                ? 'bg-amber-700 text-white shadow-sm ring-2 ring-amber-500/20'
+                : 'text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300'
+            }`}
+          >
+            <span>⚠️ Tiêu Chí Vi Phạm / Nhắc Nhở</span>
+          </button>
+        </div>
+
+        <span className="text-[11px] text-slate-500 font-medium pl-1">
+          {groupedData.reduce((acc, g) => acc + g.questions.length, 0)} tiêu chí đang hiển thị
+        </span>
+      </div>
+
       {/* Search Input */}
       <div className="relative">
         <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
@@ -337,6 +386,7 @@ export const Option1QuestionsView: React.FC<Option1QuestionsViewProps> = ({
         ) : (
           groupedData.map((group) => {
             const isExpanded = expandedGroups[group.code] !== false; // Default expanded
+            const isGroupGhiNhan = group.questions.some(q => q.measurementType === 'ghi nhận');
             return (
               <div
                 key={group.code}
@@ -347,13 +397,20 @@ export const Option1QuestionsView: React.FC<Option1QuestionsViewProps> = ({
                   onClick={() => toggleGroup(group.code)}
                   className="p-4 bg-slate-50/80 hover:bg-slate-100/80 cursor-pointer flex items-center justify-between border-b border-slate-200/60 transition-colors"
                 >
-                  <div className="flex items-center gap-2.5 min-w-0 pr-2">
+                  <div className="flex items-center gap-2.5 min-w-0 pr-2 flex-wrap">
                     <span className="font-mono text-xs font-black bg-emerald-600 text-white px-2.5 py-1 rounded-xl shadow-sm shrink-0 whitespace-nowrap">
                       {group.code}
                     </span>
                     <h3 className="font-extrabold text-xs sm:text-sm text-slate-900 truncate">
                       {group.name}
                     </h3>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap border ${
+                      isGroupGhiNhan
+                        ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                        : 'bg-rose-50 text-rose-800 border-rose-300'
+                    }`}>
+                      {isGroupGhiNhan ? '🌟 Chấm theo mức độ ghi nhận' : '⚠️ Chấm theo mức độ vi phạm'}
+                    </span>
                     <span className="text-[10px] font-bold text-slate-500 bg-slate-200/70 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap hidden sm:inline-block">
                       {group.questions.length} tiêu chí
                     </span>
@@ -392,8 +449,12 @@ export const Option1QuestionsView: React.FC<Option1QuestionsViewProps> = ({
                         </div>
 
                         <div className="flex items-center gap-1.5 shrink-0 self-end sm:self-start mt-1 sm:mt-0">
-                          <span className="text-[10px] font-bold px-2 py-1 rounded-xl bg-slate-100 text-slate-700 border border-slate-200 whitespace-nowrap">
-                            {q.measurementType || 'Thang 0-5'}
+                          <span className={`text-[10px] font-bold px-2.5 py-1 rounded-xl whitespace-nowrap border ${
+                            q.measurementType === 'ghi nhận'
+                              ? 'bg-emerald-50 text-emerald-800 border-emerald-300'
+                              : 'bg-rose-50 text-rose-800 border-rose-300'
+                          }`}>
+                            {q.measurementType === 'ghi nhận' ? '🌟 Ghi nhận' : '⚠️ Vi phạm'}
                           </span>
                           {currentUser?.isAdmin && (
                             <>

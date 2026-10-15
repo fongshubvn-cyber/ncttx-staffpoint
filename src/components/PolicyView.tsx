@@ -45,9 +45,10 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
   const activePeriodObj = recentPeriods.find(p => p.key === activePeriodKey) || recentPeriods[0];
 
   const [activeTab, setActiveTab] = useState<'rules' | 'staff_scores' | 'appeals'>('rules');
+  const [filterTrack, setFilterTrack] = useState<'all' | 'Pháp quy & Kỷ luật' | 'Văn hóa & Tác phong'>('all');
   const [isEditingRules, setIsEditingRules] = useState(false);
   const [rules, setRules] = useState<PolicyRule[]>(() => {
-    if (params.policyRules && Array.isArray(params.policyRules) && params.policyRules.length > 0) {
+    if (params.policyRules && Array.isArray(params.policyRules) && params.policyRules.length >= 20 && params.policyRules.some(r => r.track)) {
       return params.policyRules;
     }
     return initialPolicyRules;
@@ -61,11 +62,12 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
     if (!onUpdateParams) return;
     onUpdateParams({
       ...params,
+      policyVersion: '2026_v2',
       policyRules: rules,
       defaultPolicyScore: 100,
     });
     setIsEditingRules(false);
-    alert('Đã lưu cấu hình 10 Nội Quy & Điểm Phạt thành công!');
+    alert('Đã lưu cấu hình Hệ Thống Nội Quy 2 Ngạch & Điểm Phạt thành công!');
   };
 
   const filteredStaffList = staffList.filter(s => 
@@ -101,10 +103,10 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
               <span>Hệ Thống Nội Quy & Tình Trạng Nhân Sự (Account Health)</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black font-heading text-white tracking-tight">
-              10 Nội Quy Mặc Định & Điểm Tuân Thủ (100 Điểm Gốc Mỗi Tháng) 🛡️
+              Hệ Thống Nội Quy 2 Ngạch: Pháp Quy & Văn Hóa (100 Điểm Gốc) 🛡️
             </h2>
             <p className="text-xs sm:text-sm text-emerald-100/90 max-w-2xl font-medium leading-relaxed">
-              Mỗi tháng, nhân sự được cấp <strong className="text-[#52B788]">100 điểm nội quy mặc định độc lập</strong>. Điểm trừ chỉ tính trong kỳ tháng đó. Sang tháng mới, điểm tuân thủ sẽ tự động <strong className="text-amber-300">Restart về 100đ</strong>.
+              Phân tách rõ ràng 2 ngạch: <strong className="text-rose-300">🔴 Pháp quy & Kỷ luật</strong> (Khung tuân thủ Bộ luật Lao động) và <strong className="text-[#52B788]">🟢 Văn hóa & Tác phong</strong> (Khung rèn luyện Sổ tay Nhân sự). Mỗi tháng nhân sự được cấp <strong className="text-amber-300">100 điểm tuân thủ độc lập</strong>.
             </p>
           </div>
 
@@ -117,7 +119,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
               className="px-4 py-2 rounded-2xl bg-white hover:bg-emerald-100 text-[#1B4332] font-black text-xs shadow-md transition-all active:scale-95 shrink-0 flex items-center space-x-1.5 cursor-pointer border border-emerald-200"
             >
               <Edit3 className="w-4 h-4 text-[#2D6A4F]" />
-              <span>{isEditingRules ? "💾 Lưu Cấu Hình Điểm Phạt" : "✏️ Chỉnh Sửa 10 Nội Quy"}</span>
+              <span>{isEditingRules ? "💾 Lưu Cấu Hình Điểm Phạt" : "✏️ Chỉnh Sửa Nội Quy"}</span>
             </button>
           )}
         </div>
@@ -180,7 +182,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
           }`}
         >
           <ShieldCheck className="w-4 h-4" />
-          <span>📋 10 Nội Quy & Mức Điểm Phạt</span>
+          <span>📋 Hệ Thống Nội Quy 2 Ngạch ({rules.length})</span>
         </button>
 
         <button
@@ -196,18 +198,79 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
         </button>
       </div>
 
-      {/* TAB 1: 10 POLICY RULES & PENALTY POINTS */}
+      {/* TAB 1: 20 POLICY RULES & PENALTY POINTS ACROSS 2 TRACKS */}
       {activeTab === 'rules' && (
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
-            <h3 className="text-sm font-extrabold font-heading text-[#1B4332] uppercase tracking-wider">
-              Danh Sách Quy Định Nội Quy Công Ty ({rules.length} Nội Quy)
-            </h3>
+            <div>
+              <h3 className="text-sm font-extrabold font-heading text-[#1B4332] uppercase tracking-wider">
+                Hệ Thống Quy Định Nội Quy ({rules.length} Nội Quy • 2 Ngạch)
+              </h3>
+              <p className="text-xs text-slate-500 font-medium">
+                Ngạch 1: Pháp quy lao động & kỷ luật • Ngạch 2: Văn hóa & tác phong vận hành
+              </p>
+            </div>
             {isEditingRules && (
               <span className="text-xs text-rose-600 font-bold bg-rose-50 px-2.5 py-1 rounded-full border border-rose-200 animate-pulse">
                 ✏️ Đang trong chế độ chỉnh sửa nội quy
               </span>
             )}
+          </div>
+
+          {/* Track Filter Chips & Search Bar */}
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 bg-white p-3 rounded-2xl border border-slate-200 shadow-2xs">
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 sm:pb-0">
+              <button
+                type="button"
+                onClick={() => setFilterTrack('all')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  filterTrack === 'all'
+                    ? 'bg-[#1B4332] text-white shadow-2xs font-extrabold'
+                    : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+                }`}
+              >
+                Tất Cả ({rules.length})
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterTrack('Pháp quy & Kỷ luật')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  filterTrack === 'Pháp quy & Kỷ luật'
+                    ? 'bg-rose-700 text-white shadow-2xs font-extrabold'
+                    : 'bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200'
+                }`}
+              >
+                <span>🔴 Ngạch 1: Pháp Quy & Kỷ Luật</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-mono font-extrabold">
+                  {rules.filter(r => r.track === 'Pháp quy & Kỷ luật').length}
+                </span>
+              </button>
+              <button
+                type="button"
+                onClick={() => setFilterTrack('Văn hóa & Tác phong')}
+                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                  filterTrack === 'Văn hóa & Tác phong'
+                    ? 'bg-emerald-800 text-white shadow-2xs font-extrabold'
+                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                }`}
+              >
+                <span>🟢 Ngạch 2: Văn Hóa & Tác Phong</span>
+                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-mono font-extrabold">
+                  {rules.filter(r => r.track === 'Văn hóa & Tác phong').length}
+                </span>
+              </button>
+            </div>
+
+            <div className="relative min-w-[200px]">
+              <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              <input
+                type="text"
+                placeholder="Tìm kiếm nội quy, từ khóa..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="w-full pl-8 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs font-medium focus:ring-1 focus:ring-[#2D6A4F] focus:bg-white transition-all"
+              />
+            </div>
           </div>
 
           {isEditingRules && (
@@ -219,13 +282,16 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
               <button
                 type="button"
                 onClick={() => {
+                  const targetTrack = filterTrack !== 'all' ? filterTrack : 'Pháp quy & Kỷ luật';
+                  const prefix = targetTrack === 'Pháp quy & Kỷ luật' ? 'PQ' : 'VH';
                   const nextNum = rules.length + 1;
                   const numStr = nextNum < 10 ? `0${nextNum}` : `${nextNum}`;
                   const newRule: PolicyRule = {
-                    id: `NQ${numStr}`,
-                    code: `NQ-${numStr}`,
+                    id: `${prefix}${numStr}`,
+                    code: `${prefix}-${numStr}`,
+                    track: targetTrack,
                     title: `Nội quy mới #${nextNum}`,
-                    category: 'Quy định chung',
+                    category: targetTrack === 'Pháp quy & Kỷ luật' ? 'Kỷ luật lao động' : 'Tác phong văn hóa',
                     description: 'Nhập nội dung chi tiết của quy định nội quy mới tại đây...',
                     penaltyPoints: 10,
                     severity: 'Vừa',
@@ -243,206 +309,243 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
           )}
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3.5">
-            {rules.map((rule, idx) => (
-              <div 
-                key={rule.id}
-                className={`mobile-card p-4 space-y-3 border rounded-2xl transition-all shadow-2xs ${
-                  isEditingRules 
-                    ? 'bg-amber-50/30 border-amber-300 ring-1 ring-amber-400/20' 
-                    : rule.active === false
-                      ? 'bg-slate-50 border-slate-200 opacity-60'
-                      : 'bg-white border-slate-200 hover:border-[#2D6A4F]'
-                }`}
-              >
-                {isEditingRules ? (
-                  /* EDIT MODE FOR ADMIN */
-                  <div className="space-y-3 text-xs">
-                    {/* Code & Title */}
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Mã NQ</label>
-                        <input
-                          type="text"
-                          value={rule.code || rule.id}
-                          onChange={(e) => {
-                            const updated = [...rules];
-                            updated[idx] = { ...updated[idx], code: e.target.value };
-                            setRules(updated);
-                          }}
-                          className="w-full p-2 bg-white border border-slate-300 rounded-xl font-mono font-bold text-xs focus:ring-1 focus:ring-[#2D6A4F]"
-                        />
-                      </div>
-                      <div className="col-span-2">
-                        <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Tên Nội Quy *</label>
-                        <input
-                          type="text"
-                          value={rule.title}
-                          onChange={(e) => {
-                            const updated = [...rules];
-                            updated[idx] = { ...updated[idx], title: e.target.value };
-                            setRules(updated);
-                          }}
-                          className="w-full p-2 bg-white border border-slate-300 rounded-xl font-bold text-xs text-[#1B4332] focus:ring-1 focus:ring-[#2D6A4F]"
-                          placeholder="Nhập tên nội quy..."
-                        />
-                      </div>
-                    </div>
+            {rules
+              .filter(r => {
+                const matchTrack = filterTrack === 'all' || (r.track === filterTrack);
+                const matchQuery = !searchQuery.trim() || 
+                  r.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  (r.code || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  r.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                  r.category.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchTrack && matchQuery;
+              })
+              .map((rule) => {
+                const idx = rules.findIndex(x => x.id === rule.id);
+                return (
+                  <div 
+                    key={rule.id}
+                    className={`mobile-card p-4 space-y-3 border rounded-2xl transition-all shadow-2xs ${
+                      isEditingRules 
+                        ? 'bg-amber-50/30 border-amber-300 ring-1 ring-amber-400/20' 
+                        : rule.active === false
+                          ? 'bg-slate-50 border-slate-200 opacity-60'
+                          : 'bg-white border-slate-200 hover:border-[#2D6A4F]'
+                    }`}
+                  >
+                    {isEditingRules ? (
+                      /* EDIT MODE FOR ADMIN */
+                      <div className="space-y-3 text-xs">
+                        {/* Ngạch & Mã NQ & Title */}
+                        <div className="grid grid-cols-1 sm:grid-cols-4 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Ngạch *</label>
+                            <select
+                              value={rule.track || 'Pháp quy & Kỷ luật'}
+                              onChange={(e) => {
+                                const updated = [...rules];
+                                updated[idx] = { ...updated[idx], track: e.target.value };
+                                setRules(updated);
+                              }}
+                              className="w-full p-2 bg-white border border-slate-300 rounded-xl font-bold text-xs"
+                            >
+                              <option value="Pháp quy & Kỷ luật">🔴 Ngạch 1: Pháp quy</option>
+                              <option value="Văn hóa & Tác phong">🟢 Ngạch 2: Văn hóa</option>
+                            </select>
+                          </div>
+                          <div>
+                            <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Mã NQ</label>
+                            <input
+                              type="text"
+                              value={rule.code || rule.id}
+                              onChange={(e) => {
+                                const updated = [...rules];
+                                updated[idx] = { ...updated[idx], code: e.target.value };
+                                setRules(updated);
+                              }}
+                              className="w-full p-2 bg-white border border-slate-300 rounded-xl font-mono font-bold text-xs focus:ring-1 focus:ring-[#2D6A4F]"
+                            />
+                          </div>
+                          <div className="sm:col-span-2">
+                            <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Tên Nội Quy *</label>
+                            <input
+                              type="text"
+                              value={rule.title}
+                              onChange={(e) => {
+                                const updated = [...rules];
+                                updated[idx] = { ...updated[idx], title: e.target.value };
+                                setRules(updated);
+                              }}
+                              className="w-full p-2 bg-white border border-slate-300 rounded-xl font-bold text-xs text-[#1B4332] focus:ring-1 focus:ring-[#2D6A4F]"
+                              placeholder="Nhập tên nội quy..."
+                            />
+                          </div>
+                        </div>
 
-                    {/* Description */}
-                    <div>
-                      <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Mô Tả Chi Tiết Quy Định *</label>
-                      <textarea
-                        rows={2}
-                        value={rule.description}
-                        onChange={(e) => {
-                          const updated = [...rules];
-                          updated[idx] = { ...updated[idx], description: e.target.value };
-                          setRules(updated);
-                        }}
-                        className="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 font-medium focus:ring-1 focus:ring-[#2D6A4F]"
-                        placeholder="Mô tả nội dung quy định..."
-                      />
-                    </div>
-
-                    {/* Penalty Points, Severity & Category */}
-                    <div className="grid grid-cols-3 gap-2">
-                      <div>
-                        <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Điểm Trừ (100đ)</label>
-                        <div className="flex items-center gap-1">
-                          <span className="text-rose-600 font-extrabold text-xs">-</span>
-                          <input
-                            type="number"
-                            min="1"
-                            max="100"
-                            value={rule.penaltyPoints}
+                        {/* Description */}
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Mô Tả Chi Tiết Quy Định *</label>
+                          <textarea
+                            rows={2}
+                            value={rule.description}
                             onChange={(e) => {
-                              const val = Math.max(1, Number(e.target.value));
                               const updated = [...rules];
-                              updated[idx] = { ...updated[idx], penaltyPoints: val };
+                              updated[idx] = { ...updated[idx], description: e.target.value };
                               setRules(updated);
                             }}
-                            className="w-full p-1.5 bg-white border border-rose-300 rounded-xl font-mono font-black text-rose-600 text-xs text-center focus:ring-1 focus:ring-rose-500"
+                            className="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 font-medium focus:ring-1 focus:ring-[#2D6A4F]"
+                            placeholder="Mô tả nội dung quy định..."
                           />
                         </div>
+
+                        {/* Penalty Points, Severity & Category */}
+                        <div className="grid grid-cols-3 gap-2">
+                          <div>
+                            <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Điểm Trừ (100đ)</label>
+                            <div className="flex items-center gap-1">
+                              <span className="text-rose-600 font-extrabold text-xs">-</span>
+                              <input
+                                type="number"
+                                min="1"
+                                max="100"
+                                value={rule.penaltyPoints}
+                                onChange={(e) => {
+                                  const val = Math.max(1, Number(e.target.value));
+                                  const updated = [...rules];
+                                  updated[idx] = { ...updated[idx], penaltyPoints: val };
+                                  setRules(updated);
+                                }}
+                                className="w-full p-1.5 bg-white border border-rose-300 rounded-xl font-mono font-black text-rose-600 text-xs text-center focus:ring-1 focus:ring-rose-500"
+                              />
+                            </div>
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Mức Độ</label>
+                            <select
+                              value={rule.severity}
+                              onChange={(e) => {
+                                const updated = [...rules];
+                                updated[idx] = { ...updated[idx], severity: e.target.value as any };
+                                setRules(updated);
+                              }}
+                              className="w-full p-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800"
+                            >
+                              <option value="Nhẹ">Nhẹ</option>
+                              <option value="Vừa">Vừa</option>
+                              <option value="Nghiêm trọng">Nghiêm trọng</option>
+                              <option value="Rất nghiêm trọng">Rất nghiêm trọng</option>
+                            </select>
+                          </div>
+
+                          <div>
+                            <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Phân Loại</label>
+                            <input
+                              type="text"
+                              value={rule.category}
+                              onChange={(e) => {
+                                const updated = [...rules];
+                                updated[idx] = { ...updated[idx], category: e.target.value };
+                                setRules(updated);
+                              }}
+                              className="w-full p-1.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 font-medium"
+                              placeholder="Phân loại"
+                            />
+                          </div>
+                        </div>
+
+                        {/* Enforcement Measure */}
+                        <div>
+                          <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Biện Pháp Xử Lý Kỷ Luật</label>
+                          <input
+                            type="text"
+                            value={rule.enforcementMeasure}
+                            onChange={(e) => {
+                              const updated = [...rules];
+                              updated[idx] = { ...updated[idx], enforcementMeasure: e.target.value };
+                              setRules(updated);
+                            }}
+                            className="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs text-emerald-900 font-medium focus:ring-1 focus:ring-[#2D6A4F]"
+                            placeholder="Nhập biện pháp xử lý..."
+                          />
+                        </div>
+
+                        {/* Active Switch & Delete Button */}
+                        <div className="flex items-center justify-between pt-2 border-t border-amber-200/80">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              const updated = [...rules];
+                              updated[idx] = { ...updated[idx], active: rule.active === false ? true : false };
+                              setRules(updated);
+                            }}
+                            className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
+                              rule.active === false
+                                ? 'bg-slate-200 text-slate-600 hover:bg-slate-300'
+                                : 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
+                            }`}
+                          >
+                            {rule.active === false ? '🔴 Đã Ẩn Quy Định' : '🟢 Đang Áp Dụng'}
+                          </button>
+
+                          {rules.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => {
+                                if (window.confirm(`⚠️ Admin chắc chắn muốn xóa quy định "${rule.title}"?`)) {
+                                  setRules(rules.filter((_, i) => i !== idx));
+                                }
+                              }}
+                              className="px-3 py-1.5 rounded-xl bg-rose-100 text-rose-700 hover:bg-rose-200 text-xs font-bold transition-all cursor-pointer"
+                            >
+                              🗑️ Xóa Quy Định
+                            </button>
+                          )}
+                        </div>
                       </div>
+                    ) : (
+                      /* DISPLAY MODE */
+                      <>
+                        <div className="flex items-start justify-between gap-2">
+                          <div className="space-y-1 min-w-0">
+                            <div className="flex items-center space-x-1.5 flex-wrap">
+                              <span className="px-2.5 py-0.5 rounded-full font-mono text-[11px] font-black bg-[#1B4332] text-[#52B788] shrink-0">
+                                {rule.code || rule.id}
+                              </span>
+                              <span className={`px-2 py-0.5 rounded-full text-[10px] font-black shrink-0 ${
+                                rule.track === 'Pháp quy & Kỷ luật'
+                                  ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                  : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                              }`}>
+                                {rule.track === 'Pháp quy & Kỷ luật' ? '🔴 Ngạch 1: Pháp quy' : '🟢 Ngạch 2: Văn hóa'}
+                              </span>
+                            </div>
+                            <h4 className="font-extrabold text-[#1B4332] text-sm">{rule.title}</h4>
+                          </div>
 
-                      <div>
-                        <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Mức Độ</label>
-                        <select
-                          value={rule.severity}
-                          onChange={(e) => {
-                            const updated = [...rules];
-                            updated[idx] = { ...updated[idx], severity: e.target.value as any };
-                            setRules(updated);
-                          }}
-                          className="w-full p-1.5 bg-white border border-slate-300 rounded-xl text-xs font-bold text-slate-800"
-                        >
-                          <option value="Nhẹ">Nhẹ</option>
-                          <option value="Vừa">Vừa</option>
-                          <option value="Nghiêm trọng">Nghiêm trọng</option>
-                          <option value="Rất nghiêm trọng">Rất nghiêm trọng</option>
-                        </select>
-                      </div>
+                          <span className="px-3 py-1 rounded-xl text-xs font-mono font-black bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
+                            -{rule.penaltyPoints} điểm
+                          </span>
+                        </div>
 
-                      <div>
-                        <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Phân Loại</label>
-                        <input
-                          type="text"
-                          value={rule.category}
-                          onChange={(e) => {
-                            const updated = [...rules];
-                            updated[idx] = { ...updated[idx], category: e.target.value };
-                            setRules(updated);
-                          }}
-                          className="w-full p-1.5 bg-white border border-slate-300 rounded-xl text-xs text-slate-800 font-medium"
-                          placeholder="Phân loại"
-                        />
-                      </div>
-                    </div>
+                        <p className="text-xs text-slate-600 leading-relaxed font-medium bg-[#EDEAE3]/50 p-3 rounded-xl">
+                          {rule.description}
+                        </p>
 
-                    {/* Enforcement Measure */}
-                    <div>
-                      <label className="block text-[10px] font-extrabold text-slate-500 mb-0.5 uppercase">Biện Pháp Xử Lý Kỷ Luật</label>
-                      <input
-                        type="text"
-                        value={rule.enforcementMeasure}
-                        onChange={(e) => {
-                          const updated = [...rules];
-                          updated[idx] = { ...updated[idx], enforcementMeasure: e.target.value };
-                          setRules(updated);
-                        }}
-                        className="w-full p-2 bg-white border border-slate-300 rounded-xl text-xs text-emerald-900 font-medium focus:ring-1 focus:ring-[#2D6A4F]"
-                        placeholder="Nhập biện pháp xử lý..."
-                      />
-                    </div>
+                        <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 border-t border-slate-100">
+                          <span className="font-medium">
+                            Phân loại: <strong className="text-slate-700">{rule.category}</strong>
+                          </span>
+                          <span className="font-bold text-[#2D6A4F]">Mức: {rule.severity}</span>
+                        </div>
 
-                    {/* Active Switch & Delete Button */}
-                    <div className="flex items-center justify-between pt-2 border-t border-amber-200/80">
-                      <button
-                        type="button"
-                        onClick={() => {
-                          const updated = [...rules];
-                          updated[idx] = { ...updated[idx], active: rule.active === false ? true : false };
-                          setRules(updated);
-                        }}
-                        className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer ${
-                          rule.active === false
-                            ? 'bg-slate-200 text-slate-600 hover:bg-slate-300'
-                            : 'bg-emerald-100 text-emerald-800 border border-emerald-300 hover:bg-emerald-200'
-                        }`}
-                      >
-                        {rule.active === false ? '🔴 Đã Ẩn Quy Định' : '🟢 Đang Áp Dụng'}
-                      </button>
-
-                      {rules.length > 1 && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (window.confirm(`⚠️ Admin chắc chắn muốn xóa quy định "${rule.title}"?`)) {
-                              setRules(rules.filter((_, i) => i !== idx));
-                            }
-                          }}
-                          className="px-3 py-1.5 rounded-xl bg-rose-100 text-rose-700 hover:bg-rose-200 text-xs font-bold transition-all cursor-pointer"
-                        >
-                          🗑️ Xóa Quy Định
-                        </button>
-                      )}
-                    </div>
+                        <div className="bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-200/70 text-[11px] text-emerald-900">
+                          <strong>Biện pháp xử lý:</strong> {rule.enforcementMeasure}
+                        </div>
+                      </>
+                    )}
                   </div>
-                ) : (
-                  /* DISPLAY MODE */
-                  <>
-                    <div className="flex items-start justify-between gap-2">
-                      <div className="flex items-center space-x-2 min-w-0">
-                        <span className="px-2.5 py-0.5 rounded-full font-mono text-[11px] font-black bg-[#1B4332] text-[#52B788] shrink-0">
-                          {rule.code || rule.id}
-                        </span>
-                        <h4 className="font-extrabold text-[#1B4332] text-sm truncate">{rule.title}</h4>
-                      </div>
-
-                      <span className="px-3 py-1 rounded-xl text-xs font-mono font-black bg-rose-50 text-rose-700 border border-rose-200 shrink-0">
-                        -{rule.penaltyPoints} điểm
-                      </span>
-                    </div>
-
-                    <p className="text-xs text-slate-600 leading-relaxed font-medium bg-[#EDEAE3]/50 p-3 rounded-xl">
-                      {rule.description}
-                    </p>
-
-                    <div className="flex items-center justify-between pt-1 text-[11px] text-slate-500 border-t border-slate-100">
-                      <span className="font-medium">
-                        Phân loại: <strong className="text-slate-700">{rule.category}</strong>
-                      </span>
-                      <span className="font-bold text-[#2D6A4F]">Mức: {rule.severity}</span>
-                    </div>
-
-                    <div className="bg-emerald-50/60 p-2.5 rounded-xl border border-emerald-200/70 text-[11px] text-emerald-900">
-                      <strong>Biện pháp xử lý:</strong> {rule.enforcementMeasure}
-                    </div>
-                  </>
-                )}
-              </div>
-            ))}
+                );
+              })}
           </div>
         </div>
       )}

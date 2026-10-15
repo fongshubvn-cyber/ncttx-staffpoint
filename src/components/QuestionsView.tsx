@@ -33,6 +33,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
   currentUser,
 }) => {
   const [activeTab, setActiveTab] = useState<'Chung' | 'Phòng ban' | 'Quản lý' | 'Ranh giới'>('Chung');
+  const [measurementFilter, setMeasurementFilter] = useState<'all' | 'ghi_nhan' | 'vi_pham'>('all');
   const [selectedLineId, setSelectedLineId] = useState<string>('TM_DV');
   const [searchTerm, setSearchTerm] = useState<string>('');
   const [showModal, setShowModal] = useState(false);
@@ -252,6 +253,10 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
         if (!isBoundaryQuestion(q)) return false;
       }
 
+      // Bộ lọc Ghi nhận vs Vi phạm
+      if (measurementFilter === 'ghi_nhan' && q.measurementType !== 'ghi nhận') return false;
+      if (measurementFilter === 'vi_pham' && q.measurementType !== 'vi phạm') return false;
+
       if (term) {
         return (
           q.id.toLowerCase().includes(term) ||
@@ -427,6 +432,50 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
           <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
           <span>4. RANH GIỚI ⚠️</span>
         </button>
+      </div>
+
+      {/* Sub-filter: Ghi nhận vs Vi phạm */}
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2.5 bg-slate-50 p-2.5 rounded-2xl border border-slate-200">
+        <div className="flex items-center gap-1.5 text-xs flex-wrap">
+          <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider pl-1">Phân loại:</span>
+          <button
+            type="button"
+            onClick={() => setMeasurementFilter('all')}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs cursor-pointer ${
+              measurementFilter === 'all'
+                ? 'bg-[#1B4332] text-white shadow-xs'
+                : 'text-slate-600 hover:bg-slate-200/60 bg-white border border-slate-200'
+            }`}
+          >
+            Tất cả
+          </button>
+          <button
+            type="button"
+            onClick={() => setMeasurementFilter('ghi_nhan')}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs cursor-pointer flex items-center gap-1.5 ${
+              measurementFilter === 'ghi_nhan'
+                ? 'bg-[#2D6A4F] text-white shadow-sm ring-2 ring-emerald-500/20'
+                : 'text-[#1B4332] bg-emerald-50 hover:bg-emerald-100 border border-emerald-300'
+            }`}
+          >
+            <span>🌟 Tiêu Chí Ghi Nhận</span>
+          </button>
+          <button
+            type="button"
+            onClick={() => setMeasurementFilter('vi_pham')}
+            className={`px-3 py-1.5 rounded-xl font-bold transition-all text-xs cursor-pointer flex items-center gap-1.5 ${
+              measurementFilter === 'vi_pham'
+                ? 'bg-amber-700 text-white shadow-sm ring-2 ring-amber-500/20'
+                : 'text-amber-800 bg-amber-50 hover:bg-amber-100 border border-amber-300'
+            }`}
+          >
+            <span>⚠️ Tiêu Chí Vi Phạm / Nhắc Nhở</span>
+          </button>
+        </div>
+
+        <span className="text-[11px] text-slate-500 font-medium pl-1">
+          {groupedData.reduce((acc, g) => acc + g.questions.length, 0)} tiêu chí đang hiển thị
+        </span>
       </div>
 
       {/* Search & Expansion Controls */}

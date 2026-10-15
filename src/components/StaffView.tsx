@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Staff, DepartmentLine, ParameterConfig, AuthUser } from '../types';
-import { getSalaryTierBadge, calculateSalaryTier, calculateTotalScore, getVisibleStaffListForUser, isManagementRole } from '../utils/calculator';
+import { getSalaryTierBadge, calculateSalaryTier, calculateTotalScore, getVisibleStaffListForUser, isManagementRole, getStaffBaselineScores, getDepartmentTrackName } from '../utils/calculator';
 import { 
   Users, 
   Search, 
@@ -107,8 +107,8 @@ export const StaffView: React.FC<StaffViewProps> = ({
   const [line, setLine] = useState<string>('Thương mại & Dịch vụ');
   const [speechCapability, setSpeechCapability] = useState<'Người nói' | 'Người điếc/ khiếm thính'>('Người nói');
   const [location, setLocation] = useState<string>('Văn phòng');
-  const [generalScore, setGeneralScore] = useState<number>(4.2);
-  const [techScore, setTechScore] = useState<number>(4.2);
+  const [generalScore, setGeneralScore] = useState<number>(4.08);
+  const [techScore, setTechScore] = useState<number>(4.08);
   const [mgmtScore, setMgmtScore] = useState<number>(0);
   const [isStaffManager, setIsStaffManager] = useState<boolean>(false);
   const [isNewAdmin, setIsNewAdmin] = useState<boolean>(false);
@@ -354,7 +354,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
                   <span className="text-slate-600 font-bold">Bậc lương P2:</span>
                   <span className="px-3 py-1 rounded-full bg-[#1B4332] text-[#52B788] font-bold flex items-center space-x-1">
                     <Star className="w-3.5 h-3.5 text-[#52B788] fill-[#52B788]" />
-                    <span>Bậc {selectedStaff.salaryTier} / 5</span>
+                    <span>Bậc {selectedStaff.salaryTier}</span>
                   </span>
                 </div>
                 <div className="flex justify-between text-slate-700">
@@ -365,18 +365,43 @@ export const StaffView: React.FC<StaffViewProps> = ({
                   <span>Cấp bậc công việc:</span>
                   <strong className="text-[#1B4332] font-bold">{selectedStaff.jobLevel}</strong>
                 </div>
-                <div className="flex justify-between text-slate-700">
-                  <span>Điểm Văn hóa chung:</span>
-                  <strong className="text-[#1B4332] font-bold">{selectedStaff.generalScore || 5.0} / 5.0</strong>
-                </div>
-                {isManagementRole(selectedStaff) && (
-                  <div className="flex justify-between text-slate-700">
-                    <span>Điểm Ngạch quản lý:</span>
-                    <strong className="text-[#1B4332] font-bold">
-                      {selectedStaff.isManager ? `${selectedStaff.mgmtScore ?? 5.0} / ${selectedStaff.mgmtScore ?? 5.0}` : 'Mặc định (5.0 / 5.0)'}
-                    </strong>
-                  </div>
-                )}
+                {(() => {
+                  const trackInfo = getDepartmentTrackName(selectedStaff.line || selectedStaff.department);
+                  const isMgmt = isManagementRole(selectedStaff);
+                  const wGen = isMgmt ? (params.weightGeneralWithMgmt ?? 0.50) : (params.weightGeneralNoMgmt ?? 0.65);
+                  const wTech = isMgmt ? (params.weightTechWithMgmt ?? 0.20) : (params.weightTechNoMgmt ?? 0.35);
+                  const wMgmt = isMgmt ? (params.weightMgmtWithMgmt ?? 0.30) : 0;
+
+                  return (
+                    <>
+                      <div className="flex justify-between text-slate-700">
+                        <span>Văn hóa & Thái độ ({Math.round(wGen * 100)}%):</span>
+                        <strong className="text-[#1B4332] font-mono font-bold">
+                          {selectedStaff.generalScore?.toFixed(2) || '4.08'}
+                        </strong>
+                      </div>
+                      <div className="flex justify-between text-slate-700">
+                        <span className="truncate mr-2">{trackInfo.fullName} ({Math.round(wTech * 100)}%):</span>
+                        <strong className="text-[#1B4332] font-mono font-bold shrink-0">
+                          {selectedStaff.techScore?.toFixed(2) || '4.08'}
+                        </strong>
+                      </div>
+                      {isMgmt && (
+                        <div className="flex justify-between text-slate-700">
+                          <span>Ngạch Quản Lý ({Math.round(wMgmt * 100)}%):</span>
+                          <strong className="text-[#1B4332] font-mono font-bold">
+                            {selectedStaff.mgmtScore?.toFixed(2) ?? '4.08'}
+                          </strong>
+                        </div>
+                      )}
+                      <div className="text-[10px] text-slate-500 font-medium">
+                        💡 Tiêu chí: {isMgmt 
+                          ? `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%) + Ngạch QL (${Math.round(wMgmt * 100)}%)`
+                          : `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%)`}
+                      </div>
+                    </>
+                  );
+                })()}
                 <div className="flex flex-col gap-1 text-slate-700">
                   <div className="flex justify-between items-center">
                     <span>Ngạch Chuyên Môn đảm nhận:</span>
@@ -679,19 +704,24 @@ export const StaffView: React.FC<StaffViewProps> = ({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const totalSc = calculateTotalScore(
-                  editingStaff.generalScore,
-                  editingStaff.techScore,
-                  editingStaff.mgmtScore,
-                  params
-                );
-                const salaryT = calculateSalaryTier(totalSc, params);
+                const isMgr = editingStaff.isManager || editingStaff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel);
+                const updatedTarget = {
+                  ...editingStaff,
+                  isManager: isMgr,
+                };
+                const baselines = getStaffBaselineScores(updatedTarget, params);
+                const totalSc = baselines.totalScore;
+                const salaryT = baselines.salaryTier;
 
                 const updatedStaff: Staff = {
-                  ...editingStaff,
+                  ...updatedTarget,
+                  generalScore: baselines.generalScore,
+                  techScore: baselines.techScore,
+                  mgmtScore: baselines.mgmtScore,
                   totalScore: totalSc,
                   salaryTier: salaryT,
-                  isManager: editingStaff.isManager || editingStaff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel),
+                  hasCustomTechScore: false,
+                  hasCustomMgmtScore: false,
                 };
 
                 if (editNewPass.trim() && onUpdatePassword) {
@@ -807,19 +837,39 @@ export const StaffView: React.FC<StaffViewProps> = ({
                 </div>
               </div>
 
-              {/* 1. Điểm Văn Hóa chung: Tự động (Không chỉnh sửa thủ công) */}
-              <div className="p-3 bg-emerald-50/70 border border-emerald-200/80 rounded-xl space-y-1">
-                <div className="flex items-center justify-between text-xs font-bold text-emerald-900">
-                  <span className="flex items-center gap-1.5">
-                    <span className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse"></span>
-                    Điểm Văn Hóa & Thái Độ: <span className="text-emerald-700 font-extrabold text-sm ml-1">5.0 / 5.0</span>
-                  </span>
-                  <span className="text-[10px] bg-emerald-100 text-emerald-800 font-bold px-2 py-0.5 rounded-md">Tự động (Chính xác)</span>
-                </div>
-                <p className="text-[11px] text-emerald-700/90 leading-tight">
-                  Điểm mặc định 5.0/5.0, tự động chịu tác động đúng khi phát sinh sự kiện/phản hồi nhân sự trong kỳ. Không cho phép chỉnh tay trực tiếp tránh sai lệch.
-                </p>
-              </div>
+              {/* Điểm Nền Tự Động Từ Hệ Thống (Đã tắt tùy chỉnh riêng lẻ) */}
+              {(() => {
+                const isMgr = editingStaff.isManager || editingStaff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel);
+                const baselines = getStaffBaselineScores({ ...editingStaff, isManager: isMgr }, params);
+                const tBadge = getSalaryTierBadge(baselines.salaryTier);
+                return (
+                  <div className="p-3.5 bg-slate-50 border border-slate-200/90 rounded-2xl space-y-2.5">
+                    <div className="flex items-center justify-between text-xs font-bold text-slate-800">
+                      <span className="flex items-center gap-1.5">
+                        <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                        <span>Điểm Nền Áp Dụng Từ Hệ Thống:</span>
+                      </span>
+                      <span className="text-[10px] bg-emerald-50 text-emerald-800 font-bold px-2 py-0.5 rounded-md border border-emerald-200">
+                        Chuẩn Toàn Hệ Thống
+                      </span>
+                    </div>
+
+                    <p className="text-[11px] text-slate-500 leading-relaxed">
+                      Nhân sự chịu tác động trực tiếp và tự động theo <strong>Bảng Điểm Nền Chung của hệ thống</strong> (cấu hình tại tab <em>Điểm Nền & Tham Số</em>). Tính năng tự cài đặt điểm nền riêng lẻ cho nhân sự đã được tắt.
+                    </p>
+
+                    <div className="flex items-center justify-between bg-white p-2.5 rounded-xl border border-slate-200 text-xs">
+                      <span className="font-semibold text-slate-700">Điểm nền chuẩn ({isMgr ? 'Quản lý' : 'Nhân viên'}):</span>
+                      <div className="flex items-center gap-2">
+                        <strong className="text-emerald-800 font-mono font-black text-sm">{baselines.totalScore.toFixed(2)}</strong>
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded border ${tBadge.bgClass} ${tBadge.textClass}`}>
+                          {tBadge.name} • HS: {tBadge.coefficientStr}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
+                );
+              })()}
 
               {/* 2. Tích chọn Ngạch Chuyên Môn (Các tuyến / bộ phận làm việc) */}
               <div className="p-3 bg-slate-50 border border-slate-200 rounded-xl space-y-2.5">
@@ -860,7 +910,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
                               ...editingStaff,
                               assignedLines: updated,
                               line: mainLine,
-                              hasCustomTechScore: updated.length > 0,
+                              hasCustomTechScore: false,
                             });
                           }}
                           className="w-4 h-4 text-emerald-600 rounded cursor-pointer shrink-0"
@@ -896,7 +946,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
                       setEditingStaff({
                         ...editingStaff,
                         isManager: checked,
-                        hasCustomMgmtScore: checked,
+                        hasCustomMgmtScore: false,
                       });
                     }}
                     className="w-4 h-4 text-emerald-600 rounded cursor-pointer"

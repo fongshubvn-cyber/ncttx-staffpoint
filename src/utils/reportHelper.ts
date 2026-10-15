@@ -22,7 +22,7 @@ export interface GroupScoreDetail {
   groupCode: string;
   groupName: string;
   category: string;
-  trackCategory: 'common' | 'dept' | 'mgmt';
+  trackCategory: 'common' | 'dept' | 'mgmt' | 'boundary';
   trackName: string;
   subCriteriaCount: number;
   basePoints: number;
@@ -63,10 +63,12 @@ export function getStaffCriteriaBreakdown(
   commonCriteria: EvaluatedCriterion[];
   deptCriteria: EvaluatedCriterion[];
   mgmtCriteria: EvaluatedCriterion[];
+  boundaryCriteria: EvaluatedCriterion[];
   groupedDetails: GroupScoreDetail[];
   commonGroups: GroupScoreDetail[];
   deptGroups: GroupScoreDetail[];
   mgmtGroups: GroupScoreDetail[];
+  boundaryGroups: GroupScoreDetail[];
   totalViolations: number;
   totalRecognitions: number;
 } {
@@ -91,13 +93,17 @@ export function getStaffCriteriaBreakdown(
 
   const evaluatedCriteria: EvaluatedCriterion[] = questions.filter(q => q.active !== false).map(q => {
     const qCat = q.category || 'Chung';
-    const isGeneral = qCat === 'Chung' || qCat === 'Ranh giới' || q.groupCode.startsWith('VH');
-    const isMgmtCriterion = qCat === 'Quản lý' || q.groupCode.startsWith('Q') || q.groupCode.startsWith('QH');
+    const isBoundary = qCat === 'Ranh giới' || q.groupCode.startsWith('RG') || (q.groupName && q.groupName.toUpperCase().includes('RANH GIỚI'));
+    const isMgmtCriterion = !isBoundary && (qCat === 'Quản lý' || q.groupCode.startsWith('Q') || q.groupCode.startsWith('QH'));
+    const isGeneral = !isBoundary && !isMgmtCriterion && (qCat === 'Chung' || q.groupCode.startsWith('VH') || q.groupCode.startsWith('TC') || q.groupCode.startsWith('NL'));
     
     let isApplicable = false;
     let trackName = 'Văn hóa chung';
 
-    if (isGeneral) {
+    if (isBoundary) {
+      isApplicable = true;
+      trackName = 'Ranh giới không thỏa hiệp';
+    } else if (isGeneral) {
       isApplicable = true;
       trackName = 'Văn hóa chung';
     } else if (isMgmtCriterion) {
@@ -176,9 +182,11 @@ export function getStaffCriteriaBreakdown(
     };
   }).filter((item): item is EvaluatedCriterion => item !== null);
 
-  const commonCriteria = evaluatedCriteria.filter(c => c.category === 'Chung' || c.category === 'Ranh giới' || c.groupCode.startsWith('VH'));
-  const mgmtCriteria = evaluatedCriteria.filter(c => c.category === 'Quản lý' || c.groupCode.startsWith('Q') || c.groupCode.startsWith('QH'));
-  const deptCriteria = evaluatedCriteria.filter(c => !commonCriteria.includes(c) && !mgmtCriteria.includes(c));
+  const isBoundaryItem = (c: EvaluatedCriterion) => c.category === 'Ranh giới' || c.groupCode.startsWith('RG') || (c.groupName && c.groupName.toUpperCase().includes('RANH GIỚI'));
+  const boundaryCriteria = evaluatedCriteria.filter(isBoundaryItem);
+  const commonCriteria = evaluatedCriteria.filter(c => !isBoundaryItem(c) && (c.category === 'Chung' || c.groupCode.startsWith('VH') || c.groupCode.startsWith('TC') || c.groupCode.startsWith('NL')));
+  const mgmtCriteria = evaluatedCriteria.filter(c => !isBoundaryItem(c) && (c.category === 'Quản lý' || c.groupCode.startsWith('Q') || c.groupCode.startsWith('QH')));
+  const deptCriteria = evaluatedCriteria.filter(c => !isBoundaryItem(c) && !commonCriteria.includes(c) && !mgmtCriteria.includes(c));
 
   // Build grouped details per Group Code
   const groupMap = new Map<string, GroupScoreDetail>();
@@ -186,12 +194,14 @@ export function getStaffCriteriaBreakdown(
   evaluatedCriteria.forEach(c => {
     const key = c.groupCode || 'OTHER';
     if (!groupMap.has(key)) {
-      const isCommon = c.category === 'Chung' || c.category === 'Ranh giới' || c.groupCode.startsWith('VH');
-      const isMgmtGrp = c.category === 'Quản lý' || c.groupCode.startsWith('Q') || c.groupCode.startsWith('QH');
-      const trackCategory: GroupScoreDetail['trackCategory'] = isCommon ? 'common' : isMgmtGrp ? 'mgmt' : 'dept';
-      const trackName = isCommon ? 'Văn hóa chung' : isMgmtGrp ? 'Quản lý & Lãnh đạo' : `Chuyên môn ngạch (${staff.line || staff.department})`;
+      const isBoundaryGrp = isBoundaryItem(c);
+      const isMgmtGrp = !isBoundaryGrp && (c.category === 'Quản lý' || c.groupCode.startsWith('Q') || c.groupCode.startsWith('QH'));
+      const isCommon = !isBoundaryGrp && !isMgmtGrp && (c.category === 'Chung' || c.groupCode.startsWith('VH') || c.groupCode.startsWith('TC') || c.groupCode.startsWith('NL'));
       
-      const defaultBase = isCommon ? (staff.generalScore || 5.0) : isMgmtGrp ? (staff.mgmtScore || 5.0) : (staff.techScore || 5.0);
+      const trackCategory: GroupScoreDetail['trackCategory'] = isBoundaryGrp ? 'boundary' : isCommon ? 'common' : isMgmtGrp ? 'mgmt' : 'dept';
+      const trackName = isBoundaryGrp ? 'Ranh giới không thỏa hiệp' : isCommon ? 'Văn hóa chung' : isMgmtGrp ? 'Quản lý & Lãnh đạo' : `Chuyên môn ngạch (${staff.line || staff.department})`;
+      
+      const defaultBase = isBoundaryGrp ? 5.0 : isCommon ? (staff.generalScore || 5.0) : isMgmtGrp ? (staff.mgmtScore || 5.0) : (staff.techScore || 5.0);
 
       groupMap.set(key, {
         groupCode: key,
@@ -232,6 +242,7 @@ export function getStaffCriteriaBreakdown(
   const commonGroups = groupedDetails.filter(g => g.trackCategory === 'common');
   const deptGroups = groupedDetails.filter(g => g.trackCategory === 'dept');
   const mgmtGroups = groupedDetails.filter(g => g.trackCategory === 'mgmt');
+  const boundaryGroups = groupedDetails.filter(g => g.trackCategory === 'boundary');
 
   const totalViolations = staffPeriodIncidents.filter(i => i.type === 'vi_pham').length;
   const totalRecognitions = staffPeriodIncidents.filter(i => i.type === 'ghi_nhan').length;
@@ -241,10 +252,12 @@ export function getStaffCriteriaBreakdown(
     commonCriteria,
     deptCriteria,
     mgmtCriteria,
+    boundaryCriteria,
     groupedDetails,
     commonGroups,
     deptGroups,
     mgmtGroups,
+    boundaryGroups,
     totalViolations,
     totalRecognitions,
   };

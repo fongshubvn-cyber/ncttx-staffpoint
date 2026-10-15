@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Staff, IncidentRecord, Question, ParameterConfig, AuthUser } from '../types';
-import { getSalaryTierBadge, isHRHeadRole, get3RecentPeriods, getVisibleStaffListForUser, getStaffScoresForPeriod, getStaffPolicyScoreForPeriod, isManagementRole } from '../utils/calculator';
+import { getSalaryTierBadge, isHRHeadRole, get3RecentPeriods, getVisibleStaffListForUser, getStaffScoresForPeriod, getStaffPolicyScoreForPeriod, isManagementRole, getDepartmentTrackName } from '../utils/calculator';
 import { PolicyHealthModal } from './PolicyHealthModal';
 import { 
   Sparkles, 
@@ -95,7 +95,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
       tips.push({
         title: `Cải thiện Điểm Nội Quy & Tuân Thủ (${policyData.policyScore}/100 đ)`,
         type: 'vi_pham',
-        description: `Điểm nội quy hiện tại là ${policyData.policyScore}/100 đ (${policyData.statusObj.level}). Đã bị trừ -${policyData.totalDeduction} đ do ${policyData.violations.length} vi phạm trong kỳ. Hãy rà soát 10 nội quy để lấy lại mốc Tốt (80+ điểm).`,
+        description: `Điểm nội quy hiện tại là ${policyData.policyScore}/100 đ (${policyData.statusObj.level}). Đã bị trừ -${policyData.totalDeduction} đ do ${policyData.violations.length} vi phạm trong kỳ. Hãy rà soát các điều khoản nội quy để lấy lại mốc Tốt (80+ điểm).`,
         priority: 'Cần chú ý',
       });
     }
@@ -115,7 +115,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
       tips.push({
         title: 'Nâng cao Điểm Văn Hóa Chung (One Voice)',
         type: 'van_hoa',
-        description: `Điểm văn hóa kỳ ${selectedPeriodKey} là ${periodScores.generalScore}/5.0. Thực hành giao tiếp chân thành, tôn trọng đồng nghiệp khiếm thính.`,
+        description: `Điểm văn hóa kỳ ${selectedPeriodKey} là ${periodScores.generalScore}. Thực hành giao tiếp chân thành, tôn trọng đồng nghiệp khiếm thính.`,
         priority: 'Rèn luyện',
       });
     }
@@ -124,7 +124,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
       tips.push({
         title: 'Hoàn thiện Năng Lực Chuyên Môn',
         type: 'chuyen_mon',
-        description: `Điểm chuyên môn là ${periodScores.techScore}/5.0. Ôn luyện bộ tiêu chí chất lượng thật của tuyến ${staff.line}.`,
+        description: `Điểm chuyên môn là ${periodScores.techScore}. Ôn luyện bộ tiêu chí chất lượng thật của tuyến ${staff.line}.`,
         priority: 'Rèn luyện',
       });
     }
@@ -133,23 +133,23 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
       tips.push({
         title: 'Vững Vàng Năng Lực Quản Lý OPA',
         type: 'quan_ly',
-        description: `Điểm quản lý là ${periodScores.mgmtScore}/5.0. Thể hiện tư duy quản trị vững chãi và hỗ trợ sát sao cho đội nhóm.`,
+        description: `Điểm quản lý là ${periodScores.mgmtScore}. Thể hiện tư duy quản trị vững chãi và hỗ trợ sát sao cho đội nhóm.`,
         priority: 'Cần chú ý',
       });
     }
 
     if (periodScores.salaryTier < 5) {
-      const nextTierScore = (params.tier5Threshold * 5.0).toFixed(2);
-      const gap = (parseFloat(nextTierScore) - periodScores.totalScore).toFixed(2);
+      const targetScore = params.tier5Threshold ? (params.tier5Threshold > 1 ? params.tier5Threshold : params.tier5Threshold * 5.0) : 4.8;
+      const gap = Math.max(0, targetScore - periodScores.totalScore).toFixed(2);
       tips.push({
-        title: `Lộ trình chinh phục Bậc 5 (Xuất sắc - 85%+ điểm)`,
+        title: `Lộ trình chinh phục Bậc 5 (Vượt chuẩn rõ rệt • Hệ số 1.10)`,
         type: 'lo_trinh',
-        description: `Bạn đang ở Bậc ${periodScores.salaryTier} (Kỳ ${selectedPeriodKey}). Cần thêm khoảng +${gap} điểm làm việc để cán mốc Bậc 5.`,
+        description: `Bạn đang ở Bậc ${periodScores.salaryTier} (Kỳ ${selectedPeriodKey}). Cần thêm khoảng +${gap} điểm làm việc để cán mốc Bậc 5 (từ 4.80đ).`,
         priority: 'Khuyến khích',
       });
     } else {
       tips.push({
-        title: 'Duy trì phong độ Xuất sắc Bậc 5 ⭐️',
+        title: 'Duy trì phong độ Vượt chuẩn Bậc 5 (HS: 1.10) ⭐️',
         type: 'duy_tri',
         description: `Chúc mừng bạn đã vững vàng ở Bậc 5 (Kỳ ${selectedPeriodKey})! Tiếp tục lan tỏa giá trị chữa lành và nâng đỡ đồng nghiệp.`,
         priority: 'Ghi nhận',
@@ -247,7 +247,7 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           <div className="flex flex-col items-end shrink-0">
             <span className="px-3.5 py-1.5 rounded-full bg-[#1B4332] text-[#52B788] text-xs font-black border border-[#2D6A4F] inline-flex items-center space-x-1.5 shadow-sm">
               <Star className="w-3.5 h-3.5 text-[#52B788] fill-[#52B788] shrink-0" />
-              <span>Bậc {periodScores.salaryTier} / 5</span>
+              <span>Bậc {periodScores.salaryTier}</span>
             </span>
             <span className="text-[10px] sm:text-[11px] font-bold text-slate-500 mt-1 tracking-tight">Hệ số P2 tháng</span>
           </div>
@@ -277,78 +277,117 @@ export const SummaryView: React.FC<SummaryViewProps> = ({
           
           {/* BÊN TRÁI: ĐIỂM ĐÁNH GIÁ CÔNG VIỆC (0 - 5.0) */}
           {(() => {
-            const targetBaseline = staff.totalScore && staff.totalScore > 0 ? staff.totalScore : 5.0;
-            const overallScorePercent = Math.min(100, Math.round((periodScores.totalScore / targetBaseline) * 100));
+            const hasMgmtRole = isManagementRole(staff);
+            const trackInfo = getDepartmentTrackName(staff.line || staff.department);
+            const wGen = hasMgmtRole ? (params.weightGeneralWithMgmt ?? 0.50) : (params.weightGeneralNoMgmt ?? 0.65);
+            const wMgmt = hasMgmtRole ? (params.weightMgmtWithMgmt ?? 0.30) : 0;
+            const wTech = hasMgmtRole ? (params.weightTechWithMgmt ?? 0.20) : (params.weightTechNoMgmt ?? 0.35);
+
+            const scoreRatio = Math.max(0, Math.min(1, periodScores.totalScore / 5.0));
+
             return (
               <div className="bg-gradient-to-br from-emerald-900/5 via-emerald-800/10 to-emerald-900/5 p-4 rounded-2xl border border-emerald-700/20 space-y-2.5 relative overflow-hidden shadow-xs">
                 <div className="flex items-center justify-between">
                   <span className="text-xs font-black font-heading tracking-wide text-[#1B4332] flex items-center space-x-1.5">
                     <Star className="w-4 h-4 text-[#52B788] fill-[#52B788]" />
-                    <span>ĐÁNH GIÁ CÔNG VIỆC (TỈ LỆ HOÀN THÀNH)</span>
+                    <span>ĐÁNH GIÁ CÔNG VIỆC</span>
                   </span>
                   <span className="px-2.5 py-0.5 rounded-full bg-[#1B4332] text-[#52B788] text-xs font-black font-mono">
-                    {overallScorePercent}%
+                    {periodScores.totalScore.toFixed(2)}
                   </span>
                 </div>
                 
                 <div className="flex items-baseline justify-between pt-0.5">
                   <div className="flex items-baseline space-x-1.5">
                     <span className="text-2xl sm:text-3xl font-black font-mono text-[#1B4332]">
-                      {overallScorePercent}%
+                      {periodScores.totalScore.toFixed(2)}
                     </span>
-                    <span className="text-xs font-bold text-[#2D6A4F]">({periodScores.totalScore.toFixed(2)}đ)</span>
                   </div>
-                  <span className="text-xs font-bold text-[#1B4332] bg-white px-2.5 py-1 rounded-xl border border-emerald-900/10 shadow-2xs">
-                    {getSalaryTierBadge(periodScores.salaryTier).label}
-                  </span>
+                  {(() => {
+                    const tBadge = getSalaryTierBadge(periodScores.salaryTier);
+                    return (
+                      <span className={`text-xs font-black px-2.5 py-1 rounded-xl border shadow-2xs ${tBadge.bgClass} ${tBadge.textClass} ${tBadge.borderClass}`}>
+                        {tBadge.name} • HS: {tBadge.coefficientStr}
+                      </span>
+                    );
+                  })()}
                 </div>
 
                 {/* Work score mini progress */}
                 <div className="w-full h-2.5 bg-white rounded-full overflow-hidden p-0.5 border border-emerald-900/15 shadow-inner">
                   <div 
                     className="h-full bg-gradient-to-r from-[#2D6A4F] to-[#52B788] rounded-full transition-all duration-500" 
-                    style={{ width: `${overallScorePercent}%` }} 
+                    style={{ width: `${scoreRatio * 100}%` }} 
                   />
                 </div>
 
-                {/* Clean Structured Breakdown Rows */}
-                <div className="pt-1.5 space-y-1.5 text-[11px]">
+                {/* Bậc Lương Quy Đổi Theo P2 (Chuẩn Bảng Đơn Giá P2) */}
+                {(() => {
+                  const tBadge = getSalaryTierBadge(periodScores.salaryTier);
+                  return (
+                    <div className="flex items-center justify-between text-[11px] bg-white px-2.5 py-1.5 rounded-xl border border-emerald-900/10 shadow-2xs">
+                      <span className="font-bold text-slate-700 truncate" title={tBadge.meaning}>{tBadge.meaning}</span>
+                      <span className="font-mono text-[10px] font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0 ml-1">
+                        {tBadge.scoreRange}
+                      </span>
+                    </div>
+                  );
+                })()}
+
+                {/* Clean Structured Breakdown Rows: Phân tách rõ ràng 3 cột trụ */}
+                <div className="pt-2 space-y-1.5 text-[11px]">
+                  {/* 1. Văn Hóa & Thái Độ */}
                   <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
                     <span className="text-slate-700 font-semibold flex items-center gap-1.5">
                       <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                       <span>Văn Hóa & Thái Độ:</span>
+                      <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 font-bold">
+                        {Math.round(wGen * 100)}%
+                      </span>
                     </span>
                     <span className="font-mono font-bold text-emerald-800">
-                      {periodScores.generalScore} / 5.0
+                      {periodScores.generalScore.toFixed(2)}
                     </span>
                   </div>
 
-                  {isManagementRole(staff) && (
+                  {/* 2. Ngạch Phòng Ban */}
+                  <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs gap-2">
+                    <span className="text-slate-700 font-semibold flex items-center gap-1.5 min-w-0">
+                      <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0"></span>
+                      <span className="truncate">{trackInfo.fullName}:</span>
+                      <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200 font-bold shrink-0">
+                        {Math.round(wTech * 100)}%
+                      </span>
+                    </span>
+                    <span className="font-mono font-bold text-purple-800 shrink-0">
+                      {periodScores.techScore.toFixed(2)}
+                    </span>
+                  </div>
+
+                  {/* 3. Ngạch Quản Lý (Chỉ dành cho Cấp Quản Lý) */}
+                  {hasMgmtRole && (
                     <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
                       <span className="text-slate-700 font-semibold flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
                         <span>Ngạch Quản Lý:</span>
+                        <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 font-bold">
+                          {Math.round(wMgmt * 100)}%
+                        </span>
                       </span>
                       <span className="font-mono font-bold text-blue-800">
-                        {periodScores.mgmtScore > 0 ? `${periodScores.mgmtScore} / ${periodScores.mgmtScore}` : '---'}
+                        {periodScores.mgmtScore.toFixed(2)}
                       </span>
                     </div>
                   )}
 
-                  <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs gap-2">
-                    <span className="text-slate-[#2D3748] font-semibold flex items-center gap-1.5 shrink-0">
-                      <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0"></span>
-                      <span>Ngạch Chuyên Môn:</span>
+                  {/* Tiêu chí cấu thành điểm đánh giá */}
+                  <div className="pt-1 text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                    <span className="font-bold text-[#1B4332]">💡 Tiêu chí:</span>
+                    <span className="truncate">
+                      {hasMgmtRole
+                        ? `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%) + Ngạch QL (${Math.round(wMgmt * 100)}%)`
+                        : `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%)`}
                     </span>
-                    {periodScores.hasCustomTechScore ? (
-                      <span className="font-mono font-bold text-purple-800 shrink-0">
-                        {periodScores.techScore} / {periodScores.techScore}
-                      </span>
-                    ) : (
-                      <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200 truncate">
-                        Chưa tích ngạch (Mặc định 5.0 / 5.0)
-                      </span>
-                    )}
                   </div>
                 </div>
               </div>

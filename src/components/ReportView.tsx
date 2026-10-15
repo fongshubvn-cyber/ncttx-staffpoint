@@ -398,7 +398,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <div className="text-right shrink-0">
                 <span className="px-2.5 py-1 rounded-full bg-[#1B4332] text-[#52B788] text-xs font-black border border-[#2D6A4F] flex items-center space-x-1 shadow-sm">
                   <Star className="w-3 h-3 text-[#52B788] fill-[#52B788]" />
-                  <span>Bậc {targetStaff.salaryTier} / 5</span>
+                  <span>Bậc {targetStaff.salaryTier}</span>
                 </span>
                 <p className="text-[10px] font-bold text-slate-500 mt-1">Hệ số P2 tháng</p>
               </div>
@@ -409,25 +409,21 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <div className="bg-white p-1.5 sm:p-2 rounded-xl border border-slate-200">
                 <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold block">Văn Hóa</span>
                 <strong className="text-[#1B4332] font-black text-xs sm:text-sm">{targetStaff.generalScore}</strong>
-                <span className="text-[8px] sm:text-[9px] text-slate-400 block">/ 5.0</span>
               </div>
 
               <div className="bg-white p-1.5 sm:p-2 rounded-xl border border-slate-200">
                 <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold block">Chuyên Môn</span>
                 <strong className="text-[#1B4332] font-black text-xs sm:text-sm">{targetStaff.techScore}</strong>
-                <span className="text-[8px] sm:text-[9px] text-slate-400 block">/ 5.0</span>
               </div>
 
               <div className="bg-white p-1.5 sm:p-2 rounded-xl border border-slate-200">
                 <span className="text-[9px] sm:text-[10px] text-slate-500 font-bold block">Quản Lý</span>
                 <strong className="text-[#1B4332] font-black text-xs sm:text-sm">{targetStaff.mgmtScore ?? '---'}</strong>
-                <span className="text-[8px] sm:text-[9px] text-slate-400 block">/ 5.0</span>
               </div>
 
               <div className="bg-[#2D6A4F] text-white p-1.5 sm:p-2 rounded-xl shadow-sm">
                 <span className="text-[9px] sm:text-[10px] text-emerald-200 font-bold block">TỔNG ĐIỂM</span>
                 <strong className="text-xs sm:text-base font-black">{targetStaff.totalScore.toFixed(2)}</strong>
-                <span className="text-[8px] sm:text-[9px] text-emerald-200 block">/ 5.0</span>
               </div>
             </div>
           </div>
@@ -458,7 +454,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                           <strong className="text-xs font-black text-slate-900">{g.groupName}</strong>
                         </div>
                         <span className="text-xs font-black text-[#2D6A4F] font-mono bg-emerald-50 px-2 py-0.5 rounded border border-emerald-200">
-                          {g.achievedScore.toFixed(2)} / 5.0đ
+                          {g.achievedScore.toFixed(2)}
                         </span>
                       </div>
 
@@ -504,7 +500,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
                           <strong className="text-xs font-black text-slate-900">{g.groupName}</strong>
                         </div>
                         <span className="text-xs font-black text-teal-800 font-mono bg-teal-50 px-2 py-0.5 rounded border border-teal-200">
-                          {g.achievedScore.toFixed(2)} / 5.0đ
+                          {g.achievedScore.toFixed(2)}
                         </span>
                       </div>
 
@@ -526,6 +522,54 @@ export const ReportView: React.FC<ReportViewProps> = ({
                   ))}
                 </div>
               </div>
+
+              {/* Boundary Groups Breakdown (Tách riêng khỏi Khung chung) */}
+              {criteriaBreakdown.boundaryGroups && criteriaBreakdown.boundaryGroups.length > 0 && (
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between border-b border-rose-200 pb-1.5">
+                    <h4 className="text-xs font-black font-heading text-rose-900 flex items-center space-x-1.5">
+                      <AlertTriangle className="w-4 h-4 text-rose-600" />
+                      <span>Ranh Giới Không Thỏa Hiệp ⚠️ (Độc lập khỏi Khung chung)</span>
+                    </h4>
+                    <span className="text-[10px] font-bold text-rose-800 bg-rose-50 px-2 py-0.5 rounded-full border border-rose-200">
+                      Ranh giới đỏ
+                    </span>
+                  </div>
+
+                  <div className="space-y-2">
+                    {criteriaBreakdown.boundaryGroups.map(g => (
+                      <div key={g.groupCode} className="p-3 bg-white rounded-xl border border-rose-200 space-y-1.5">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center space-x-2">
+                            <span className="font-mono text-[10px] font-black text-rose-900 bg-rose-100 px-2 py-0.5 rounded border border-rose-300">
+                              {g.groupCode}
+                            </span>
+                            <strong className="text-xs font-black text-slate-900">{g.groupName}</strong>
+                          </div>
+                          <span className="text-xs font-black text-rose-800 font-mono bg-rose-50 px-2 py-0.5 rounded border border-rose-200">
+                            {g.achievedScore.toFixed(2)}
+                          </span>
+                        </div>
+
+                        {/* Child Sub-items List (Chi tiết mục) */}
+                        <div className="pl-4 pt-1 space-y-1 border-t border-rose-100 text-[11px]">
+                          {g.items.map(item => (
+                            <div key={item.id} className="flex items-center justify-between text-slate-700 py-0.5">
+                              <span className="flex items-center space-x-1">
+                                <span className="font-mono text-[9px] font-bold text-slate-500">{item.id}:</span>
+                                <span>{item.text}</span>
+                              </span>
+                              <span className="font-mono font-bold text-rose-900 shrink-0 pl-2">
+                                {item.effectiveScore.toFixed(2)}đ
+                              </span>
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
             </div>
           )}
 
@@ -758,7 +802,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <span>Đ.TB Văn Hóa</span>
               <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-500" />
             </div>
-            <p className="text-lg sm:text-xl font-black text-[#2D6A4F]">{avgGeneralScore} / 5.0</p>
+            <p className="text-lg sm:text-xl font-black text-[#2D6A4F]">{avgGeneralScore}</p>
             <p className="text-[9px] text-emerald-600 font-bold">16 nhóm văn hóa</p>
           </div>
 
@@ -767,7 +811,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <span>Đ.TB Tổng Thể</span>
               <TrendingUp className="w-3.5 h-3.5 text-[#2D6A4F]" />
             </div>
-            <p className="text-lg sm:text-xl font-black text-[#1B4332]">{avgTotalScore} / 5.0</p>
+            <p className="text-lg sm:text-xl font-black text-[#1B4332]">{avgTotalScore}</p>
             <p className="text-[9px] text-slate-400 font-medium">Chuyên môn: {avgTechScore}</p>
           </div>
 

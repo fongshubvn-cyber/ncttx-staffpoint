@@ -115,15 +115,22 @@ export interface BaselinePoint {
   baselineScore: number;
   salaryTier: number;
   note?: string;
+  generalScore?: number;
+  techScore?: number;
+  mgmtScore?: number;
+  trackName?: string;
+  roleType?: 'Nhân viên' | 'Quản lý';
+  formulaStr?: string;
+  weightsStr?: string;
 }
 
 export interface ParameterConfig {
   majorityThreshold: number; // 0.6
-  tier1Threshold: number; // 0.0 (< 40%)
-  tier2Threshold: number; // 0.4 (40% - 55%)
-  tier3Threshold: number; // 0.55 (55% - 70%)
-  tier4Threshold: number; // 0.7 (70% - 85%)
-  tier5Threshold: number; // 0.85 (>= 85%)
+  tier1Threshold: number; // 0.0 (1.0 đến dưới 2.5đ, HS: 0.10)
+  tier2Threshold: number; // 0.50 (2.5 đến dưới 3.5đ, HS: 0.40)
+  tier3Threshold: number; // 0.70 (3.5 đến dưới 4.0đ, HS: 0.90)
+  tier4Threshold: number; // 0.80 (4.0 đến dưới 4.8đ, HS: 1.00)
+  tier5Threshold: number; // 0.96 (4.8 đến 5.0đ, HS: 1.10)
   weightGeneralNoMgmt: number; // 0.65
   weightTechNoMgmt: number; // 0.35
   weightGeneralWithMgmt: number; // 0.50
@@ -132,8 +139,27 @@ export interface ParameterConfig {
   defaultViolationPoints: number; // 5
   defaultRecognitionPoints: number; // 0
   
+  // Baseline Benchmark Points (Admin Directly Editable)
+  baselineScoreCommon?: number;    // Default 4.08 (Tuyến chưa có ngạch riêng, 6 tuyến)
+  baselineScoreTmdvStaff?: number; // Default 4.52 (Thương mại & Dịch vụ, nhân viên)
+  baselineScoreTmdvMgmt?: number;  // Default 4.19 (Thương mại & Dịch vụ, quản lý)
+  baselineScoreNshcStaff?: number; // Default 4.40 (Nhân sự - Hành chính - Pháp chế, nhân viên)
+  baselineScoreNshcMgmt?: number;  // Default 4.54 (Nhân sự - Hành chính - Pháp chế, quản lý)
+
+  // Baseline Points Settings (Admin Configurable)
+  baselineCultureCommon?: number; // Default 4.08 (Điểm nền Văn Hóa chung & Tuyến chưa có ngạch riêng)
+  baselineTmdvGeneral?: number;   // Default 4.26 (Điểm nền Văn Hóa TM&DV)
+  baselineTmdvTech?: number;      // Default 5.00 (Điểm nền Chuyên Môn TM&DV)
+  baselineTmdvMgmt?: number;      // Default 3.54 (Điểm nền Quản Lý TM&DV)
+  baselineNshcGeneral?: number;   // Default 4.08 (Điểm nền Văn Hóa NSHC)
+  baselineNshcTech?: number;      // Default 5.00 (Điểm nền Chuyên Môn NSHC)
+  baselineNshcMgmt?: number;      // Default 5.00 (Điểm nền Quản Lý NSHC)
+  baselineOtherTech?: number;     // Default 4.08 (Điểm nền Chuyên Môn tuyến khác)
+  baselineOtherMgmt?: number;     // Default 4.08 (Điểm nền Quản Lý tuyến khác)
+
   // Internal Policy Settings
   defaultPolicyScore?: number; // Default 100 points
+  policyVersion?: string; // Phiên bản nội quy (vd: '2026_v2')
   policyRules?: PolicyRule[];
   
   // Configurable Incident / Ticket Point Impacts
@@ -150,12 +176,13 @@ export interface ParameterConfig {
 }
 
 export interface PolicyRule {
-  id: string; // 'NQ01', 'NQ02'
-  code: string; // 'NQ-01'
+  id: string; // 'PQ01', 'VH01'...
+  code: string; // 'PQ-01', 'VH-01'...
+  track?: 'Pháp quy & Kỷ luật' | 'Văn hóa & Tác phong' | string; // Ngạch nội quy
   title: string;
   category: string;
   description: string;
-  penaltyPoints: number; // Điểm phạt bị trừ khỏi 100 (5, 10, 15, 20, 30, 50)
+  penaltyPoints: number; // Điểm phạt bị trừ khỏi 100 (5, 10, 15, 20, 25, 30, 50)
   severity: 'Nhẹ' | 'Vừa' | 'Nghiêm trọng' | 'Rất nghiêm trọng';
   enforcementMeasure: string;
   active: boolean;

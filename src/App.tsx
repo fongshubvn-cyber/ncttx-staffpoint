@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Navbar } from './components/Navbar';
 import { SummaryView } from './components/SummaryView';
 import { IncidentsView } from './components/IncidentsView';
@@ -41,7 +41,14 @@ import {
   saveIncidentAtomic,
   syncIncidentsToCloudAtomic
 } from './config/firebase';
-import { isDeptHeadOrAboveRole } from './utils/calculator';
+import { 
+  isDeptHeadOrAboveRole, 
+  getStaffBaselineScores, 
+  getCalculatedBaselinePoints, 
+  calculateTotalScore, 
+  calculateSalaryTier, 
+  isManagementRole 
+} from './utils/calculator';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('summary'); // Default: Trang Tổng hợp
@@ -89,12 +96,21 @@ export function App() {
   const [staffList, setStaffList] = useState<Staff[]>(() => {
     const saved = localStorage.getItem('ncttx_staff_list');
     const rawList: Staff[] = saved ? JSON.parse(saved) : initialStaffList;
-    return rawList.map(st => ({
-      ...st,
-      generalScore: 5.0,
-      techScore: st.hasCustomTechScore && typeof st.techScore === 'number' ? st.techScore : 5.0,
-      mgmtScore: st.hasCustomMgmtScore && typeof st.mgmtScore === 'number' ? st.mgmtScore : 5.0,
-    }));
+    const savedParamsRaw = localStorage.getItem('ncttx_params');
+    const initialParams = savedParamsRaw ? { ...defaultParameters, ...JSON.parse(savedParamsRaw) } : defaultParameters;
+    return rawList.map(st => {
+      const baselines = getStaffBaselineScores(st, initialParams);
+      return {
+        ...st,
+        generalScore: baselines.generalScore,
+        techScore: baselines.techScore,
+        mgmtScore: baselines.mgmtScore,
+        totalScore: baselines.totalScore,
+        salaryTier: baselines.salaryTier,
+        hasCustomTechScore: false,
+        hasCustomMgmtScore: false,
+      };
+    });
   });
 
   const [lines, setLines] = useState<DepartmentLine[]>(() => {
@@ -112,18 +128,40 @@ export function App() {
     return saved ? JSON.parse(saved) : initialIncidents;
   });
 
-  const [baselinePoints] = useState<BaselinePoint[]>(initialBaselinePoints);
   const [params, setParams] = useState<ParameterConfig>(() => {
     const saved = localStorage.getItem('ncttx_params');
     const parsed = saved ? JSON.parse(saved) : {};
     return {
       ...defaultParameters,
+      weightGeneralNoMgmt: 0.65,
+      weightTechNoMgmt: 0.35,
+      weightGeneralWithMgmt: 0.50,
+      weightMgmtWithMgmt: 0.30,
+      weightTechWithMgmt: 0.20,
       ...parsed,
-      policyRules: (parsed.policyRules && Array.isArray(parsed.policyRules) && parsed.policyRules.length > 0)
+      baselineScoreCommon: (typeof parsed.baselineScoreCommon === 'number' && parsed.baselineScoreCommon > 0)
+        ? parsed.baselineScoreCommon
+        : defaultParameters.baselineScoreCommon,
+      baselineScoreTmdvStaff: (typeof parsed.baselineScoreTmdvStaff === 'number' && parsed.baselineScoreTmdvStaff > 0)
+        ? parsed.baselineScoreTmdvStaff
+        : defaultParameters.baselineScoreTmdvStaff,
+      baselineScoreTmdvMgmt: (typeof parsed.baselineScoreTmdvMgmt === 'number' && parsed.baselineScoreTmdvMgmt > 0)
+        ? parsed.baselineScoreTmdvMgmt
+        : defaultParameters.baselineScoreTmdvMgmt,
+      baselineScoreNshcStaff: (typeof parsed.baselineScoreNshcStaff === 'number' && parsed.baselineScoreNshcStaff > 0)
+        ? parsed.baselineScoreNshcStaff
+        : defaultParameters.baselineScoreNshcStaff,
+      baselineScoreNshcMgmt: (typeof parsed.baselineScoreNshcMgmt === 'number' && parsed.baselineScoreNshcMgmt > 0)
+        ? parsed.baselineScoreNshcMgmt
+        : defaultParameters.baselineScoreNshcMgmt,
+      policyVersion: '2026_v2',
+      policyRules: (parsed.policyRules && Array.isArray(parsed.policyRules) && parsed.policyVersion === '2026_v2' && parsed.policyRules.length >= 20 && parsed.policyRules.some((r: any) => r.track))
         ? parsed.policyRules
         : initialPolicyRules,
     };
   });
+
+  const baselinePoints = useMemo(() => getCalculatedBaselinePoints(params), [params]);
 
   // Track which collections have completed initial Cloud load
   const isCloudLoadedRef = React.useRef<Record<string, boolean>>({});
@@ -135,12 +173,19 @@ export function App() {
     const unsubStaff = subscribeToCollection('staff_list', (cloudData) => {
       isCloudLoadedRef.current['staff_list'] = true;
       if (Array.isArray(cloudData) && cloudData.length > 0) {
-        const sanitized = cloudData.map((st: Staff) => ({
-          ...st,
-          generalScore: 5.0,
-          techScore: st.hasCustomTechScore && typeof st.techScore === 'number' ? st.techScore : 5.0,
-          mgmtScore: st.hasCustomMgmtScore && typeof st.mgmtScore === 'number' ? st.mgmtScore : 5.0,
-        }));
+        const sanitized = cloudData.map((st: Staff) => {
+          const baselines = getStaffBaselineScores(st, params);
+          return {
+            ...st,
+            generalScore: baselines.generalScore,
+            techScore: baselines.techScore,
+            mgmtScore: baselines.mgmtScore,
+            totalScore: baselines.totalScore,
+            salaryTier: baselines.salaryTier,
+            hasCustomTechScore: false,
+            hasCustomMgmtScore: false,
+          };
+        });
         setStaffList(sanitized);
         localStorage.setItem('ncttx_staff_list', JSON.stringify(sanitized));
       }
@@ -189,7 +234,13 @@ export function App() {
       isCloudLoadedRef.current['params'] = true;
       if (data && typeof data === 'object') {
         setParams(prev => {
-          const updated = { ...prev, ...data };
+          const isOldPolicy = !data.policyVersion || data.policyVersion !== '2026_v2' || !data.policyRules || data.policyRules.length < 20 || !data.policyRules.some((r: any) => r.track);
+          const updated = { 
+            ...prev, 
+            ...data,
+            policyVersion: '2026_v2',
+            policyRules: isOldPolicy ? initialPolicyRules : data.policyRules,
+          };
           localStorage.setItem('ncttx_params', JSON.stringify(updated));
           return updated;
         });
@@ -435,12 +486,19 @@ export function App() {
       ]);
 
       if (Array.isArray(staffData) && staffData.length > 0) {
-        const sanitized = staffData.map((st: Staff) => ({
-          ...st,
-          generalScore: typeof st.generalScore === 'number' && !isNaN(st.generalScore) ? st.generalScore : 5.0,
-          techScore: st.hasCustomTechScore && typeof st.techScore === 'number' ? st.techScore : 5.0,
-          mgmtScore: st.hasCustomMgmtScore && typeof st.mgmtScore === 'number' ? st.mgmtScore : 5.0,
-        }));
+        const sanitized = staffData.map((st: Staff) => {
+          const baselines = getStaffBaselineScores(st, params);
+          return {
+            ...st,
+            generalScore: baselines.generalScore,
+            techScore: baselines.techScore,
+            mgmtScore: baselines.mgmtScore,
+            totalScore: baselines.totalScore,
+            salaryTier: baselines.salaryTier,
+            hasCustomTechScore: false,
+            hasCustomMgmtScore: false,
+          };
+        });
         setStaffList(sanitized);
         localStorage.setItem('ncttx_staff_list', JSON.stringify(sanitized));
       }
@@ -636,11 +694,11 @@ export function App() {
   // Helper: Refund points upon approved appeal
   const refundIncidentScoreImpact = (incident: IncidentRecord) => {
     if (!incident || typeof incident.impactPoints !== 'number') return;
-    const wGenMgmt = params?.weightGeneralWithMgmt ?? 0.35;
+    const wGenMgmt = params?.weightGeneralWithMgmt ?? 0.50;
     const wMgmtMgmt = params?.weightMgmtWithMgmt ?? 0.30;
-    const wTechMgmt = params?.weightTechWithMgmt ?? 0.35;
-    const wGenNoMgmt = params?.weightGeneralNoMgmt ?? 0.50;
-    const wTechNoMgmt = params?.weightTechNoMgmt ?? 0.50;
+    const wTechMgmt = params?.weightTechWithMgmt ?? 0.20;
+    const wGenNoMgmt = params?.weightGeneralNoMgmt ?? 0.65;
+    const wTechNoMgmt = params?.weightTechNoMgmt ?? 0.35;
 
     setStaffList(prev => {
       const updated = prev.map(staff => {
@@ -699,11 +757,11 @@ export function App() {
   // Helper: Apply score impact to target staff
   const applyIncidentScoreImpact = (incident: IncidentRecord) => {
     if (!incident || typeof incident.impactPoints !== 'number') return;
-    const wGenMgmt = params?.weightGeneralWithMgmt ?? 0.35;
+    const wGenMgmt = params?.weightGeneralWithMgmt ?? 0.50;
     const wMgmtMgmt = params?.weightMgmtWithMgmt ?? 0.30;
-    const wTechMgmt = params?.weightTechWithMgmt ?? 0.35;
-    const wGenNoMgmt = params?.weightGeneralNoMgmt ?? 0.50;
-    const wTechNoMgmt = params?.weightTechNoMgmt ?? 0.50;
+    const wTechMgmt = params?.weightTechWithMgmt ?? 0.20;
+    const wGenNoMgmt = params?.weightGeneralNoMgmt ?? 0.65;
+    const wTechNoMgmt = params?.weightTechNoMgmt ?? 0.35;
 
     setStaffList(prev => {
       const updated = prev.map(staff => {
@@ -827,11 +885,51 @@ export function App() {
     });
   };
 
-  // Handler: Update system parameters
+  // Handler: Update system parameters (baseline points & weights)
   const handleUpdateParams = (newParams: ParameterConfig) => {
     setParams(newParams);
     localStorage.setItem('ncttx_params', JSON.stringify(newParams));
     saveToCloud('params', newParams);
+
+    // Immediately recalculate all staff baselines and totals with newParams
+    setStaffList(prev => {
+      const updated = prev.map(st => {
+        const baselines = getStaffBaselineScores(st, newParams);
+        const approvedIncidents = incidents.filter(
+          i => i.targetId === st.id && 
+               !i.isDeleted && 
+               (i.status === 'Đã duyệt' || i.status === 'Đã ghi nhận')
+        );
+        let curGen = baselines.generalScore;
+        approvedIncidents.forEach(inc => {
+          if (typeof inc.impactPoints === 'number' && !isNaN(inc.impactPoints)) {
+            curGen += inc.impactPoints;
+          }
+        });
+        curGen = Math.max(0, Math.min(5, Number(curGen.toFixed(2))));
+
+        const techScore = baselines.techScore;
+        const isMgmt = isManagementRole(st);
+        const mgmtScore = isMgmt ? baselines.mgmtScore : undefined;
+
+        const totalScore = calculateTotalScore(curGen, techScore, mgmtScore, newParams);
+        const salaryTier = calculateSalaryTier(totalScore, newParams);
+
+        return {
+          ...st,
+          generalScore: curGen,
+          techScore,
+          mgmtScore,
+          totalScore,
+          salaryTier,
+          hasCustomTechScore: false,
+          hasCustomMgmtScore: false,
+        };
+      });
+      localStorage.setItem('ncttx_staff_list', JSON.stringify(updated));
+      saveToCloud('staff_list', updated);
+      return updated;
+    });
   };
 
   // IF NOT LOGGED IN: DISPLAY ONLY THE STANDALONE LOGIN GATE!

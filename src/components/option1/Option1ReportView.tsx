@@ -202,7 +202,7 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
             <span>{title} ({groups.length} mục chính)</span>
           </h3>
           <span className={`text-[10px] font-black ${badgeText} ${badgeBg} px-2.5 py-0.5 rounded-full border border-slate-300 shadow-sm whitespace-nowrap`}>
-            Điểm TB Ngạch: {trackScore.toFixed(2)} / 5.0đ
+            Điểm TB Ngạch: {trackScore.toFixed(2)}
           </span>
         </div>
 
@@ -517,7 +517,6 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
                   <div>
                     <span className="text-[10px] text-slate-500 font-bold block">Điểm TB Ngạch</span>
                     <span className="text-2xl font-black text-emerald-800 font-heading">{t.score.toFixed(2)}</span>
-                    <span className="text-[10px] text-slate-400 font-bold"> / 5.0</span>
                   </div>
 
                   <div className="text-right">
@@ -541,13 +540,13 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
               </span>
               <div className="flex items-baseline gap-2 mt-0.5">
                 <span className="text-2xl sm:text-3xl font-black font-heading">{totalScoreVal.toFixed(2)}</span>
-                <span className="text-xs opacity-75 font-bold">/ 5.0 Điểm Chuẩn</span>
               </div>
             </div>
 
             <div className="text-left sm:text-right shrink-0">
-              <span className="text-[10px] font-black uppercase opacity-80 block">Bậc Cách Làm Việc Dự Kiến</span>
-              <span className="text-lg font-black font-heading block">{tier.label}</span>
+              <span className="text-[10px] font-black uppercase opacity-80 block">Bậc Cách Làm Việc & Hệ Số P2</span>
+              <span className="text-lg font-black font-heading block">{tier.name} • HS: {tier.coefficientStr}</span>
+              <span className="text-xs opacity-90 font-medium block">{tier.meaning} ({tier.scoreRange})</span>
             </div>
           </div>
         </div>
@@ -581,6 +580,18 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
             <Star className="w-4 h-4 text-purple-600" />,
             "bg-purple-100",
             "text-purple-900"
+          )
+        )}
+
+        {/* SECTION 5: RANH GIỚI KHÔNG THỎA HIỆP (ĐỘC LẬP KHỎI KHUNG CHUNG) */}
+        {criteriaBreakdown.boundaryGroups && criteriaBreakdown.boundaryGroups.length > 0 && (
+          renderGroupedListSection(
+            "5. Ranh Giới Không Thỏa Hiệp ⚠️ (Độc lập khỏi Khung chung)",
+            criteriaBreakdown.boundaryGroups,
+            5.0,
+            <AlertTriangle className="w-4 h-4 text-rose-600" />,
+            "bg-rose-100",
+            "text-rose-900"
           )
         )}
 

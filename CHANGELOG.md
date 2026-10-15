@@ -1,5 +1,36 @@
 # 📜 NHẬT KÝ PHIÊN BẢN & MỐC NGUYÊN BẢN DỰ ÁN STAFFPOINT
 
+## 📌 PHIÊN BẢN V1.008-STABLE (15/10/2026)
+**Git Tag:** `v1.008-stable`  
+**GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  
+**Trạng thái:** ✅ Đã hoàn tất Chuẩn hoá Thang Điểm 100 & Công thức 3 Trụ cột Tách bạch, Số hoá 20 Nội quy 2 Ngạch từ NQLĐ 2026 & Sổ tay Nhân sự TTX, và Nâng cấp Toàn diện AI Chatbox theo Keywords Intent RAG.
+
+### 🌟 BẢNG TỔNG HỢP CÁC TÍNH NĂNG & CẢI TIẾN TRONG BẢN V1.008:
+1. **Chuẩn Hoá Hệ Điểm 100 & Loại Bỏ Hoàn Toàn Điểm Thang 5 (`/5`):**
+   - Loại bỏ triệt để điểm `/5` gây nhầm lẫn trên toàn bộ giao diện (Hồ sơ nhân sự, Bảng tổng kết, Báo cáo, Modal sức khỏe nội quy).
+   - Khóa tính năng tự ý chỉnh sửa Điểm nền cá nhân; toàn bộ nhân sự chịu tác động công bằng từ Điểm nền chung của hệ thống (Điểm Văn hóa mặc định 100đ, Điểm Chuyên môn phòng ban 100đ, Điểm Quản lý 100đ).
+
+2. **Phân Tách Rõ Ràng Điểm Đánh Giá Công Việc Theo 3 Trụ Cột Độc Lập:**
+   - **Trụ cột 1 – Văn hóa & Tác phong:** Áp dụng 100% cho toàn bộ thành viên Nhà.
+   - **Trụ cột 2 – Ngạch Chuyên môn Phòng ban:** Bám sát từng bộ phận thực tế (Pha chế, Bếp bánh/Sản xuất, Thương mại & Dịch vụ, E-Commerce, Kế toán, v.v.).
+   - **Trụ cột 3 – Ngạch Quản lý:** Chỉ kích hoạt khi nhân sự được giao vai trò Quản lý / Tổ trưởng.
+   - **Công thức tính điểm thực tế chuẩn hóa:**
+     - Nhân viên: $\text{Điểm Thực tế} = \text{Văn hoá} + \text{Ngạch Phòng ban}$
+     - Quản lý: $\text{Điểm Thực tế} = \text{Văn hoá} + \text{Ngạch Phòng ban} + \text{Ngạch Quản lý}$
+   - Tích hợp liên kết phân hạng 5 Bậc lương $P_2$ (Bậc 1: $\ge 90đ$, Bậc 2: 80–89đ, Bậc 3: 70–79đ, Bậc 4: 50–69đ, Bậc 5: $< 50đ$) theo Quyết định NQ-TTX-01/2026.
+
+3. **Số Hóa & Chuẩn Hóa 20 Nội Quy Theo 2 Ngạch (Thay Thế Toàn Bộ 10 Nội Quy Cũ):**
+   - Xóa bỏ 10 nội quy đơn giản cũ, cập nhật bộ 20 quy chế chuẩn mực từ 2 tài liệu gốc (*Nội quy lao động số 01/2026/NQ-TTX* & *Sổ tay nhân sự TTX*):
+     - **Ngạch 1 – Pháp quy & Kỷ luật Lao động (10 quy định, mã PQ-01 đến PQ-10):** Chấm công & giờ giấc làm việc; Bảo mật tiền lương (Điều 20 NQLĐ); Quản lý tiền mặt, két quỹ & thu ngân; Bảo vệ bí mật kinh doanh & công thức sản xuất; An toàn lao động & PCCC; An toàn vệ sinh thực phẩm (ATTP); Phòng chống quấy rối & xâm phạm nhân phẩm; Nghiêm cấm chất kích thích, cờ bạc & vũ khí; Trách nhiệm bảo vệ công cụ, máy móc; Quy trình xử lý kỷ luật lao động.
+     - **Ngạch 2 – Văn hóa, Ứng xử & Tác phong Nhà (10 quy định, mã VH-01 đến VH-10):** Tôn trọng đồng đội Khiếm thính & Ngôn ngữ ký hiệu; Tinh thần tự lực & không thương mại hóa sự khiếm thính; Văn hóa tiếp khách & 6 điều cấm; Tiêu chuẩn đồng phục & diện mạo mộc mạc; Giữ gìn 5 yếu tố không gian linh hồn của Nhà; Tự giác vệ sinh & phân loại rác; Quy chế Tiền tips & Quỹ chung của Nhà; Phương pháp làm việc OPA, SMART & Ghi chép ca; Tinh thần Kaizen & tư duy hướng giải pháp; Tác phong bàn giao ca & sử dụng điện thoại.
+
+4. **Nâng Cấp AI Chatbox (Thanh Xuân AI) Theo Bộ Từ Khóa Intent RAG Đa Tầng:**
+   - Tích hợp tri thức toàn bộ 20 nội quy 2 ngạch, công thức 3 trụ cột và 5 bậc lương vào System Instruction của Gemini.
+   - Xây dựng động cơ nhận diện từ khóa tự nhiên siêu tốc (Offline & Online): hỗ trợ tra cứu chi tiết Khiếu nại 48h, Quy định tiền tips, Bảo mật lương, Giờ giấc, Két quỹ, Bí mật kinh doanh xưởng, 3 Ranh giới đỏ không thỏa hiệp, 5 Yếu tố không gian...
+   - Bổ sung thanh Gợi ý nhanh (Quick Suggestion Chips) 8 chủ đề then chốt 1-chạm giúp nhân sự dễ dàng tương tác.
+
+---
+
 ## 📌 PHIÊN BẢN V1.007-STABLE (12/10/2026)
 **Git Tag:** `v1.007-stable`  
 **GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  

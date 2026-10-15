@@ -9,7 +9,8 @@ import {
   get3RecentPeriods,
   getVisibleStaffListForUser,
   getStaffScoresForPeriod,
-  getStaffPolicyScoreForPeriod
+  getStaffPolicyScoreForPeriod,
+  getDepartmentTrackName
 } from '../../utils/calculator';
 import { PolicyHealthModal } from '../PolicyHealthModal';
 import { 
@@ -391,8 +392,14 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
           <div className="space-y-3">
             {/* WORK SCORE CARD (BÊN TRÁI) */}
             {(() => {
-              const targetBaseline = staff.totalScore && staff.totalScore > 0 ? staff.totalScore : 5.0;
-              const overallScorePercent = Math.min(100, Math.round((overallScore / targetBaseline) * 100));
+              const trackInfo = getDepartmentTrackName(staff.line || staff.department);
+              const wGen = hasMgmtRole ? (params.weightGeneralWithMgmt ?? 0.50) : (params.weightGeneralNoMgmt ?? 0.65);
+              const wMgmt = hasMgmtRole ? (params.weightMgmtWithMgmt ?? 0.30) : 0;
+              const wTech = hasMgmtRole ? (params.weightTechWithMgmt ?? 0.20) : (params.weightTechNoMgmt ?? 0.35);
+
+              // Tiến độ điểm dựa trên thang điểm 5.0
+              const scoreRatio = Math.max(0, Math.min(1, overallScore / 5.0));
+
               return (
                 <div className="p-4 rounded-2xl bg-[#EDEAE3]/50 border border-slate-200 space-y-3">
                   <div className="flex items-center justify-between">
@@ -400,56 +407,84 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                       <Star className="w-3.5 h-3.5 text-[#52B788] fill-[#52B788]" />
                       <span>Điểm Đánh Giá Công Việc</span>
                     </span>
-                    <span className="text-xs font-mono font-extrabold text-[#2D6A4F] flex items-center gap-1.5">
-                      <strong className="text-base font-black font-mono text-emerald-800">{overallScorePercent}%</strong>
-                      <span className="text-[11px] text-slate-500 font-sans font-medium">({overallScore.toFixed(2)}đ)</span>
-                    </span>
+                    <strong className="text-base font-black font-mono text-emerald-800">{overallScore.toFixed(2)}</strong>
                   </div>
                   <div className="w-full bg-slate-200 h-2.5 rounded-full overflow-hidden">
                     <div
                       className="bg-gradient-to-r from-emerald-600 to-teal-600 h-full rounded-full transition-all duration-500"
-                      style={{ width: `${overallScorePercent}%` }}
+                      style={{ width: `${scoreRatio * 100}%` }}
                     ></div>
                   </div>
+
+                  {/* Bậc Lương Quy Đổi Theo P2 (Chuẩn Bảng Đơn Giá P2) */}
+                  <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-emerald-900/10 shadow-2xs gap-1.5">
+                    <div className="flex items-center gap-1.5 min-w-0">
+                      <span className={`text-[10px] font-black px-2 py-0.5 rounded-md border shrink-0 ${tier.bgClass} ${tier.textClass} ${tier.borderClass}`}>
+                        {tier.name} • HS: {tier.coefficientStr}
+                      </span>
+                      <span className="text-[11px] font-bold text-slate-700 truncate" title={tier.meaning}>
+                        {tier.meaning}
+                      </span>
+                    </div>
+                    <span className="text-[10px] font-mono font-bold text-emerald-800 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-200 shrink-0">
+                      {tier.scoreRange}
+                    </span>
+                  </div>
                   
-                  {/* Clean Structured Breakdown Rows */}
-                  <div className="pt-1.5 space-y-1.5 border-t border-slate-200/80 text-[11px]">
+                  {/* Clean Structured Breakdown Rows: Phân tách rõ ràng 3 cột trụ */}
+                  <div className="pt-2 space-y-1.5 border-t border-slate-200/80 text-[11px]">
+                    {/* 1. Văn Hóa & Thái Độ */}
                     <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
                       <span className="text-slate-700 font-semibold flex items-center gap-1.5">
                         <span className="w-2 h-2 rounded-full bg-emerald-500 shrink-0"></span>
                         <span>Văn Hóa & Thái Độ:</span>
+                        <span className="text-[10px] text-emerald-700 bg-emerald-50 px-1.5 py-0.2 rounded border border-emerald-200 font-bold">
+                          {Math.round(wGen * 100)}%
+                        </span>
                       </span>
                       <span className="font-mono font-bold text-emerald-800">
-                        {periodScores.generalScore} / 5.0
+                        {periodScores.generalScore.toFixed(2)}
                       </span>
                     </div>
 
+                    {/* 2. Ngạch Phòng Ban */}
+                    <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs gap-2">
+                      <span className="text-slate-700 font-semibold flex items-center gap-1.5 min-w-0">
+                        <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0"></span>
+                        <span className="truncate">{trackInfo.fullName}:</span>
+                        <span className="text-[10px] text-purple-700 bg-purple-50 px-1.5 py-0.2 rounded border border-purple-200 font-bold shrink-0">
+                          {Math.round(wTech * 100)}%
+                        </span>
+                      </span>
+                      <span className="font-mono font-bold text-purple-800 shrink-0">
+                        {periodScores.techScore.toFixed(2)}
+                      </span>
+                    </div>
+
+                    {/* 3. Ngạch Quản Lý (Chỉ dành cho Cấp Quản Lý) */}
                     {hasMgmtRole && (
                       <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs">
                         <span className="text-slate-700 font-semibold flex items-center gap-1.5">
                           <span className="w-2 h-2 rounded-full bg-blue-500 shrink-0"></span>
                           <span>Ngạch Quản Lý:</span>
+                          <span className="text-[10px] text-blue-700 bg-blue-50 px-1.5 py-0.2 rounded border border-blue-200 font-bold">
+                            {Math.round(wMgmt * 100)}%
+                          </span>
                         </span>
                         <span className="font-mono font-bold text-blue-800">
-                          {periodScores.mgmtScore} / {periodScores.mgmtScore}
+                          {periodScores.mgmtScore.toFixed(2)}
                         </span>
                       </div>
                     )}
 
-                    <div className="flex items-center justify-between bg-white px-2.5 py-1.5 rounded-xl border border-slate-200/80 shadow-2xs gap-2">
-                      <span className="text-slate-700 font-semibold flex items-center gap-1.5 shrink-0">
-                        <span className="w-2 h-2 rounded-full bg-purple-500 shrink-0"></span>
-                        <span>Ngạch Chuyên Môn:</span>
+                    {/* Tiêu chí cấu thành điểm đánh giá */}
+                    <div className="pt-1 text-[10px] text-slate-500 font-medium flex items-center gap-1">
+                      <span className="font-bold text-[#1B4332]">💡 Tiêu chí:</span>
+                      <span className="truncate">
+                        {hasMgmtRole
+                          ? `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%) + Ngạch QL (${Math.round(wMgmt * 100)}%)`
+                          : `Văn hóa (${Math.round(wGen * 100)}%) + ${trackInfo.shortName} (${Math.round(wTech * 100)}%)`}
                       </span>
-                      {periodScores.hasCustomTechScore ? (
-                        <span className="font-mono font-bold text-purple-800 shrink-0">
-                          {periodScores.techScore} / {periodScores.techScore}
-                        </span>
-                      ) : (
-                        <span className="text-[10px] font-bold text-amber-800 bg-amber-50 px-2 py-0.5 rounded-lg border border-amber-200 truncate">
-                          Chưa tích ngạch (Mặc định 5.0 / 5.0)
-                        </span>
-                      )}
                     </div>
                   </div>
                 </div>

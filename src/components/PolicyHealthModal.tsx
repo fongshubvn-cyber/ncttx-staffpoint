@@ -228,7 +228,7 @@ export const PolicyHealthModal: React.FC<PolicyHealthModalProps> = ({
                 <div className="p-3 bg-white/80 rounded-xl border border-emerald-900/10 text-xs text-slate-600 space-y-1">
                   <p className="font-bold text-[#1B4332]">Mô tả quy tắc điểm nội quy:</p>
                   <p className="leading-relaxed text-[11px]">
-                    Mỗi nhân sự khởi tạo mặc định <strong>100 điểm nội quy</strong>. Khi vi phạm bất kỳ nội quy nào trong 10 nội quy công ty, điểm sẽ bị trừ tương ứng mức độ severity. Khi điểm giảm còn 79, 49 hoặc dưới 20, các biện pháp cưỡng chế/xử lý tương ứng sẽ tự động kích hoạt.
+                    Mỗi nhân sự khởi tạo mặc định <strong>100 điểm nội quy</strong>. Khi vi phạm bất kỳ nội quy nào trong hệ thống nội quy 2 ngạch (Pháp quy & Văn hóa), điểm sẽ bị trừ tương ứng mức độ vi phạm. Khi điểm giảm còn 79, 49 hoặc dưới 20, các biện pháp cưỡng chế/xử lý tương ứng sẽ tự động kích hoạt.
                   </p>
                 </div>
               </div>
@@ -328,7 +328,7 @@ export const PolicyHealthModal: React.FC<PolicyHealthModalProps> = ({
                 <div className="p-8 text-center bg-emerald-50/50 rounded-2xl border border-emerald-200 space-y-2">
                   <CheckCircle2 className="w-10 h-10 text-[#2D6A4F] mx-auto" />
                   <p className="text-sm font-bold text-[#1B4332]">Không có vi phạm nội quy nào!</p>
-                  <p className="text-xs text-slate-500">Bạn đang chấp hành cực kỳ tốt 10 nội quy Nhà Của Thời Thanh Xuân.</p>
+                  <p className="text-xs text-slate-500">Bạn đang chấp hành cực kỳ tốt hệ thống nội quy Nhà Của Thời Thanh Xuân.</p>
                 </div>
               ) : (
                 <div className="space-y-2.5">

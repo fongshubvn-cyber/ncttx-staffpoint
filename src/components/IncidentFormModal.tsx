@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Staff, Question, DepartmentLine, IncidentRecord, IncidentType, SeverityLevel, ParameterConfig, AuthUser } from '../types';
 import { isManagementRole } from '../utils/calculator';
 import { initialPolicyRules } from '../data/seedData';
-import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert, ClipboardCheck, BookOpen } from 'lucide-react';
+import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert, ClipboardCheck, BookOpen, AlertTriangle } from 'lucide-react';
 
 interface IncidentFormModalProps {
   show: boolean;
@@ -46,7 +46,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
   const [reporterId, setReporterId] = useState<string>(currentUser?.id || staffList[0]?.id || '');
   const [targetId, setTargetId] = useState<string>(initialTargetId || staffList[1]?.id || staffList[0]?.id || '');
   const [criteriaScope, setCriteriaScope] = useState<string>('Chung'); // 'Chung', 'Department', 'Management', or 'Boundary'
-  const [policyRuleId, setPolicyRuleId] = useState<string>('NQ01');
+  const [policyRuleId, setPolicyRuleId] = useState<string>('PQ01');
   const [submittedSuccess, setSubmittedSuccess] = useState<IncidentRecord | null>(null);
 
   React.useEffect(() => {
@@ -132,23 +132,42 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
   const targetStaff = staffList.find(s => s.id === targetId) || staffList[0];
   const isTargetManager = targetStaff ? isManagementRole(targetStaff) : false;
 
+  // Xác định chính xác người dùng đang lập phiếu Ghi Nhận (Khen thưởng) hay Vi Phạm (Nhắc nhở)
+  const currentEvalType: IncidentType = formCategory === 'policy'
+    ? 'vi_pham'
+    : workEvalMode === 'minus'
+      ? 'vi_pham'
+      : 'ghi_nhan';
+
   // Dynamically filter questions based on Scope & Target's Department & Management Role
   const availableQuestions = questions.filter(q => {
+    // 1. Phân loại chuẩn xác: Khi ghi nhận CHỈ HIỆN tiêu chí ghi nhận, và ngược lại
+    if (currentEvalType === 'vi_pham' && q.measurementType !== 'vi phạm') return false;
+    if (currentEvalType === 'ghi_nhan' && q.measurementType !== 'ghi nhận') return false;
+
+    // 2. Phân loại theo phạm vi tiêu chí
+    const isRG = (
+      q.groupCode.startsWith('RG') ||
+      q.id.startsWith('RG') ||
+      q.category === 'Ranh giới' ||
+      (q.groupName && q.groupName.toUpperCase().includes('RANH GIỚI'))
+    );
+
+    // CRITICAL: RG sẽ không nằm trong Khung chung vì nó nằm trong "Ranh giới không thoả hiệp"
     if (criteriaScope === 'Boundary') {
-      return (
-        q.groupCode.startsWith('RG') ||
-        q.id.startsWith('RG') ||
-        q.category === 'Ranh giới' ||
-        (q.groupName && q.groupName.toUpperCase().includes('RANH GIỚI'))
-      );
+      return isRG;
     }
 
-    // Match type (vi phạm vs ghi nhận)
-    if (type === 'vi_pham' && q.measurementType !== 'vi phạm') return false;
-    if (type === 'ghi_nhan' && q.measurementType !== 'ghi nhận') return false;
+    // RG tuyệt đối KHÔNG thuộc Khung chung, Chuyên môn, hay Quản lý
+    if (isRG) {
+      return false;
+    }
 
     if (criteriaScope === 'Chung') {
-      return q.category === 'Chung' || q.groupCode.startsWith('VH') || q.groupCode.startsWith('TC3') || q.groupCode.startsWith('NL');
+      return (
+        (q.category === 'Chung' || q.groupCode.startsWith('VH') || q.groupCode.startsWith('TC') || q.groupCode.startsWith('NL')) &&
+        !q.groupCode.startsWith('Q')
+      );
     } else if (criteriaScope === 'Department') {
       // Must match Target Staff's specific Department Line!
       return q.lineId === targetStaff?.line || q.groupCode.startsWith('B') || q.groupCode.startsWith('C') || q.groupCode.startsWith('N') || q.groupCode.startsWith('HC') || q.groupCode.startsWith('PC');
@@ -417,7 +436,16 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 <div className="grid grid-cols-2 gap-2">
                   <button
                     type="button"
-                    onClick={() => setWorkEvalMode('plus')}
+                    onClick={() => {
+                      setWorkEvalMode('plus');
+                      setType('ghi_nhan');
+                      if (criteriaScope === 'Boundary') {
+                        setCriteriaScope('Chung');
+                      }
+                      setQuestionId('');
+                      setTitle('');
+                      setDescription('');
+                    }}
                     className={`p-3 rounded-2xl border font-black font-heading flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
                       workEvalMode === 'plus'
                         ? 'bg-[#2D6A4F] text-white border-[#2D6A4F] shadow-md ring-2 ring-[#2D6A4F]/30'
@@ -429,7 +457,13 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
 
                   <button
                     type="button"
-                    onClick={() => setWorkEvalMode('minus')}
+                    onClick={() => {
+                      setWorkEvalMode('minus');
+                      setType('vi_pham');
+                      setQuestionId('');
+                      setTitle('');
+                      setDescription('');
+                    }}
                     className={`p-3 rounded-2xl border font-black font-heading flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
                       workEvalMode === 'minus'
                         ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/30'
@@ -535,12 +569,21 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 }}
                 className="w-full p-2.5 bg-white border border-rose-300 rounded-xl text-slate-900 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer"
               >
-                <option value="">-- Chọn 1 trong 10 Điều Khoản Nội Quy Vi Phạm --</option>
-                {policyRulesList.filter(r => r.active !== false).map((rule) => (
-                  <option key={rule.id} value={rule.id}>
-                    [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ nội quy — Mức {rule.severity})
-                  </option>
-                ))}
+                <option value="">-- Chọn Điều Khoản Nội Quy Vi Phạm --</option>
+                <optgroup label="🔴 NGẠCH 1: PHÁP QUY & KỶ LUẬT (KHUNG TUÂN THỦ CỨNG)">
+                  {policyRulesList.filter(r => r.active !== false && (r.track === 'Pháp quy & Kỷ luật' || r.id.startsWith('PQ'))).map((rule) => (
+                    <option key={rule.id} value={rule.id}>
+                      [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
+                    </option>
+                  ))}
+                </optgroup>
+                <optgroup label="🟢 NGẠCH 2: VĂN HÓA & TÁC PHONG VẬN HÀNH (KHUNG RÈN LUYỆN MỀM)">
+                  {policyRulesList.filter(r => r.active !== false && (r.track === 'Văn hóa & Tác phong' || r.id.startsWith('VH'))).map((rule) => (
+                    <option key={rule.id} value={rule.id}>
+                      [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
+                    </option>
+                  ))}
+                </optgroup>
               </select>
 
               {/* Selected Rule Detail Box */}
@@ -550,14 +593,23 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                     const rule = policyRulesList.find(r => r.id === policyRuleId)!;
                     return (
                       <>
-                        <div className="flex items-center justify-between font-extrabold text-rose-950">
-                          <span>📋 [{rule.code}] {rule.title}</span>
+                        <div className="flex items-center justify-between font-extrabold text-rose-950 flex-wrap gap-1">
+                          <div className="flex items-center gap-1.5 flex-wrap">
+                            <span>📋 [{rule.code}] {rule.title}</span>
+                            <span className={`px-2 py-0.5 rounded-full text-[10px] font-black ${
+                              rule.track === 'Pháp quy & Kỷ luật'
+                                ? 'bg-rose-100 text-rose-800 border border-rose-300'
+                                : 'bg-emerald-100 text-emerald-800 border border-emerald-300'
+                            }`}>
+                              {rule.track === 'Pháp quy & Kỷ luật' ? '🔴 Ngạch 1: Pháp quy' : '🟢 Ngạch 2: Văn hóa'}
+                            </span>
+                          </div>
                           <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white font-mono font-black text-[11px]">
                             -{rule.penaltyPoints}đ Nội quy
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-600 leading-relaxed font-medium">{rule.description}</p>
-                        <div className="text-[10px] text-rose-800 font-semibold pt-1 border-t border-rose-100 flex items-center justify-between gap-2">
+                        <div className="text-[10px] text-rose-800 font-semibold pt-1 border-t border-rose-100 flex items-center justify-between gap-2 flex-wrap">
                           <span>Phân loại: <strong>{rule.category}</strong></span>
                           <span>Biện pháp: <strong>{rule.enforcementMeasure}</strong></span>
                         </div>
@@ -583,27 +635,30 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                   }}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#1B4332] font-bold focus:outline-none focus:border-[#2D6A4F]"
                 >
-                  <option value="Chung">1. Khung chung (Áp dụng toàn công ty - 65% hoặc 50%)</option>
+                  <option value="Chung">1. Khung chung (Văn hóa & Kỷ luật chung)</option>
                   <option value="Department">
-                    2. Ngạch chuyên môn riêng của bộ phận: {targetStaff?.line} (35% hoặc 20%)
+                    2. Ngạch chuyên môn riêng của bộ phận: {targetStaff?.line}
                   </option>
                   {isTargetManager && (
                     <option value="Management">
-                      3. Ngạch Quản lý (Chỉ áp dụng Quản lý trở lên - 30%)
+                      3. Ngạch Quản lý (Chỉ áp dụng Quản lý trở lên)
                     </option>
                   )}
-                  <option value="Boundary">
-                    4. Ranh Giới Không Thỏa Hiệp ⚠️ (Khen thưởng giữ ranh giới / Bảo vệ tính tử tế)
-                  </option>
+                  {currentEvalType === 'vi_pham' && (
+                    <option value="Boundary">
+                      4. Ranh Giới Không Thỏa Hiệp ⚠️ (Vi phạm ranh giới đỏ)
+                    </option>
+                  )}
                 </select>
 
                 {criteriaScope === 'Boundary' && (
-                  <div className="mt-2 p-2.5 rounded-xl bg-emerald-50 border border-emerald-200 text-[11px] text-emerald-900 space-y-1">
-                    <p className="font-bold flex items-center space-x-1">
-                      <span>🌟 Ranh Giới Tử Tế & Khen Thưởng:</span>
+                  <div className="mt-2 p-2.5 rounded-xl bg-rose-50 border border-rose-200 text-[11px] text-rose-900 space-y-1">
+                    <p className="font-bold flex items-center space-x-1.5 text-rose-800">
+                      <AlertTriangle className="w-4 h-4 text-rose-600 shrink-0" />
+                      <span>⚠️ Ranh Giới Không Thỏa Hiệp (Độc lập khỏi Khung chung):</span>
                     </p>
                     <p className="text-[10px] text-slate-700 leading-tight">
-                      Ghi nhận và tuyên dương các hành động bảo vệ ranh giới sự thật, giữ gìn sự tử tế và thương hiệu Nhà Của Thời Thanh Xuân!
+                      Quy định các hành vi vi phạm ranh giới đỏ (Trừ thẳng điểm / Chặn kết quả đánh giá).
                     </p>
                   </div>
                 )}
@@ -619,10 +674,14 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="block text-slate-700 font-extrabold font-heading">
-                    5. Tìm & Chọn Tiêu Chí Đánh Giá Cụ Thể
+                    5. Chọn Tiêu Chí {currentEvalType === 'ghi_nhan' ? 'Ghi Nhận (Khen Thưởng)' : 'Nhắc Nhở (Vi Phạm)'}
                   </label>
-                  <span className="text-[10px] text-[#2D6A4F] font-bold">
-                    Tìm thấy {filteredAvailableQuestions.length} tiêu chí
+                  <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
+                    currentEvalType === 'ghi_nhan'
+                      ? 'text-emerald-800 bg-emerald-100 border border-emerald-300'
+                      : 'text-amber-800 bg-amber-100 border border-amber-300'
+                  }`}>
+                    {filteredAvailableQuestions.length} tiêu chí {currentEvalType === 'ghi_nhan' ? 'ghi nhận' : 'nhắc nhở'}
                   </span>
                 </div>
 
@@ -631,7 +690,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                   <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-[#2D6A4F]" />
                   <input
                     type="text"
-                    placeholder="🔍 Nhập mã (VH1, TC1...) hoặc từ khóa tiêu chí để tìm nhanh..."
+                    placeholder={`🔍 Tìm nhanh tiêu chí ${currentEvalType === 'ghi_nhan' ? 'ghi nhận (NL1, NL3...)' : 'nhắc nhở (VH1, TC1...)'}...`}
                     value={searchCriteriaTerm}
                     onChange={(e) => setSearchCriteriaTerm(e.target.value)}
                     className="w-full pl-9 pr-8 py-2.5 bg-[#EDEAE3]/70 border border-emerald-900/20 rounded-xl text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-[#2D6A4F] font-medium"
@@ -653,10 +712,10 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                   onChange={(e) => handleSelectQuestion(e.target.value)}
                   className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium focus:outline-none focus:border-[#2D6A4F]"
                 >
-                  <option value="">-- Chọn tiêu chí từ danh sách dropdown --</option>
+                  <option value="">-- Chọn tiêu chí {currentEvalType === 'ghi_nhan' ? 'Ghi Nhận' : 'Nhắc Nhở'} từ danh sách --</option>
                   {filteredAvailableQuestions.map((q) => (
                     <option key={q.id} value={q.id}>
-                      [{q.id}] {q.groupCode}: {q.text}
+                      [{q.id}] [{q.measurementType === 'ghi nhận' ? '🌟 Ghi nhận' : '⚠️ Vi phạm'}] {q.groupCode}: {q.text}
                     </option>
                   ))}
                 </select>
