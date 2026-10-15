@@ -1,5 +1,15 @@
 # 📜 NHẬT KÝ PHIÊN BẢN & MỐC NGUYÊN BẢN DỰ ÁN STAFFPOINT
 
+## 📌 CẬP NHẬT TINH GỌN HỆ THỐNG NỘI QUY (POLICY VERSION 2026_V3) (15/10/2026)
+**Trạng thái:** ✅ Đã hoàn tất Tinh gọn danh mục Nội quy thành 3 quy định trọng tâm theo chỉ đạo vận hành thực tế:
+1. **NQ-01: Đi làm đúng giờ & Chấm công đầy đủ (Trễ giờ)** – Trừ 5 điểm (Mức Nhẹ).
+2. **NQ-02: Không chấp hành điều phối của quản lý** – Trừ 15 điểm (Mức Vừa).
+3. **NQ-03: Không hoàn thành công việc đúng deadline** – Trừ 10 điểm (Mức Vừa).
+- Nâng cấp `policyVersion` lên `'2026_v3'` để tự động đồng bộ và xóa cache cũ trên LocalStorage & Firebase Cloud Realtime.
+- Cập nhật toàn diện giao diện Quản lý Nội quy (`PolicyView.tsx`), Thiết lập Tham số (`BaselineView.tsx`), Lập biên bản vi phạm (`IncidentFormModal.tsx`) và Trợ lý AI Chat (`AiChatModal.tsx`).
+
+---
+
 ## 📌 PHIÊN BẢN V1.008-STABLE (15/10/2026)
 **Git Tag:** `v1.008-stable`  
 **GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  

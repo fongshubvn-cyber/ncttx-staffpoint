@@ -48,7 +48,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
   const [filterTrack, setFilterTrack] = useState<'all' | 'Pháp quy & Kỷ luật' | 'Văn hóa & Tác phong'>('all');
   const [isEditingRules, setIsEditingRules] = useState(false);
   const [rules, setRules] = useState<PolicyRule[]>(() => {
-    if (params.policyRules && Array.isArray(params.policyRules) && params.policyRules.length >= 20 && params.policyRules.some(r => r.track)) {
+    if (params.policyRules && Array.isArray(params.policyRules) && params.policyRules.length >= 3) {
       return params.policyRules;
     }
     return initialPolicyRules;
@@ -62,12 +62,12 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
     if (!onUpdateParams) return;
     onUpdateParams({
       ...params,
-      policyVersion: '2026_v2',
+      policyVersion: '2026_v3',
       policyRules: rules,
       defaultPolicyScore: 100,
     });
     setIsEditingRules(false);
-    alert('Đã lưu cấu hình Hệ Thống Nội Quy 2 Ngạch & Điểm Phạt thành công!');
+    alert('Đã lưu cấu hình Hệ Thống Nội Quy & Điểm Phạt thành công!');
   };
 
   const filteredStaffList = staffList.filter(s => 
@@ -103,10 +103,10 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
               <span>Hệ Thống Nội Quy & Tình Trạng Nhân Sự (Account Health)</span>
             </div>
             <h2 className="text-xl sm:text-2xl font-black font-heading text-white tracking-tight">
-              Hệ Thống Nội Quy 2 Ngạch: Pháp Quy & Văn Hóa (100 Điểm Gốc) 🛡️
+              Hệ Thống Nội Quy & Kỷ Luật Lao Động (100 Điểm Gốc) 🛡️
             </h2>
             <p className="text-xs sm:text-sm text-emerald-100/90 max-w-2xl font-medium leading-relaxed">
-              Phân tách rõ ràng 2 ngạch: <strong className="text-rose-300">🔴 Pháp quy & Kỷ luật</strong> (Khung tuân thủ Bộ luật Lao động) và <strong className="text-[#52B788]">🟢 Văn hóa & Tác phong</strong> (Khung rèn luyện Sổ tay Nhân sự). Mỗi tháng nhân sự được cấp <strong className="text-amber-300">100 điểm tuân thủ độc lập</strong>.
+              Quy định kỷ luật giờ giấc (Trễ giờ), điều phối công việc và hạn hoàn thành (Deadline). Mỗi tháng nhân sự được cấp <strong className="text-amber-300">100 điểm tuân thủ độc lập</strong>.
             </p>
           </div>
 
@@ -240,25 +240,27 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
                     : 'bg-rose-50 text-rose-800 hover:bg-rose-100 border border-rose-200'
                 }`}
               >
-                <span>🔴 Ngạch 1: Pháp Quy & Kỷ Luật</span>
+                <span>🔴 Pháp Quy & Kỷ Luật</span>
                 <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-mono font-extrabold">
                   {rules.filter(r => r.track === 'Pháp quy & Kỷ luật').length}
                 </span>
               </button>
-              <button
-                type="button"
-                onClick={() => setFilterTrack('Văn hóa & Tác phong')}
-                className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
-                  filterTrack === 'Văn hóa & Tác phong'
-                    ? 'bg-emerald-800 text-white shadow-2xs font-extrabold'
-                    : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
-                }`}
-              >
-                <span>🟢 Ngạch 2: Văn Hóa & Tác Phong</span>
-                <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-mono font-extrabold">
-                  {rules.filter(r => r.track === 'Văn hóa & Tác phong').length}
-                </span>
-              </button>
+              {rules.some(r => r.track === 'Văn hóa & Tác phong') && (
+                <button
+                  type="button"
+                  onClick={() => setFilterTrack('Văn hóa & Tác phong')}
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap flex items-center gap-1.5 ${
+                    filterTrack === 'Văn hóa & Tác phong'
+                      ? 'bg-emerald-800 text-white shadow-2xs font-extrabold'
+                      : 'bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200'
+                  }`}
+                >
+                  <span>🟢 Văn Hóa & Tác Phong</span>
+                  <span className="px-1.5 py-0.2 rounded-full text-[10px] bg-white/20 font-mono font-extrabold">
+                    {rules.filter(r => r.track === 'Văn hóa & Tác phong').length}
+                  </span>
+                </button>
+              )}
             </div>
 
             <div className="relative min-w-[200px]">

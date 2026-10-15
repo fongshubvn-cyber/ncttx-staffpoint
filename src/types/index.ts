@@ -160,7 +160,7 @@ export interface ParameterConfig {
 
   // Internal Policy Settings
   defaultPolicyScore?: number; // Default 100 points
-  policyVersion?: string; // Phiên bản nội quy (vd: '2026_v2')
+  policyVersion?: string; // Phiên bản nội quy (vd: '2026_v3')
   policyRules?: PolicyRule[];
   
   // Configurable Incident / Ticket Point Impacts
@@ -177,7 +177,7 @@ export interface ParameterConfig {
 }
 
 export interface PolicyRule {
-  id: string; // 'PQ01', 'VH01'...
+  id: string; // 'NQ01', 'NQ02'...
   code: string; // 'PQ-01', 'VH-01'...
   track?: 'Pháp quy & Kỷ luật' | 'Văn hóa & Tác phong' | string; // Ngạch nội quy
   title: string;

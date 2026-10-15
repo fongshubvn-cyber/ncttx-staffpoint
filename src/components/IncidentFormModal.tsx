@@ -46,7 +46,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
   const [reporterId, setReporterId] = useState<string>(currentUser?.id || staffList[0]?.id || '');
   const [targetId, setTargetId] = useState<string>(initialTargetId || staffList[1]?.id || staffList[0]?.id || '');
   const [criteriaScope, setCriteriaScope] = useState<string>('Chung'); // 'Chung', 'Department', 'Management', or 'Boundary'
-  const [policyRuleId, setPolicyRuleId] = useState<string>('PQ01');
+  const [policyRuleId, setPolicyRuleId] = useState<string>(() => (policyRulesList[0]?.id || 'NQ01'));
   const [submittedSuccess, setSubmittedSuccess] = useState<IncidentRecord | null>(null);
 
   React.useEffect(() => {
@@ -570,20 +570,32 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 className="w-full p-2.5 bg-white border border-rose-300 rounded-xl text-slate-900 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer"
               >
                 <option value="">-- Chọn Điều Khoản Nội Quy Vi Phạm --</option>
-                <optgroup label="🔴 NGẠCH 1: PHÁP QUY & KỶ LUẬT (KHUNG TUÂN THỦ CỨNG)">
-                  {policyRulesList.filter(r => r.active !== false && (r.track === 'Pháp quy & Kỷ luật' || r.id.startsWith('PQ'))).map((rule) => (
-                    <option key={rule.id} value={rule.id}>
-                      [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
-                    </option>
-                  ))}
-                </optgroup>
-                <optgroup label="🟢 NGẠCH 2: VĂN HÓA & TÁC PHONG VẬN HÀNH (KHUNG RÈN LUYỆN MỀM)">
-                  {policyRulesList.filter(r => r.active !== false && (r.track === 'Văn hóa & Tác phong' || r.id.startsWith('VH'))).map((rule) => (
-                    <option key={rule.id} value={rule.id}>
-                      [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
-                    </option>
-                  ))}
-                </optgroup>
+                {policyRulesList.some(r => r.active !== false && (r.track === 'Văn hóa & Tác phong' || r.id.startsWith('VH'))) ? (
+                  <>
+                    <optgroup label="🔴 NGẠCH 1: PHÁP QUY & KỶ LUẬT (KHUNG TUÂN THỦ CỨNG)">
+                      {policyRulesList.filter(r => r.active !== false && (r.track !== 'Văn hóa & Tác phong' && !r.id.startsWith('VH'))).map((rule) => (
+                        <option key={rule.id} value={rule.id}>
+                          [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
+                        </option>
+                      ))}
+                    </optgroup>
+                    <optgroup label="🟢 NGẠCH 2: VĂN HÓA & TÁC PHONG VẬN HÀNH (KHUNG RÈN LUYỆN MỀM)">
+                      {policyRulesList.filter(r => r.active !== false && (r.track === 'Văn hóa & Tác phong' || r.id.startsWith('VH'))).map((rule) => (
+                        <option key={rule.id} value={rule.id}>
+                          [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
+                        </option>
+                      ))}
+                    </optgroup>
+                  </>
+                ) : (
+                  <optgroup label="📋 NỘI QUY & KỶ LUẬT LAO ĐỘNG (THANG 100 ĐIỂM)">
+                    {policyRulesList.filter(r => r.active !== false).map((rule) => (
+                      <option key={rule.id} value={rule.id}>
+                        [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
               </select>
 
               {/* Selected Rule Detail Box */}

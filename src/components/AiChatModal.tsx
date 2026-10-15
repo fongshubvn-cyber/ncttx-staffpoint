@@ -55,7 +55,7 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
 
   const userName = currentUser?.name || 'bạn';
 
-  const policyRulesList: PolicyRule[] = (params.policyRules && params.policyRules.length >= 20) 
+  const policyRulesList: PolicyRule[] = (params.policyRules && params.policyRules.length >= 3) 
     ? params.policyRules 
     : initialPolicyRules;
 
@@ -63,7 +63,7 @@ export const AiChatModal: React.FC<AiChatModalProps> = ({
     {
       id: 'welcome-msg',
       sender: 'ai',
-      text: `Chào ${userName} nhé! 🌿 Mình là **Thanh Xuân** — người bạn trợ lý AI đồng hành cùng bạn tại Nhà Của Thời Thanh Xuân.\n\nHôm nay công việc của bạn thế nào? Cần trò chuyện hay tra cứu về 20 nội quy 2 ngạch, tiền tips, cách khiếu nại 48h, công thức tính điểm hay tiêu chí cứ nhắn cho mình nhé!`,
+      text: `Chào ${userName} nhé! 🌿 Mình là **Thanh Xuân** — người bạn trợ lý AI đồng hành cùng bạn tại Nhà Của Thời Thanh Xuân.\n\nHôm nay công việc của bạn thế nào? Cần trò chuyện hay tra cứu về các nội quy lao động (Trễ giờ, Điều phối, Deadline), tiền tips, cách khiếu nại 48h, công thức tính điểm hay tiêu chí cứ nhắn cho mình nhé!`,
       timestamp: new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
     },
   ]);
@@ -252,11 +252,31 @@ ${staffSummary}`;
         `⚖️ Vi phạm ranh giới đỏ sẽ bị lập biên bản kỷ luật nặng, trừ từ **-25đ đến -50đ** nội quy hoặc đình chỉ sa thải theo luật định!`;
     }
 
-    // 7. PQ-01 & PQ-10: Đi muộn / Giờ giấc / Chấm công / Bỏ việc
-    if (/đi muộn|đi trễ|về sớm|chấm công|bỏ việc|nghỉ làm|giờ làm|quên chấm công/i.test(rawLower)) {
-      return `Chào ${userName}! ⏰ Về quy định giờ giấc và chấm công:\n\n` +
-        `• **[PQ-01] Kỷ luật giờ giấc & Điểm danh ca làm việc:** Vào ca đúng giờ, thực hiện chấm công và bàn giao ca đầy đủ. Không đi muộn, về sớm, không tự ý rời vị trí hoặc tiếp khách riêng quá 15 phút. Vi phạm trừ **-5đ nội quy** (Mức Nhẹ). Vi phạm từ 3 lần/tháng sẽ bị lập biên bản kỷ luật khiển trách.\n\n` +
-        `• **[PQ-10] Chấp hành kỷ luật công việc & Không tự ý bỏ việc:** Tự ý nghỉ 1-2 ngày bị khiển trách (-50đ nội quy). Tự ý bỏ việc từ **05 ngày cộng dồn trong 30 ngày** hoặc **20 ngày cộng dồn trong 365 ngày** mà không có lý do chính đáng sẽ bị **kỷ luật Sa thải** theo Bộ luật Lao động.`;
+    // 7. NQ-01: Đi làm đúng giờ & Chấm công đầy đủ (Trễ giờ)
+    if (/đi muộn|đi trễ|về sớm|chấm công|trễ giờ|muộn ca|giờ làm|quên chấm công/i.test(rawLower)) {
+      return `Chào ${userName}! ⏰ Về quy định trễ giờ và giờ giấc:\n\n` +
+        `Theo Nội quy lao động, quy định này thuộc mã **[NQ-01] - Đi làm đúng giờ & Chấm công đầy đủ (Trễ giờ)**:\n\n` +
+        `• Vào ca đúng giờ, thực hiện chấm công và bàn giao ca đầy đủ. Trường hợp đến muộn quá 15 phút không báo trước sẽ bị tính vi phạm trễ giờ.\n` +
+        `• **Mức phạt:** Trừ **-5đ nội quy** (Mức Nhẹ).\n` +
+        `• **Biện pháp xử lý:** Nhắc nhở ca & Ghi chép nhật ký ca làm việc; vi phạm nhiều lần xem xét hạ bậc thi đua.`;
+    }
+
+    // NQ-02: Không chấp hành điều phối của quản lý
+    if (/điều phối|chấp hành điều phối|không chấp hành|không tuân thủ|chống đối|phân công|sắp xếp công việc/i.test(rawLower)) {
+      return `Chào ${userName}! 📋 Về việc chấp hành điều phối của quản lý:\n\n` +
+        `Theo Nội quy lao động, quy định này thuộc mã **[NQ-02] - Không chấp hành điều phối của quản lý**:\n\n` +
+        `• Không tuân thủ, từ chối hoặc chống đối sự phân công, điều động, sắp xếp công việc hợp lý từ Quản lý / Trưởng ca / Cấp trên trực tiếp trong ca làm việc.\n` +
+        `• **Mức phạt:** Trừ **-15đ nội quy** (Mức Vừa).\n` +
+        `• **Biện pháp xử lý:** Nhắc nhở, lập biên bản vi phạm kỷ luật điều phối và họp kiểm điểm ca làm việc.`;
+    }
+
+    // NQ-03: Không hoàn thành công việc đúng deadline
+    if (/deadline|trễ deadline|chậm deadline|đúng hạn|đúng deadline|chậm tiến độ|chậm nộp báo cáo/i.test(rawLower)) {
+      return `Chào ${userName}! ⏳ Về thời hạn hoàn thành công việc (deadline):\n\n` +
+        `Theo Nội quy lao động, quy định này thuộc mã **[NQ-03] - Không hoàn thành công việc đúng deadline**:\n\n` +
+        `• Không hoàn thành các nhiệm vụ, công việc được giao hoặc chậm trễ nộp báo cáo đúng thời hạn cam kết (deadline) mà không có lý do chính đáng hoặc không báo trước.\n` +
+        `• **Mức phạt:** Trừ **-10đ nội quy** (Mức Vừa).\n` +
+        `• **Biện pháp xử lý:** Nhắc nhở, đôn đốc tiến độ và trừ điểm chuyên cần/tiến độ công việc.`;
     }
 
     // 8. PQ-02: Bảo mật tiền lương / Hỏi lương / So sánh lương
@@ -443,19 +463,11 @@ ${staffSummary}`;
         `• **Mức phạt:** Trừ **-10đ nội quy** (Mức Vừa). Tạm giữ thiết bị cá nhân trong ca và bàn giao lại dưới sự giám sát của Trưởng ca.`;
     }
 
-    // 26. Tổng quan 20 Nội quy 2 Ngạch
-    if (/nội quy|20 nội quy|2 ngạch|quy định công ty|quy chế/i.test(rawLower)) {
-      const pqCount = policyRulesList.filter(r => r.track === 'Pháp quy & Kỷ luật' || r.id.startsWith('PQ')).length;
-      const vhCount = policyRulesList.filter(r => r.track === 'Văn hóa & Tác phong' || r.id.startsWith('VH')).length;
-
-      return `Chào ${userName}! 📋 Hệ thống nội quy Nhà Của Thời Thanh Xuân gồm **20 điều khoản** được phân tách rõ ràng thành **2 Ngạch**:\n\n` +
-        `🔴 **NGẠCH 1: PHÁP QUY & KỶ LUẬT (${pqCount} Điều: PQ-01 đến PQ-10)**\n` +
-        `• Căn cứ pháp lý theo Bộ luật Lao động & 3 Ranh giới đỏ.\n` +
-        `• Bao gồm: Giờ giấc, bảo mật tiền lương (Điều 20), quản lý tiền mặt, bí mật kinh doanh, PCCC, ATTP, chống quấy rối, chất cấm, bồi thường vật chất và sa thải.\n\n` +
-        `🟢 **NGẠCH 2: VĂN HÓA & TÁC PHONG VẬN HÀNH (${vhCount} Điều: VH-01 đến VH-10)**\n` +
-        `• Căn cứ theo Sổ tay nhân sự (kim chỉ nam ứng xử và rèn luyện P2).\n` +
-        `• Bao gồm: Giao tiếp ký hiệu hòa nhập, không thương mại hóa sự khiếm thính, 6 điều cấm tiếp khách, diện mạo & mùi hương, 5 yếu tố không gian, tự giác dọn dẹp, tiền tips quỹ chung, OPA, Kaizen và bàn giao ca.\n\n` +
-        `🛡️ Mỗi tháng nhân sự được cấp **100 điểm tuân thủ độc lập**, tự động restart khi sang tháng mới. Bạn muốn hỏi chi tiết điều khoản nào cứ nhắn cho mình nhé!`;
+    // 26. Tổng quan Nội quy
+    if (/nội quy|quy định công ty|quy chế|danh mục nội quy/i.test(rawLower)) {
+      return `Chào ${userName}! 📋 Hệ thống nội quy Nhà Của Thời Thanh Xuân gồm các điều khoản trọng tâm:\n\n` +
+        policyRulesList.map((r, i) => `${i + 1}️⃣ **[${r.code}] ${r.title}:** Trừ -${r.penaltyPoints}đ (${r.severity})\n• ${r.description}`).join('\n\n') +
+        `\n\n🛡️ Mỗi tháng nhân sự được cấp **100 điểm tuân thủ độc lập**, tự động restart khi sang tháng mới. Bạn muốn hỏi chi tiết nội quy nào cứ nhắn cho mình nhé!`;
     }
 
     // 27. Smart Multi-Source Token Matching (Tra cứu song song cả 20 Nội quy và Tiêu chí Questions)

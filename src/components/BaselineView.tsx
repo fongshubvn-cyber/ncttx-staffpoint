@@ -19,7 +19,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
 }) => {
   const [isEditing, setIsEditing] = useState(false);
   const [policyRules, setPolicyRules] = useState<PolicyRule[]>(
-    (params.policyRules && params.policyRules.length >= 20 && params.policyRules.some(r => r.track))
+    (params.policyRules && params.policyRules.length >= 3)
       ? params.policyRules
       : initialPolicyRules
   );
@@ -130,7 +130,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
     if (!onUpdateParams) return;
     onUpdateParams({
       ...params,
-      policyVersion: '2026_v2',
+      policyVersion: '2026_v3',
       policyRules,
       defaultPolicyScore: 100,
       baselineCultureCommon: bCultureCommon,
