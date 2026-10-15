@@ -47,7 +47,8 @@ import {
   getCalculatedBaselinePoints, 
   calculateTotalScore, 
   calculateSalaryTier, 
-  isManagementRole 
+  isManagementRole,
+  getIncidentTargetPillar
 } from './utils/calculator';
 
 export function App() {
@@ -691,39 +692,40 @@ export function App() {
     return isNaN(num) ? fallback : num;
   };
 
-  // Helper: Refund points upon approved appeal
+  // Helper: Refund points upon approved appeal or deleted incident
   const refundIncidentScoreImpact = (incident: IncidentRecord) => {
-    if (!incident || typeof incident.impactPoints !== 'number') return;
-    const wGenMgmt = params?.weightGeneralWithMgmt ?? 0.50;
-    const wMgmtMgmt = params?.weightMgmtWithMgmt ?? 0.30;
-    const wTechMgmt = params?.weightTechWithMgmt ?? 0.20;
-    const wGenNoMgmt = params?.weightGeneralNoMgmt ?? 0.65;
-    const wTechNoMgmt = params?.weightTechNoMgmt ?? 0.35;
+    if (!incident || typeof incident.impactPoints !== 'number' || incident.impactPoints === 0) return;
+    const impact = safeNum(incident.impactPoints, 0);
+    const pillar = getIncidentTargetPillar(incident);
 
     setStaffList(prev => {
       const updated = prev.map(staff => {
         if (staff.id === incident.targetId) {
-          const curGen = safeNum(staff.generalScore, 5.0);
-          const curTech = safeNum(staff.techScore, 5.0);
-          const curMgmt = safeNum(staff.mgmtScore, 5.0);
-          const refundedPoints = Math.abs(safeNum(incident.impactPoints, 0));
+          const baselines = getStaffBaselineScores(staff, params);
+          const isMgmt = isManagementRole(staff);
+          let curGen = safeNum(staff.generalScore, baselines.generalScore);
+          let curTech = safeNum(staff.techScore, baselines.techScore);
+          let curMgmt = isMgmt ? safeNum(staff.mgmtScore, baselines.mgmtScore ?? 0) : undefined;
 
-          const newGeneralScore = Math.max(0, Math.min(5, Number((curGen + refundedPoints).toFixed(2))));
-          let newTotalScore = 5.0;
-          if (typeof staff.mgmtScore === 'number' && !isNaN(staff.mgmtScore)) {
-            newTotalScore = Math.max(0, Math.min(5, Number((
-              newGeneralScore * wGenMgmt + curMgmt * wMgmtMgmt + curTech * wTechMgmt
-            ).toFixed(2))));
+          // Reversing impact: subtract impactPoints!
+          if (pillar === 'mgmt' && isMgmt && curMgmt !== undefined) {
+            curMgmt = Math.max(0, Math.min(5, Number((curMgmt - impact).toFixed(2))));
+          } else if (pillar === 'tech') {
+            curTech = Math.max(0, Math.min(5, Number((curTech - impact).toFixed(2))));
           } else {
-            newTotalScore = Math.max(0, Math.min(5, Number((
-              newGeneralScore * wGenNoMgmt + curTech * wTechNoMgmt
-            ).toFixed(2))));
+            curGen = Math.max(0, Math.min(5, Number((curGen - impact).toFixed(2))));
           }
+
+          const newTotalScore = calculateTotalScore(curGen, curTech, curMgmt, params);
+          const salaryTier = calculateSalaryTier(newTotalScore, params);
 
           return {
             ...staff,
-            generalScore: isNaN(newGeneralScore) ? 5.0 : newGeneralScore,
-            totalScore: isNaN(newTotalScore) ? 5.0 : newTotalScore,
+            generalScore: curGen,
+            techScore: curTech,
+            mgmtScore: curMgmt,
+            totalScore: newTotalScore,
+            salaryTier,
           };
         }
         return staff;
@@ -756,37 +758,37 @@ export function App() {
 
   // Helper: Apply score impact to target staff
   const applyIncidentScoreImpact = (incident: IncidentRecord) => {
-    if (!incident || typeof incident.impactPoints !== 'number') return;
-    const wGenMgmt = params?.weightGeneralWithMgmt ?? 0.50;
-    const wMgmtMgmt = params?.weightMgmtWithMgmt ?? 0.30;
-    const wTechMgmt = params?.weightTechWithMgmt ?? 0.20;
-    const wGenNoMgmt = params?.weightGeneralNoMgmt ?? 0.65;
-    const wTechNoMgmt = params?.weightTechNoMgmt ?? 0.35;
+    if (!incident || typeof incident.impactPoints !== 'number' || incident.impactPoints === 0) return;
+    const impact = safeNum(incident.impactPoints, 0);
+    const pillar = getIncidentTargetPillar(incident);
 
     setStaffList(prev => {
       const updated = prev.map(staff => {
         if (staff.id === incident.targetId) {
-          const curGen = safeNum(staff.generalScore, 5.0);
-          const curTech = safeNum(staff.techScore, 5.0);
-          const curMgmt = safeNum(staff.mgmtScore, 5.0);
-          const impact = safeNum(incident.impactPoints, 0);
+          const baselines = getStaffBaselineScores(staff, params);
+          const isMgmt = isManagementRole(staff);
+          let curGen = safeNum(staff.generalScore, baselines.generalScore);
+          let curTech = safeNum(staff.techScore, baselines.techScore);
+          let curMgmt = isMgmt ? safeNum(staff.mgmtScore, baselines.mgmtScore ?? 0) : undefined;
 
-          const newGeneralScore = Math.max(0, Math.min(5, Number((curGen + impact).toFixed(2))));
-          let newTotalScore = 5.0;
-          if (typeof staff.mgmtScore === 'number' && !isNaN(staff.mgmtScore)) {
-            newTotalScore = Math.max(0, Math.min(5, Number((
-              newGeneralScore * wGenMgmt + curMgmt * wMgmtMgmt + curTech * wTechMgmt
-            ).toFixed(2))));
+          if (pillar === 'mgmt' && isMgmt && curMgmt !== undefined) {
+            curMgmt = Math.max(0, Math.min(5, Number((curMgmt + impact).toFixed(2))));
+          } else if (pillar === 'tech') {
+            curTech = Math.max(0, Math.min(5, Number((curTech + impact).toFixed(2))));
           } else {
-            newTotalScore = Math.max(0, Math.min(5, Number((
-              newGeneralScore * wGenNoMgmt + curTech * wTechNoMgmt
-            ).toFixed(2))));
+            curGen = Math.max(0, Math.min(5, Number((curGen + impact).toFixed(2))));
           }
+
+          const newTotalScore = calculateTotalScore(curGen, curTech, curMgmt, params);
+          const salaryTier = calculateSalaryTier(newTotalScore, params);
 
           return {
             ...staff,
-            generalScore: isNaN(newGeneralScore) ? 5.0 : newGeneralScore,
-            totalScore: isNaN(newTotalScore) ? 5.0 : newTotalScore,
+            generalScore: curGen,
+            techScore: curTech,
+            mgmtScore: curMgmt,
+            totalScore: newTotalScore,
+            salaryTier,
           };
         }
         return staff;
@@ -901,25 +903,37 @@ export function App() {
                (i.status === 'Đã duyệt' || i.status === 'Đã ghi nhận')
         );
         let curGen = baselines.generalScore;
+        let curTech = baselines.techScore;
+        const isMgmt = isManagementRole(st);
+        let curMgmt = isMgmt ? baselines.mgmtScore : undefined;
+
         approvedIncidents.forEach(inc => {
-          if (typeof inc.impactPoints === 'number' && !isNaN(inc.impactPoints)) {
-            curGen += inc.impactPoints;
+          if (typeof inc.impactPoints === 'number' && !isNaN(inc.impactPoints) && inc.impactPoints !== 0) {
+            const pillar = getIncidentTargetPillar(inc);
+            if (pillar === 'mgmt' && isMgmt && curMgmt !== undefined) {
+              curMgmt += inc.impactPoints;
+            } else if (pillar === 'tech') {
+              curTech += inc.impactPoints;
+            } else {
+              curGen += inc.impactPoints;
+            }
           }
         });
+
         curGen = Math.max(0, Math.min(5, Number(curGen.toFixed(2))));
+        curTech = Math.max(0, Math.min(5, Number(curTech.toFixed(2))));
+        if (curMgmt !== undefined) {
+          curMgmt = Math.max(0, Math.min(5, Number(curMgmt.toFixed(2))));
+        }
 
-        const techScore = baselines.techScore;
-        const isMgmt = isManagementRole(st);
-        const mgmtScore = isMgmt ? baselines.mgmtScore : undefined;
-
-        const totalScore = calculateTotalScore(curGen, techScore, mgmtScore, newParams);
+        const totalScore = calculateTotalScore(curGen, curTech, curMgmt, newParams);
         const salaryTier = calculateSalaryTier(totalScore, newParams);
 
         return {
           ...st,
           generalScore: curGen,
-          techScore,
-          mgmtScore,
+          techScore: curTech,
+          mgmtScore: curMgmt,
           totalScore,
           salaryTier,
           hasCustomTechScore: false,

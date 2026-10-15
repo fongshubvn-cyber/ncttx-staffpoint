@@ -134,10 +134,10 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
       policyRules,
       defaultPolicyScore: 100,
       baselineCultureCommon: bCultureCommon,
-      baselineTmdvGeneral: bTmdvGen,
+      baselineTmdvGeneral: bCultureCommon,
       baselineTmdvTech: bTmdvTech,
       baselineTmdvMgmt: bTmdvMgmt,
-      baselineNshcGeneral: bNshcGen,
+      baselineNshcGeneral: bCultureCommon,
       baselineNshcTech: bNshcTech,
       baselineNshcMgmt: bNshcMgmt,
       baselineOtherTech: bOtherTech,
@@ -450,41 +450,25 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
                 </span>
                 <div className="space-y-1.5 text-[11px]">
                   <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Thương mại & Dịch vụ:</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="5"
-                      value={bTmdvGen}
-                      onChange={(e) => setBTmdvGen(Number(e.target.value))}
-                      className="w-16 p-1 bg-slate-50 border border-slate-300 rounded font-mono font-bold text-center text-emerald-800"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Nhân sự - HC - PC:</span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0"
-                      max="5"
-                      value={bNshcGen}
-                      onChange={(e) => setBNshcGen(Number(e.target.value))}
-                      className="w-16 p-1 bg-slate-50 border border-slate-300 rounded font-mono font-bold text-center text-emerald-800"
-                    />
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-slate-600">Khung chung / Tuyến khác:</span>
+                    <span className="text-slate-600 font-bold">Chuẩn chung toàn Nhà:</span>
                     <input
                       type="number"
                       step="0.01"
                       min="0"
                       max="5"
                       value={bCultureCommon}
-                      onChange={(e) => setBCultureCommon(Number(e.target.value))}
+                      onChange={(e) => {
+                        const val = Number(e.target.value);
+                        setBCultureCommon(val);
+                        setBTmdvGen(val);
+                        setBNshcGen(val);
+                      }}
                       className="w-16 p-1 bg-slate-50 border border-slate-300 rounded font-mono font-bold text-center text-emerald-800"
                     />
                   </div>
+                  <p className="text-[10px] text-slate-500 italic leading-snug">
+                    Trụ cột Văn hóa (One Voice) thống nhất áp dụng cho 100% nhân sự toàn Nhà.
+                  </p>
                 </div>
               </div>
 

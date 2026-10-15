@@ -163,25 +163,25 @@ export function getStaffBaselineScores(staff: Staff, params?: ParameterConfig): 
   const wMgmt = isMgmt ? (params?.weightMgmtWithMgmt ?? 0.30) : 0;
 
   // Điểm thành phần từ tham số hệ thống
-  let generalScore: number;
+  // 1. Trụ cột Văn Hóa & Thái Độ: THỐNG NHẤT TOÀN NHÀ (Ưu tiên baselineCultureCommon)
+  const generalScore = params?.baselineCultureCommon ?? 4.08;
+
+  // 2. Trụ cột Ngạch Chuyên Môn Phòng Ban & 3. Trụ cột Ngạch Quản Lý
   let techScore: number;
   let mgmtScore: number | undefined = undefined;
 
   if (isTMDV) {
-    generalScore = params?.baselineTmdvGeneral ?? 4.26;
-    techScore = params?.baselineTmdvTech ?? 5.00;
+    techScore = params?.baselineTmdvTech ?? 4.06;
     if (isMgmt) {
-      mgmtScore = params?.baselineTmdvMgmt ?? 3.54;
+      mgmtScore = params?.baselineTmdvMgmt ?? 4.44;
     }
   } else if (isNSHC) {
-    generalScore = params?.baselineNshcGeneral ?? 4.08;
     techScore = params?.baselineNshcTech ?? 5.00;
     if (isMgmt) {
       mgmtScore = params?.baselineNshcMgmt ?? 5.00;
     }
   } else {
     // Tuyến khác
-    generalScore = params?.baselineCultureCommon ?? 4.08;
     techScore = params?.baselineOtherTech ?? 4.08;
     if (isMgmt) {
       mgmtScore = params?.baselineOtherMgmt ?? 4.08;
@@ -501,15 +501,64 @@ export function get3RecentPeriods(): ReportingPeriod[] {
   return list;
 }
 
+export type IncidentTargetPillar = 'general' | 'tech' | 'mgmt';
+
+/**
+ * Phân luồng chính xác phiếu phản hồi / biên bản tác động vào cột trụ nào:
+ * 1. 'mgmt': Ngạch Quản Lý
+ * 2. 'tech': Ngạch Chuyên Môn Phòng Ban
+ * 3. 'general': Văn Hóa & Thái Độ (Mặc định)
+ */
+export function getIncidentTargetPillar(incident: any): IncidentTargetPillar {
+  if (!incident) return 'general';
+  const title = (incident.title || '').toLowerCase();
+  const desc = (incident.description || '').toLowerCase();
+  const group = (incident.groupCode || '').toUpperCase();
+  const cat = (incident.category || '').toLowerCase();
+
+  // 1. Ngạch Quản Lý
+  if (
+    group.startsWith('Q') || 
+    group.startsWith('QH') || 
+    title.includes('quản lý') || 
+    desc.includes('ngạch quản lý') ||
+    cat === 'quản lý'
+  ) {
+    return 'mgmt';
+  }
+
+  // 2. Ngạch Chuyên Môn Phòng Ban
+  if (
+    title.includes('chuyên môn') || 
+    title.includes('nghiệp vụ') || 
+    title.includes('phòng ban') ||
+    desc.includes('chuyên môn') ||
+    cat === 'chuyên môn' || 
+    cat === 'phòng ban' ||
+    group.startsWith('B') || 
+    group.startsWith('C') || 
+    group.startsWith('TC') || 
+    group.startsWith('HC') || 
+    group.startsWith('N') || 
+    group.startsWith('PC') ||
+    group.startsWith('KD')
+  ) {
+    return 'tech';
+  }
+
+  // 3. Văn Hóa & Thái Độ (Mặc định)
+  return 'general';
+}
+
 /**
  * Calculates a staff member's scores (General Score, Tech Score, Mgmt Score, Total Score, Salary Tier)
  * dynamically for a specific monthly reporting period (e.g. "2026-10" vs "2026-09").
  * 
  * Rules:
  * - Each month is an independent evaluation cycle.
- * - Base general score starts at 5.0 (or staff.generalScore base).
+ * - Base general score starts at baseline (e.g. 4.08).
  * - ONLY non-deleted approved tickets recorded in that SPECIFIC period impact the score.
- * - Tickets from previous months stay in their respective month and DO NOT carry over into the new month!
+ * - Each ticket impacts the exact pillar it belongs to (Văn hóa, Chuyên môn, hoặc Quản lý).
  */
 export function getStaffScoresForPeriod(
   staff: Staff,
@@ -556,20 +605,32 @@ export function getStaffScoresForPeriod(
   const recognitionsCount = approvedIncidents.filter(i => i.type === 'ghi_nhan').length;
 
   const baselines = getStaffBaselineScores(staff, params);
+  const hasMgmt = isManagementRole(staff);
 
-  // General Score starts from baseline
+  // Scores start from baseline
   let generalScore = baselines.generalScore;
+  let techScore = baselines.techScore;
+  let mgmtScore = hasMgmt ? (baselines.mgmtScore ?? 0) : 0;
+
+  // Distribute impact points into the EXACT pillar
   approvedIncidents.forEach(inc => {
-    if (typeof inc.impactPoints === 'number' && !isNaN(inc.impactPoints)) {
-      generalScore += inc.impactPoints;
+    if (typeof inc.impactPoints === 'number' && !isNaN(inc.impactPoints) && inc.impactPoints !== 0) {
+      const pillar = getIncidentTargetPillar(inc);
+      if (pillar === 'mgmt' && hasMgmt) {
+        mgmtScore += inc.impactPoints;
+      } else if (pillar === 'tech') {
+        techScore += inc.impactPoints;
+      } else {
+        generalScore += inc.impactPoints;
+      }
     }
   });
 
   generalScore = Math.max(0, Math.min(5, Number(generalScore.toFixed(2))));
-  const techScore = baselines.techScore;
-
-  const hasMgmt = isManagementRole(staff);
-  const mgmtScore = hasMgmt ? (baselines.mgmtScore ?? 0) : 0;
+  techScore = Math.max(0, Math.min(5, Number(techScore.toFixed(2))));
+  if (hasMgmt) {
+    mgmtScore = Math.max(0, Math.min(5, Number(mgmtScore.toFixed(2))));
+  }
 
   const totalScore = approvedIncidents.length === 0
     ? baselines.totalScore
