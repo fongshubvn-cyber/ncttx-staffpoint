@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { Staff, AuthUser } from '../types';
+import { isSystemAdmin } from '../utils/calculator';
 import { Key, Search, X, Check, ShieldCheck, Lock, RefreshCw, Eye, EyeOff, RotateCcw } from 'lucide-react';
 
 interface AdminPasswordModalProps {
@@ -28,7 +29,7 @@ export const AdminPasswordModal: React.FC<AdminPasswordModalProps> = ({
   const [showPasswordFlags, setShowPasswordFlags] = useState<Record<string, boolean>>({});
   const [successToast, setSuccessToast] = useState<string | null>(null);
 
-  if (!isOpen || !currentUser?.isAdmin) return null;
+  if (!isOpen || !isSystemAdmin(currentUser)) return null;
 
   // Include Admin account + all staff members
   const allAccounts = [
@@ -46,7 +47,7 @@ export const AdminPasswordModal: React.FC<AdminPasswordModalProps> = ({
       role: s.role,
       department: s.department || s.line || 'Chưa phân chia',
       isManager: !!s.isManager,
-      isAdmin: !!s.isAdmin,
+      isAdmin: isSystemAdmin(s),
     })),
   ];
 
@@ -217,7 +218,7 @@ export const AdminPasswordModal: React.FC<AdminPasswordModalProps> = ({
                           <span className="font-extrabold text-sm text-slate-900 truncate">{acc.name}</span>
                           {acc.isAdmin && (
                             <span className="text-[10px] font-black bg-amber-100 text-amber-900 px-1.5 py-0.5 rounded border border-amber-300 flex items-center gap-0.5">
-                              <ShieldCheck className="w-3 h-3 text-amber-700" /> Admin
+                              <ShieldCheck className="w-3 h-3 text-amber-700" /> {acc.id === 'ADMIN' ? 'Admin' : 'Co-Admin'}
                             </span>
                           )}
                         </div>

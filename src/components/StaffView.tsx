@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Staff, DepartmentLine, ParameterConfig, AuthUser } from '../types';
-import { getSalaryTierBadge, calculateSalaryTier, calculateTotalScore, getVisibleStaffListForUser, isManagementRole, getStaffBaselineScores, getDepartmentTrackName } from '../utils/calculator';
+import { getSalaryTierBadge, calculateSalaryTier, calculateTotalScore, getVisibleStaffListForUser, isManagementRole, getStaffBaselineScores, getDepartmentTrackName, isSystemAdmin } from '../utils/calculator';
 import { 
   Users, 
   Search, 
@@ -69,7 +69,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
 
   // Compute visible lines: Admin sees ALL lines, non-admin sees ONLY their department line
   const visibleLines = React.useMemo(() => {
-    if (currentUser?.isAdmin) return lines;
+    if (isSystemAdmin(currentUser)) return lines;
     
     const userLineName = currentUser?.department || '';
     if (!userLineName) return lines;
@@ -95,8 +95,8 @@ export const StaffView: React.FC<StaffViewProps> = ({
     return filtered.length > 0 ? filtered : lines;
   }, [lines, currentUser]);
 
-  // Permission: Trưởng phòng trở lên hoặc Admin mới được thêm nhân sự, gán phòng ban & tạo mật khẩu
-  const canAddStaff = currentUser?.isAdmin || ['Trưởng phòng', 'C-Level', 'Founder', 'Admin', 'Manager'].includes(currentUser?.jobLevel || '');
+  // Permission: Trưởng phòng trở lên hoặc Admin / Co-Admin mới được thêm nhân sự, gán phòng ban & tạo mật khẩu
+  const canAddStaff = isSystemAdmin(currentUser) || ['Trưởng phòng', 'C-Level', 'Founder', 'Admin', 'Manager'].includes(currentUser?.jobLevel || '');
 
   // Form
   const [id, setId] = useState<string>(`TTX${String(staffList.length + 1).padStart(3, '0')}`);
@@ -279,7 +279,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
                     <Star className="w-3 h-3 text-[#52B788] fill-[#52B788]" />
                     <span>Bậc {staff.salaryTier}</span>
                   </span>
-                  {staff.isAdmin && (
+                  {isSystemAdmin(staff) && staff.id !== 'ADMIN' && (
                     <span className="px-2 py-0.5 rounded-full text-[10px] font-black bg-amber-100 text-amber-900 border border-amber-300 flex items-center space-x-1">
                       <ShieldCheck className="w-3 h-3 text-amber-700" />
                       <span>Co-Admin</span>
@@ -433,8 +433,8 @@ export const StaffView: React.FC<StaffViewProps> = ({
               <p className="text-slate-700">📍 <strong>Địa điểm làm việc:</strong> {selectedStaff.location}</p>
               <p className="text-slate-700">💬 <strong>Đối tượng giao tiếp:</strong> {selectedStaff.speechCapability}</p>
 
-              {/* Admin Privilege Toggle: Visible ONLY to Admins */}
-              {currentUser?.isAdmin && (
+              {/* Admin Privilege Toggle: Visible ONLY to Admins & Co-Admins */}
+              {isSystemAdmin(currentUser) && (
                 <div className="p-3 bg-emerald-50/90 border border-emerald-300 rounded-2xl space-y-1 my-2">
                   <label className="flex items-center space-x-2.5 cursor-pointer font-bold text-xs text-[#1B4332]">
                     <input
@@ -491,7 +491,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
               </div>
 
               {/* Advanced Admin Management Controls: Edit, Lock/Unlock & Remove */}
-              {currentUser?.isAdmin && (
+              {isSystemAdmin(currentUser) && (
                 <div className="pt-3 border-t border-slate-200 space-y-2">
                   <div className="flex items-center justify-between gap-2">
                     <button
@@ -728,7 +728,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
             <form
               onSubmit={(e) => {
                 e.preventDefault();
-                const isMgr = editingStaff.isManager || editingStaff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel);
+                const isMgr = editingStaff.isManager || isSystemAdmin(editingStaff) || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel);
                 const updatedTarget = {
                   ...editingStaff,
                   isManager: isMgr,
@@ -883,7 +883,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
 
               {/* Điểm Nền Tự Động Từ Hệ Thống (Đã tắt tùy chỉnh riêng lẻ) */}
               {(() => {
-                const isMgr = editingStaff.isManager || editingStaff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel);
+                const isMgr = editingStaff.isManager || isSystemAdmin(editingStaff) || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel);
                 const baselines = getStaffBaselineScores({ ...editingStaff, isManager: isMgr }, params);
                 const tBadge = getSalaryTierBadge(baselines.salaryTier);
                 return (

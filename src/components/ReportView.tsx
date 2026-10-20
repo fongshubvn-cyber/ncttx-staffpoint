@@ -2,7 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { Staff, IncidentRecord, DepartmentLine, ParameterConfig, AuthUser, Question } from '../types';
 import { exportReportToGoogleSheet, exportBatchMonthlyToGoogleSheet } from '../utils/exportDrive';
 import { getStaffCriteriaBreakdown, getTrackScoreDetails } from '../utils/reportHelper';
-import { getStaffScoresForPeriod } from '../utils/calculator';
+import { getStaffScoresForPeriod, isSystemAdmin } from '../utils/calculator';
 import { 
   BarChart3, 
   TrendingUp, 
@@ -67,7 +67,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
 
   // Filtered staff list based on permissions
   const visibleStaffList = useMemo(() => {
-    return (currentUser?.isAdmin 
+    return (isSystemAdmin(currentUser) 
       ? staffList 
       : staffList.filter(s => s.id === currentUser?.id)
     ).slice().sort((a, b) => {
@@ -79,13 +79,13 @@ export const ReportView: React.FC<ReportViewProps> = ({
 
   // Selected staff ID for Individual Staff Report
   const [selectedStaffId, setSelectedStaffId] = useState<string>(
-    currentUser?.isAdmin 
+    isSystemAdmin(currentUser) 
       ? (staffList[0]?.id || '')
       : (currentUser?.id || staffList[0]?.id || '')
   );
 
   useEffect(() => {
-    if (!currentUser?.isAdmin && currentUser?.id) {
+    if (!isSystemAdmin(currentUser) && currentUser?.id) {
       setSelectedStaffId(currentUser.id);
     }
   }, [currentUser]);
@@ -324,7 +324,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
               <div className="flex items-center space-x-1.5 text-xs font-extrabold text-[#1B4332] font-heading shrink-0">
                 <User className="w-4 h-4 text-[#2D6A4F] shrink-0" />
                 <span>Chọn Nhân Sự Để Báo Cáo:</span>
-                {!currentUser?.isAdmin && (
+                {!isSystemAdmin(currentUser) && (
                   <span className="text-[10px] font-bold text-[#2D6A4F] bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                     🔒 Cá nhân
                   </span>
@@ -364,7 +364,7 @@ export const ReportView: React.FC<ReportViewProps> = ({
             </div>
 
             {/* Employee Dropdown Select */}
-            {currentUser?.isAdmin ? (
+            {isSystemAdmin(currentUser) ? (
               <select
                 value={selectedStaffId}
                 onChange={(e) => setSelectedStaffId(e.target.value)}

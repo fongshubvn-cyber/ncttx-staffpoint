@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { BaselinePoint, ParameterConfig, AuthUser, PolicyRule } from '../types';
 import { initialPolicyRules } from '../data/seedData';
-import { calculateTotalScore, calculateSalaryTier } from '../utils/calculator';
+import { calculateTotalScore, calculateSalaryTier, isSystemAdmin } from '../utils/calculator';
 import { BarChart3, Sliders, Award, Calculator, Star, Leaf, Check, Edit3, ShieldCheck, ShieldAlert, Plus } from 'lucide-react';
 
 interface BaselineViewProps {
@@ -181,7 +181,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
             <Leaf className="w-4 h-4 text-[#2D6A4F]" />
             <span>Thông số hệ thống & Công thức</span>
           </div>
-          {currentUser?.isAdmin && (
+          {isSystemAdmin(currentUser) && (
             <span className="text-[10px] font-extrabold text-[#2D6A4F] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
               🔑 Admin Cấu Hình
             </span>
@@ -201,7 +201,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
               Tham Số Cộng / Trừ Điểm Phiếu Ghi Nhận & Vi Phạm 🎯
             </h3>
           </div>
-          {currentUser?.isAdmin && (
+          {isSystemAdmin(currentUser) && (
             <button
               onClick={() => {
                 if (isEditing) handleSavePoints();
@@ -381,7 +381,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
             <span className="text-[10px] font-mono font-bold text-slate-500 bg-slate-100 px-2.5 py-1 rounded">
               {isEditing ? 'Đang chỉnh sửa 3 cột trụ' : 'Tính tự động theo Trọng số & Điểm nền'}
             </span>
-            {currentUser?.isAdmin && (
+            {isSystemAdmin(currentUser) && (
               <button
                 onClick={() => {
                   if (isEditing) handleSavePoints();
@@ -945,7 +945,7 @@ export const BaselineView: React.FC<BaselineViewProps> = ({
             </div>
           </div>
 
-          {currentUser?.isAdmin && (
+          {isSystemAdmin(currentUser) && (
             <span className="text-[10px] font-mono font-bold bg-emerald-50 text-[#2D6A4F] px-2.5 py-1 rounded-full border border-emerald-200 whitespace-nowrap">
               100 Điểm Gốc
             </span>

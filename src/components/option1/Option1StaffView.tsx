@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Staff, DepartmentLine, ParameterConfig, AuthUser, SpeechType } from '../../types';
-import { getSalaryTierBadge, calculateTotalScoreForStaff, calculateSalaryTier, calculateTotalScore, getVisibleStaffListForUser, isManagementRole, getStaffBaselineScores, getDepartmentTrackName } from '../../utils/calculator';
+import { getSalaryTierBadge, calculateTotalScoreForStaff, calculateSalaryTier, calculateTotalScore, getVisibleStaffListForUser, isManagementRole, getStaffBaselineScores, getDepartmentTrackName, isSystemAdmin } from '../../utils/calculator';
 import { 
   Users, 
   Search, 
@@ -148,7 +148,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
     e.preventDefault();
     if (!editingStaff) return;
 
-    const isMgr = !!editingStaff.isManager || !!editingStaff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel);
+    const isMgr = !!editingStaff.isManager || isSystemAdmin(editingStaff) || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel);
     const updatedTarget = {
       ...editingStaff,
       isManager: isMgr,
@@ -241,7 +241,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                   {staff.id}
                 </span>
                 {renderRoleBadge(staff)}
-                {staff.isAdmin && (
+                {isSystemAdmin(staff) && staff.id !== 'ADMIN' && (
                   <span className="px-1.5 py-0.5 rounded-md bg-amber-50 text-amber-900 text-[10px] font-black border border-amber-300 flex items-center gap-1">
                     <ShieldCheck className="w-3 h-3 text-amber-700 inline" /> Co-Admin
                   </span>
@@ -355,7 +355,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
             </button>
           </div>
 
-          {currentUser?.isAdmin && (
+          {isSystemAdmin(currentUser) && (
             <div className="flex items-center gap-2">
               {onOpenAdminPasswordModal && (
                 <button
@@ -640,7 +640,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
               })()}
 
               {/* Action buttons for admin */}
-              {currentUser?.isAdmin && (
+              {isSystemAdmin(currentUser) && (
                 <div className="pt-2 flex flex-col sm:flex-row gap-2">
                   <button
                     onClick={() => {
@@ -872,7 +872,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
 
               {/* Điểm Nền Tự Động Từ Hệ Thống (Đã tắt tùy chỉnh riêng lẻ) */}
               {(() => {
-                const isMgr = !!editingStaff.isManager || !!editingStaff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel);
+                const isMgr = !!editingStaff.isManager || isSystemAdmin(editingStaff) || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager', 'Quản lý'].includes(editingStaff.jobLevel);
                 const baselines = getStaffBaselineScores({ ...editingStaff, isManager: isMgr }, params);
                 const tBadge = getSalaryTierBadge(baselines.salaryTier);
                 return (

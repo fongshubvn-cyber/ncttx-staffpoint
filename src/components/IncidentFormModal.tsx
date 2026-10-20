@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Staff, Question, DepartmentLine, IncidentRecord, IncidentType, SeverityLevel, ParameterConfig, AuthUser } from '../types';
-import { isManagementRole } from '../utils/calculator';
+import { isManagementRole, isSystemAdmin } from '../utils/calculator';
 import { initialPolicyRules } from '../data/seedData';
 import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert, ClipboardCheck, BookOpen, AlertTriangle } from 'lucide-react';
 
@@ -482,7 +482,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
             <label className="block text-slate-700 font-extrabold font-heading mb-1">
               2. Người Lập (Bạn) <span className="text-rose-500">*</span>
             </label>
-            {currentUser && !currentUser.isAdmin ? (
+            {currentUser && !isSystemAdmin(currentUser) ? (
               <div className="w-full p-2.5 bg-emerald-50 border border-emerald-300 rounded-xl text-[#1B4332] font-black text-xs flex items-center justify-between">
                 <span>
                   <strong>[{currentUser.id}]</strong> {currentUser.name} ({currentUser.role})

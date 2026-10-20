@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IncidentRecord, Staff, Question, AuthUser, AdminFeedback, IncidentStatus } from '../../types';
-import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident, get3RecentPeriods } from '../../utils/calculator';
+import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident, get3RecentPeriods, isSystemAdmin } from '../../utils/calculator';
 import { 
   Trophy, 
   Plus, 
@@ -113,7 +113,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
   }, [initialFilterType]);
 
   const isHRManager = isHRHeadRole(currentUser);
-  const isAdminUser = !!(currentUser?.isAdmin || currentUser?.id === 'ADMIN' || currentUser?.jobLevel === 'Admin');
+  const isAdminUser = isSystemAdmin(currentUser);
   const isManagerOrDeptHead = isManager || isDeptHeadOrAboveRole(currentUser) || isHRManager || isAdminUser;
   const activeHRHead = getActiveHRHead(staffList);
 

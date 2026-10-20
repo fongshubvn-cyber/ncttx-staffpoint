@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { Staff, IncidentRecord, ParameterConfig, AuthUser, PolicyRule } from '../types';
-import { getStaffPolicyScoreForPeriod, getPolicyHealthStatus, get3RecentPeriods } from '../utils/calculator';
+import { getStaffPolicyScoreForPeriod, getPolicyHealthStatus, get3RecentPeriods, isSystemAdmin } from '../utils/calculator';
 import { PolicyHealthModal } from './PolicyHealthModal';
 import { initialPolicyRules } from '../data/seedData';
 import { 
@@ -56,7 +56,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedStaffForModal, setSelectedStaffForModal] = useState<Staff | null>(null);
 
-  const isAdmin = Boolean(currentUser?.isAdmin);
+  const isAdmin = isSystemAdmin(currentUser);
 
   const handleSaveRules = () => {
     if (!onUpdateParams) return;

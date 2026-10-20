@@ -50,7 +50,7 @@ import {
   ChevronRight
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
-import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole } from '../../utils/calculator';
+import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole, isSystemAdmin } from '../../utils/calculator';
 
 interface Option1LayoutProps {
   activeTab: string;
@@ -156,7 +156,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 
   const visibleIncidentsBadgeCount = React.useMemo(() => {
     if (!currentUser) return 0;
-    const isUpperManager = currentUser.isAdmin || currentUser.id === 'ADMIN' || isHRHeadRole(currentUser) || isDeptHeadOrAboveRole(currentUser);
+    const isUpperManager = isSystemAdmin(currentUser) || isHRHeadRole(currentUser) || isDeptHeadOrAboveRole(currentUser);
     if (isUpperManager) {
       return incidents.filter(i => !i.isDeleted && canUserViewIncident(currentUser, i, staffList)).length;
     }
@@ -279,7 +279,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 </button>
 
                 {/* Admin Password Management Button (Tích hợp gọn trong Account Icon Group) */}
-                {currentUser.isAdmin && (
+                {isSystemAdmin(currentUser) && (
                   <button
                     type="button"
                     onClick={() => {
@@ -514,7 +514,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                   </button>
                 )}
 
-                {currentUser?.isAdmin ? (
+                {isSystemAdmin(currentUser) ? (
                   <button
                     onClick={() => {
                       setIsMobileMenuOpen(false);

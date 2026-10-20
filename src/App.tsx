@@ -43,6 +43,7 @@ import {
 } from './config/firebase';
 import {
   isDeptHeadOrAboveRole,
+  isSystemAdmin,
   getStaffBaselineScores,
   getCalculatedBaselinePoints,
   calculateTotalScore,
@@ -273,16 +274,33 @@ export function App() {
     localStorage.setItem('ncttx_params', JSON.stringify(params));
   }, [params]);
 
-  // Sync isManager state when currentUser changes
+  // Sync isManager and isAdmin state when currentUser changes
   useEffect(() => {
     if (currentUser) {
-      setIsManager(currentUser.isManager || currentUser.isAdmin || isDeptHeadOrAboveRole(currentUser));
-      localStorage.setItem('ncttx_current_user', JSON.stringify(currentUser));
+      const isSysAdmin = isSystemAdmin(currentUser);
+      setIsManager(currentUser.isManager || isSysAdmin || isDeptHeadOrAboveRole(currentUser));
+      localStorage.setItem('ncttx_current_user', JSON.stringify({
+        ...currentUser,
+        isAdmin: isSysAdmin,
+      }));
     } else {
       setIsManager(false);
       localStorage.removeItem('ncttx_current_user');
     }
   }, [currentUser]);
+
+  // Auto-sync currentUser's admin privileges with staffList (e.g. when promoted to Co-Admin)
+  useEffect(() => {
+    if (currentUser && currentUser.id !== 'ADMIN') {
+      const staffMember = staffList.find(s => s.id.trim().toUpperCase() === currentUser.id.trim().toUpperCase());
+      if (staffMember) {
+        const shouldBeAdmin = isSystemAdmin(staffMember);
+        if (currentUser.isAdmin !== shouldBeAdmin) {
+          setCurrentUser(prev => prev ? { ...prev, isAdmin: shouldBeAdmin } : null);
+        }
+      }
+    }
+  }, [staffList, currentUser]);
 
   // Ensure Kế Toán line exists and TTX005 is set to Trưởng phòng Kế toán
   useEffect(() => {
@@ -564,10 +582,10 @@ export function App() {
     }
   };
 
-  // Handler: ONLY Admin soft-deletes an incident record (moves to Trash Bin)
+  // Handler: Admin & Co-Admin soft-deletes an incident record (moves to Trash Bin)
   const handleDeleteIncident = (incidentId: string) => {
-    if (!currentUser?.isAdmin) {
-      alert("⚠️ Thao tác bị từ chối: Chỉ duy nhất tài khoản Admin mới có quyền xóa phiếu ghi nhận / biên bản!");
+    if (!isSystemAdmin(currentUser)) {
+      alert("⚠️ Thao tác bị từ chối: Chỉ quản trị viên (Admin / Co-Admin) mới có quyền xóa phiếu ghi nhận / biên bản!");
       return;
     }
     setIncidents(prev => {
@@ -591,10 +609,10 @@ export function App() {
     });
   };
 
-  // Handler: ONLY Admin restores an incident record from Trash Bin
+  // Handler: Admin & Co-Admin restores an incident record from Trash Bin
   const handleRestoreIncident = (incidentId: string) => {
-    if (!currentUser?.isAdmin) {
-      alert("⚠️ Thao tác bị từ chối: Chỉ duy nhất tài khoản Admin mới có quyền khôi phục phiếu!");
+    if (!isSystemAdmin(currentUser)) {
+      alert("⚠️ Thao tác bị từ chối: Chỉ quản trị viên (Admin / Co-Admin) mới có quyền khôi phục phiếu!");
       return;
     }
     setIncidents(prev => {
@@ -617,10 +635,10 @@ export function App() {
     });
   };
 
-  // Handler: ONLY Admin permanently purges an incident record from Trash Bin
+  // Handler: Admin & Co-Admin permanently purges an incident record from Trash Bin
   const handlePermanentDeleteIncident = (incidentId: string) => {
-    if (!currentUser?.isAdmin) {
-      alert("⚠️ Thao tác bị từ chối: Chỉ duy nhất tài khoản Admin mới có quyền xóa vĩnh viễn phiếu!");
+    if (!isSystemAdmin(currentUser)) {
+      alert("⚠️ Thao tác bị từ chối: Chỉ quản trị viên (Admin / Co-Admin) mới có quyền xóa vĩnh viễn phiếu!");
       return;
     }
     setIncidents(prev => {
@@ -819,20 +837,25 @@ export function App() {
 
     // If updating the currently logged-in user, immediately update currentUser session state
     if (currentUser && currentUser.id === updatedStaff.id) {
+      const isSysAdmin = isSystemAdmin(updatedStaff);
       setCurrentUser(prev => prev ? {
         ...prev,
         name: updatedStaff.name,
         role: updatedStaff.role,
         department: updatedStaff.department,
         jobLevel: updatedStaff.jobLevel,
-        isManager: !!updatedStaff.isManager || !!updatedStaff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager'].includes(updatedStaff.jobLevel),
-        isAdmin: !!updatedStaff.isAdmin || updatedStaff.jobLevel === 'Admin' || updatedStaff.id.trim().toUpperCase() === 'ADMIN',
+        isManager: !!updatedStaff.isManager || isSysAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager'].includes(updatedStaff.jobLevel),
+        isAdmin: isSysAdmin,
       } : null);
     }
   };
 
-  // Handler: Delete staff member
+  // Handler: Delete staff member (protect master ADMIN from deletion)
   const handleDeleteStaff = (staffId: string) => {
+    if (staffId.trim().toUpperCase() === 'ADMIN') {
+      alert("⚠️ Không thể xóa tài khoản Quản Trị Viên gốc (ADMIN)!");
+      return;
+    }
     setStaffList(prev => {
       const updated = prev.filter(s => s.id !== staffId);
       localStorage.setItem('ncttx_staff_list', JSON.stringify(updated));

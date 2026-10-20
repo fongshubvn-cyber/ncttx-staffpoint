@@ -10,7 +10,8 @@ import {
   getVisibleStaffListForUser,
   getStaffScoresForPeriod,
   getStaffPolicyScoreForPeriod,
-  getDepartmentTrackName
+  getDepartmentTrackName,
+  isSystemAdmin
 } from '../../utils/calculator';
 import { PolicyHealthModal } from '../PolicyHealthModal';
 import { 
@@ -59,7 +60,7 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
   isRefreshingCloud = false,
   onAppealIncident,
 }) => {
-  const isAdmin = Boolean(currentUser?.isAdmin || (currentUser?.id || '').trim().toUpperCase() === 'ADMIN' || (currentUser?.jobLevel || '').toLowerCase() === 'admin');
+  const isAdmin = isSystemAdmin(currentUser);
   const isHRManager = isHRHeadRole(currentUser);
   const recentPeriods = get3RecentPeriods();
   const [selectedPeriodKey, setSelectedPeriodKey] = useState<string>(recentPeriods[0].key);

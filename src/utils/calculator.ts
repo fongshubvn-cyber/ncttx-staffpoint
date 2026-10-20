@@ -531,12 +531,36 @@ export function getSalaryTierBadge(tier: number): SalaryTierBadgeInfo {
 }
 
 /**
- * Dynamic HR Head Permission Check
- * Admin OR any user assigned to Department 'Nhân sự' with 'Trưởng phòng' / 'Head' / 'Quản lý' role.
+ * Dynamic System Administrator Check (Admin & Co-Admin)
+ * Returns true if the user is the primary Admin or has been granted Co-Admin rights
+ * (via isAdmin flag, id === 'ADMIN', jobLevel/role containing 'admin' or 'co-admin' or 'quản trị viên').
  */
-export function isHRHeadRole(user: { isAdmin?: boolean; isManager?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined): boolean {
+export function isSystemAdmin(
+  user: { id?: string; isAdmin?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined
+): boolean {
   if (!user) return false;
   if (user.isAdmin) return true;
+  const cleanId = (user.id || '').trim().toUpperCase();
+  if (cleanId === 'ADMIN') return true;
+  const level = (user.jobLevel || '').toLowerCase().trim();
+  const role = (user.role || '').toLowerCase().trim();
+  return (
+    level.includes('admin') ||
+    role.includes('admin') ||
+    level.includes('co-admin') ||
+    role.includes('co-admin') ||
+    level.includes('quản trị viên') ||
+    role.includes('quản trị viên')
+  );
+}
+
+/**
+ * Dynamic HR Head Permission Check
+ * Admin / Co-Admin OR any user assigned to Department 'Nhân sự' with 'Trưởng phòng' / 'Head' / 'Quản lý' role.
+ */
+export function isHRHeadRole(user: { id?: string; isAdmin?: boolean; isManager?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined): boolean {
+  if (!user) return false;
+  if (isSystemAdmin(user)) return true;
 
   const roleLower = (user.role || '').toLowerCase();
   const deptLower = (user.department || '').toLowerCase();
@@ -550,11 +574,11 @@ export function isHRHeadRole(user: { isAdmin?: boolean; isManager?: boolean; rol
 
 /**
  * Dynamic Department Head or Above Permission Check
- * Admin, Founder, C-Level, Trưởng phòng, Quản lý, Head, Lead.
+ * Admin / Co-Admin, Founder, C-Level, Trưởng phòng, Quản lý, Head, Lead.
  */
-export function isDeptHeadOrAboveRole(user: { isAdmin?: boolean; isManager?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined): boolean {
+export function isDeptHeadOrAboveRole(user: { id?: string; isAdmin?: boolean; isManager?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined): boolean {
   if (!user) return false;
-  if (user.isAdmin || user.isManager) return true;
+  if (isSystemAdmin(user) || user.isManager) return true;
 
   const roleLower = (user.role || '').toLowerCase();
   const levelLower = (user.jobLevel || '').toLowerCase();
@@ -790,13 +814,8 @@ export function canUserViewIncident(
     return true;
   }
 
-  // 2. CHỈ Admin hệ thống mới xem được toàn bộ phiếu của mọi nhân sự
-  const isAdmin = Boolean(
-    user.isAdmin || 
-    cleanUserId === 'ADMIN' || 
-    (user.jobLevel || '').toLowerCase() === 'admin'
-  );
-  if (isAdmin) {
+  // 2. Admin & Co-Admin hệ thống xem được toàn bộ phiếu của mọi nhân sự
+  if (isSystemAdmin(user)) {
     return true;
   }
 
@@ -806,15 +825,14 @@ export function canUserViewIncident(
 
 /**
  * Determines rank hierarchy level for staff scoping:
- * Level 4: Admin, HR Head, Founder, CEO, C-Level (Full Company Visibility)
+ * Level 4: Admin, Co-Admin, HR Head, Founder, CEO, C-Level (Full Company Visibility)
  * Level 3: Quản lý, Trưởng phòng (Non-HR Department Manager)
  * Level 2: Lead, Trưởng ca, Cửa hàng trưởng (Line Lead / Team Lead)
  * Level 1: Regular Staff (Nhân sự thường)
  */
 export function getStaffRank(staff: { id?: string; isAdmin?: boolean; isManager?: boolean; role?: string; department?: string; jobLevel?: string } | null | undefined): number {
   if (!staff) return 1;
-  const cleanId = (staff.id || '').trim().toUpperCase();
-  if (staff.isAdmin || cleanId === 'ADMIN' || isHRHeadRole(staff)) {
+  if (isSystemAdmin(staff) || isHRHeadRole(staff)) {
     return 4;
   }
 
@@ -842,7 +860,7 @@ export function getStaffRank(staff: { id?: string; isAdmin?: boolean; isManager?
 /**
  * Permission Check: Returns staff list visible to user
  * Scoping rule: Quản lý > Lead > Nhân sự
- * - Level 4 (Admin / HR Head / Top Leadership): sees ALL staff across the company
+ * - Level 4 (Admin / Co-Admin / HR Head / Top Leadership): sees ALL staff across the company
  * - Level 3 (Quản lý / Trưởng phòng): sees self + subordinate Leads (Level 2) and Staff (Level 1) in their department/line
  * - Level 2 (Lead / Trưởng ca): sees self + subordinate Regular Staff (Level 1) in their department/line
  * - Level 1 (Nhân sự thường): sees self only
@@ -853,14 +871,9 @@ export function getVisibleStaffListForUser(
 ): Staff[] {
   if (!user) return staffList;
   const cleanUserId = (user.id || '').trim().toUpperCase();
-  const isAdmin = Boolean(
-    user.isAdmin || 
-    cleanUserId === 'ADMIN' || 
-    (user.jobLevel || '').toLowerCase() === 'admin'
-  );
 
-  // 1. Chỉ Admin mới có thể thấy nhân viên khác
-  if (isAdmin) {
+  // 1. Admin & Co-Admin có thể thấy toàn bộ nhân sự công ty
+  if (isSystemAdmin(user)) {
     return staffList;
   }
 

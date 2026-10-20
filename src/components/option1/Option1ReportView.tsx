@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { Staff, IncidentRecord, DepartmentLine, ParameterConfig, AuthUser, Question } from '../../types';
-import { getSalaryTierBadge, calculateSalaryTier, getVisibleStaffListForUser, get3RecentPeriods, getStaffScoresForPeriod } from '../../utils/calculator';
+import { getSalaryTierBadge, calculateSalaryTier, getVisibleStaffListForUser, get3RecentPeriods, getStaffScoresForPeriod, isSystemAdmin } from '../../utils/calculator';
 import { getStaffCriteriaBreakdown, getTrackScoreDetails, EvaluatedCriterion, GroupScoreDetail } from '../../utils/reportHelper';
 import { 
   BarChart3, 
@@ -73,7 +73,7 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
   }, [staffList, currentUser]);
 
   const [selectedStaffId, setSelectedStaffId] = useState<string>(
-    currentUser?.isAdmin ? (visibleStaffList[0]?.id || '') : (currentUser?.id || visibleStaffList[0]?.id || '')
+    isSystemAdmin(currentUser) ? (visibleStaffList[0]?.id || '') : (currentUser?.id || visibleStaffList[0]?.id || '')
   );
 
   useEffect(() => {
@@ -422,7 +422,7 @@ export const Option1ReportView: React.FC<Option1ReportViewProps> = ({
           </div>
         </div>
 
-        {currentUser?.isAdmin || visibleStaffList.length > 1 ? (
+        {isSystemAdmin(currentUser) || visibleStaffList.length > 1 ? (
           <select
             value={selectedStaffId}
             onChange={(e) => setSelectedStaffId(e.target.value)}

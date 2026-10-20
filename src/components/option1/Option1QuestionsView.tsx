@@ -1,5 +1,6 @@
 import React, { useState, useMemo } from 'react';
 import { Question, DepartmentLine, AuthUser } from '../../types';
+import { isSystemAdmin } from '../../utils/calculator';
 import { 
   Layers, 
   Search, 
@@ -120,7 +121,7 @@ export const Option1QuestionsView: React.FC<Option1QuestionsViewProps> = ({
 
   // Department line scoping based on user
   const visibleLines = useMemo(() => {
-    if (currentUser?.isAdmin) return lines;
+    if (isSystemAdmin(currentUser)) return lines;
     const userLineName = currentUser?.department || '';
     if (!userLineName) return lines;
     const filtered = lines.filter(l => {
@@ -231,7 +232,7 @@ export const Option1QuestionsView: React.FC<Option1QuestionsViewProps> = ({
           </div>
         </div>
 
-        {currentUser?.isAdmin && (
+        {isSystemAdmin(currentUser) && (
           <button
             type="button"
             onClick={openAddModal}
@@ -456,7 +457,7 @@ export const Option1QuestionsView: React.FC<Option1QuestionsViewProps> = ({
                           }`}>
                             {q.measurementType === 'ghi nhận' ? '🌟 Ghi nhận' : '⚠️ Vi phạm'}
                           </span>
-                          {currentUser?.isAdmin && (
+                          {isSystemAdmin(currentUser) && (
                             <>
                               <button
                                 onClick={() => openEditModal(q)}

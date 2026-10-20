@@ -24,7 +24,7 @@ import {
   Trash2
 } from 'lucide-react';
 
-import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident } from '../utils/calculator';
+import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident, isSystemAdmin } from '../utils/calculator';
 
 interface IncidentsViewProps {
   incidents: IncidentRecord[];
@@ -70,7 +70,7 @@ export const IncidentsView: React.FC<IncidentsViewProps> = ({
   const [appealReason, setAppealReason] = useState<string>('');
 
   const isHRManager = isHRHeadRole(currentUser);
-  const isAdminUser = !!(currentUser?.isAdmin || currentUser?.id === 'ADMIN' || currentUser?.jobLevel === 'Admin');
+  const isAdminUser = isSystemAdmin(currentUser);
   const isManagerOrDeptHead = isManager || isDeptHeadOrAboveRole(currentUser) || isHRManager || isAdminUser;
   const activeHRHead = getActiveHRHead(staffList);
   const activeHRHeadName = activeHRHead ? activeHRHead.name : 'Trưởng phòng Nhân sự';
@@ -367,7 +367,7 @@ export const IncidentsView: React.FC<IncidentsViewProps> = ({
       <div className="space-y-3">
         {filteredIncidents.map((incident) => {
           const isViolation = incident.type === 'vi_pham';
-          const isTargetedUser = currentUser?.id === incident.targetId || currentUser?.isAdmin;
+          const isTargetedUser = currentUser?.id === incident.targetId || isSystemAdmin(currentUser);
           const isAppealed = incident.status === 'Đang kháng nghị';
           const isAppealApproved = incident.status === 'Kháng nghị được chấp nhận';
           const isAppealRejected = incident.status === 'Kháng nghị bị từ chối';

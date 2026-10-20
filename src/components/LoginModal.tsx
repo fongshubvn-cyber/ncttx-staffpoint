@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import logoImg from '../assets/logo.png';
 import { AuthUser, Staff } from '../types';
+import { isSystemAdmin } from '../utils/calculator';
 import { 
   User, 
   KeyRound, 
@@ -120,8 +121,8 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       positionCategory: staff.positionCategory,
       department: staff.department,
       jobLevel: staff.jobLevel,
-      isManager: !!staff.isManager || !!staff.isAdmin || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager'].includes(staff.jobLevel),
-      isAdmin: !!staff.isAdmin || staff.jobLevel === 'Admin' || staff.id.trim().toUpperCase() === 'ADMIN',
+      isManager: !!staff.isManager || isSystemAdmin(staff) || ['Trưởng phòng', 'Founder', 'C-Level', 'Manager'].includes(staff.jobLevel),
+      isAdmin: isSystemAdmin(staff),
       mustChangePassword: currentPass === '123456',
     };
 

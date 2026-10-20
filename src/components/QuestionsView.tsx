@@ -1,5 +1,6 @@
 import React, { useState, useMemo, useEffect } from 'react';
 import { Question, DepartmentLine, AuthUser } from '../types';
+import { isSystemAdmin } from '../utils/calculator';
 import { 
   Plus, 
   Layers, 
@@ -40,7 +41,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
 
   // Compute visible lines for user scoping: Admin sees ALL lines, non-admin sees ONLY their department line
   const visibleLines = useMemo(() => {
-    if (currentUser?.isAdmin) return lines;
+    if (isSystemAdmin(currentUser)) return lines;
     
     const userLineName = currentUser?.department || '';
     if (!userLineName) return lines;
@@ -75,7 +76,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
 
   // Permission Rule: Từ trưởng phòng đến quản lý được thêm tiêu chí, NGOẠI TRỪ bộ phận Kế toán
   const isAccounting = currentUser?.department?.includes('Kế toán') || currentUser?.role?.includes('Kế toán');
-  const isManagerOrHead = currentUser?.isAdmin || (
+  const isManagerOrHead = isSystemAdmin(currentUser) || (
     ['Trưởng phòng', 'C-Level', 'Founder', 'Manager', 'Lead', 'Quản lý'].includes(currentUser?.jobLevel || '')
   );
   const canAddCriteria = isManagerOrHead && !isAccounting;
@@ -306,7 +307,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
             <Leaf className="w-4 h-4 text-[#2D6A4F]" />
             <span>Ma Trận Tiêu Chí Đánh Giá Nhân Sự NCTTX</span>
           </div>
-          {currentUser?.isAdmin && (
+          {isSystemAdmin(currentUser) && (
             <span className="text-[10px] font-extrabold text-[#2D6A4F] bg-emerald-50 px-2.5 py-0.5 rounded-full border border-emerald-200">
               🔑 Admin Quản Trị
             </span>
@@ -319,7 +320,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
             <span className="shrink-0">🌸</span>
           </h2>
 
-          {currentUser?.isAdmin && (
+          {isSystemAdmin(currentUser) && (
             <button
               onClick={handleOpenAddModal}
               className="px-3 py-1.5 rounded-xl bg-[#2D6A4F] hover:bg-[#1B4332] text-white text-xs font-bold shadow-sm transition-all flex items-center space-x-1 active:scale-95 shrink-0"
@@ -508,9 +509,9 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
         <div className="space-y-1.5">
           <div className="flex items-center justify-between">
             <p className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-              {currentUser?.isAdmin ? 'Chọn ngạch phòng ban:' : 'Ngạch phòng ban của bạn:'}
+              {isSystemAdmin(currentUser) ? 'Chọn ngạch phòng ban:' : 'Ngạch phòng ban của bạn:'}
             </p>
-            {!currentUser?.isAdmin && (
+            {!isSystemAdmin(currentUser) && (
               <span className="text-[10px] text-[#2D6A4F] font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
                 🔒 Đã giới hạn theo ngạch nhân sự
               </span>
@@ -675,7 +676,7 @@ export const QuestionsView: React.FC<QuestionsViewProps> = ({
                             </div>
 
                             {/* ADMIN ACTION: DELETE CRITERIA BUTTON */}
-                            {currentUser?.isAdmin && onDeleteQuestion && (
+                            {isSystemAdmin(currentUser) && onDeleteQuestion && (
                               <button
                                 onClick={() => handleDeleteCriteria(q)}
                                 className="px-2 py-0.5 rounded-md bg-rose-50 hover:bg-rose-100 text-rose-700 border border-rose-200 text-[10px] font-extrabold transition-all flex items-center space-x-1 active:scale-95 shrink-0"
