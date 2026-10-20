@@ -1,6 +1,44 @@
 # 📜 NHẬT KÝ PHIÊN BẢN & MỐC NGUYÊN BẢN DỰ ÁN STAFFPOINT
 
-## 📌 CẬP NHẬT QUY ĐỊNH: MỨC ĐỘ CHẤP HÀNH & HOÀN THÀNH CÔNG VIỆC (POLICY VERSION 2026_V4) (15/10/2026)
+## 📌 PHIÊN BẢN V1.009-STABLE (20/10/2026)
+**Git Tag:** `v1.009-stable`  
+**GitHub Repository:** `https://github.com/fongshubvn-cyber/ncttx-staffpoint.git`  
+**Trạng thái:** ✅ Đã hoàn tất Cấp Toàn Quyền Quản Trị Hệ Thống Cho Co-Admin (Ngang Hàng Admin), Chuẩn Hóa Cấu Hình Quy Định "Mức Độ Chấp Hành & Hoàn Thành Công Việc" (Policy v4), Tự Động Gán Điểm 0.00 Cho Nhân Sự Chưa Xếp Ngạch, và Kiểm Tra Toàn Diện Hệ Thống Báo Cáo Sự Vụ Thực Tế.
+
+### 🌟 BẢNG TỔNG HỢP CÁC TÍNH NĂNG & CẢI TIẾN TRONG BẢN V1.009:
+1. **Đồng Bộ Quyền Quản Trị Viên (Co-Admin) Toàn Diện Ngang Hàng Admin:**
+   - Chuẩn hóa hàm kiểm tra đặc quyền `isSystemAdmin(user)` trên toàn bộ hệ thống (`calculator.ts`).
+   - Mở toàn bộ quyền cho tài khoản Co-Admin:
+     - **Quản trị Mật khẩu:** Nút chìa khóa vàng 🔑 mở modal đổi mật khẩu, xem mật khẩu hiện tại, đổi mật khẩu và reset mật khẩu hàng loạt về `123456` cho mọi tài khoản.
+     - **Quản lý Nhân sự & Đội ngũ:** Thêm nhân sự mới, chỉnh sửa hồ sơ, ngạch chuyên môn, phân quyền quản lý, khóa/mở khóa tài khoản, xóa nhân sự và cấp/hủy quyền Co-Admin cho nhân sự khác.
+     - **Quản lý Phiếu Phản hồi & Kháng nghị:** Xem toàn bộ phiếu công ty, duyệt phiếu tuyên dương, duyệt/bác bỏ kháng nghị biên bản vi phạm, xóa phiếu, khôi phục từ Thùng rác và xóa vĩnh viễn phiếu.
+     - **Báo cáo & Phân tích Đầy đủ:** Xem hồ sơ và báo cáo chi tiết của tất cả nhân sự, xuất báo cáo Google Sheet và xuất file PDF.
+     - **Cấu hình Hệ thống:** Chỉnh sửa quy chế Chấp hành nội quy (100đ), chỉnh sửa Điểm nền & Tham số hệ thống, thêm/sửa/xóa tiêu chí ma trận.
+   - Cơ chế tự động đồng bộ session `currentUser` với `staffList`: Khi một nhân sự được cấp quyền Co-Admin, tài khoản đó lập tức kích hoạt quyền Quản trị viên trong phiên làm việc mà không cần đăng xuất/đăng nhập lại.
+
+2. **Chuẩn Hóa Xử Lý Nhân Sự "Chưa Xếp Ngạch":**
+   - Đối với nhân sự chưa được xếp vào ngạch chuyên môn hoặc ngạch quản lý:
+     - Hiển thị rõ ràng trạng thái `"Chưa xếp ngạch"` thay vì để trống.
+     - Mặc định điểm ngạch tương ứng là `0.00` (không tính vào điểm thực tế).
+     - Áp dụng đồng bộ cho cả giao diện Classic và Option 1.
+
+3. **Cập Nhật & Chuẩn Hóa Quy Định: "Mức Độ Chấp Hành & Hoàn Thành Công Việc" (Policy v4):**
+   - Đổi tên quy định thành: **Mức độ chấp hành & hoàn thành công việc** (Thang 100 điểm).
+   - Tinh gọn bộ nội quy v1.006, loại bỏ các điều khoản trùng lặp và giữ lại 6 điều khoản chuẩn mực:
+     - `NQ-01`: Đi làm đúng giờ & Chấm công đầy đủ (Trễ giờ) - Trừ 5đ.
+     - `NQ-02`: Không chấp hành điều phối của quản lý - Trừ 15đ.
+     - `NQ-03`: Không hoàn thành công việc đúng deadline - Trừ 10đ.
+     - `NQ-04`: Mặc đúng đồng phục & Diện mạo gọn gàng - Trừ 5đ.
+     - `NQ-05`: Vệ sinh sạch sẽ & Sắp xếp khu vực làm việc - Trừ 10đ.
+     - `NQ-06`: Không sử dụng điện thoại việc riêng trong ca - Trừ 10đ.
+   - Nâng cấp `policyVersion: '2026_v4'` đảm bảo đồng bộ mượt mà trên Firebase Realtime Cloud.
+
+4. **Kiểm Tra & Khảo Sát Dữ Liệu Sự Vụ Thực Tế:**
+   - Hoàn thành rà soát dữ liệu phiếu và phản ánh thời gian thực trên Firestore Cloud:
+     - Đang hoạt động: 0 phiếu ghi nhận, 1 biên bản vi phạm cũ (tháng 07/2026), 0 phản ánh hòm thư góp ý.
+     - Kỳ hiện tại Tháng 10/2026: Chưa phát sinh vi phạm hay tồn đọng phản ánh nào.
+
+---
 **Trạng thái:** ✅ Đã hoàn tất Chuẩn hóa và Đổi tên quy định thành **"Mức độ chấp hành & hoàn thành công việc"**, loại bỏ NQ-04, 05, 06, 07, 08, 10 cũ của v1.006 và hợp nhất các quy định không trùng lặp thành 6 điều khoản chuẩn:
 1. **NQ-01: Đi làm đúng giờ & Chấm công đầy đủ (Trễ giờ)** – Trừ 5 điểm (Mức Nhẹ).
 2. **NQ-02: Không chấp hành điều phối của quản lý** – Trừ 15 điểm (Mức Vừa).
