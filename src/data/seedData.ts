@@ -4852,76 +4852,7 @@ export const initialQuestions: Question[] = [
   }
 ];
 
-export const initialIncidents: IncidentRecord[] = [
-  {
-    id: 'INC-2026-001',
-    type: 'vi_pham',
-    reporterId: 'TTX007',
-    reporterName: 'A Mỹ Ngọc',
-    targetId: 'TTX003',
-    targetName: 'Nguyễn Trọng Duy',
-    targetRole: 'Trưởng phòng Thương mại & Dịch vụ',
-    questionId: 'VH1.4',
-    groupCode: 'VH1',
-    title: 'Trả lời thông tin chưa xác nhận với đối tác',
-    description: 'Tại buổi họp ngày 02/09, Trưởng phòng đã tự trả lời mức chiết khấu chưa thông qua duyệt của Tổng Giám Đốc.',
-    severity: 'Vừa',
-    date: '2026-09-02',
-    status: 'Đã ghi nhận',
-    impactPoints: -0.5,
-  },
-  {
-    id: 'INC-2026-002',
-    type: 'ghi_nhan',
-    reporterId: 'TTX009',
-    reporterName: 'Lê Tuấn Huy',
-    targetId: 'TTX010',
-    targetName: 'Trần Quang Tuấn',
-    targetRole: 'Lead Pha chế - Bếp Bánh',
-    questionId: 'VH3.1',
-    groupCode: 'VH3',
-    title: 'Hỗ trợ đồng nghiệp khiếm thính xử lý ca đông khách',
-    description: 'Lead Tuấn đã ở lại tăng cường hỗ trợ nhóm khiếm thính 2 tiếng ngoài giờ trong ca tối cao điểm dịp lễ 02/09.',
-    severity: 'Nhẹ',
-    date: '2026-09-03',
-    status: 'Đã duyệt',
-    impactPoints: 1.0,
-  },
-  {
-    id: 'INC-2026-003',
-    type: 'ghi_nhan',
-    reporterId: 'TTX001',
-    reporterName: 'Võ Thành Luân',
-    targetId: 'TTX003',
-    targetName: 'Nguyễn Trọng Duy',
-    targetRole: 'Trưởng phòng Thương mại & Dịch vụ',
-    questionId: 'VH1.1',
-    groupCode: 'VH1',
-    title: 'Tối ưu quy trình vận hành kỳ tháng 8',
-    description: 'Báo cáo tổng kết vận hành tháng 8 hoàn thành xuất sắc, rút ngắn 20% thời gian xử lý đơn hàng.',
-    severity: 'Vừa',
-    date: '2026-08-25',
-    status: 'Đã duyệt',
-    impactPoints: 1.0,
-  },
-  {
-    id: 'INC-2026-004',
-    type: 'vi_pham',
-    reporterId: 'TTX005',
-    reporterName: 'Trần Thị Thanh Hải',
-    targetId: 'TTX003',
-    targetName: 'Nguyễn Trọng Duy',
-    targetRole: 'Trưởng phòng Thương mại & Dịch vụ',
-    questionId: 'VH2.1',
-    groupCode: 'VH2',
-    title: 'Nộp báo cáo doanh số muộn ca tối',
-    description: 'Báo cáo tổng kết ca tối ngày 20/07 gửi muộn 45 phút so với quy định hệ thống.',
-    severity: 'Nhẹ',
-    date: '2026-07-20',
-    status: 'Đã ghi nhận',
-    impactPoints: -0.2,
-  }
-];
+export const initialIncidents: IncidentRecord[] = [];
 
 export const initialBaselinePoints: BaselinePoint[] = [
   {

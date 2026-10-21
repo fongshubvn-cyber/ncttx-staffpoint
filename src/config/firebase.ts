@@ -181,6 +181,7 @@ export const saveIncidentAtomic = async (incident: any): Promise<boolean> => {
 /**
  * Đồng bộ danh sách incidents lên Firestore với cơ chế Merge an toàn:
  * Không ghi đè mù quáng, mà lấy dữ liệu mới nhất trên Cloud rồi gộp với local.
+ * Đảm bảo: Phiếu đã xóa / thanh trừng (isDeleted / isPurged) KHÔNG BAO GIỜ bị phục hồi bởi client cũ.
  */
 export const syncIncidentsToCloudAtomic = async (incidentsToSync: any[]): Promise<any[]> => {
   if (!isFirebaseConfigured() || !Array.isArray(incidentsToSync)) return incidentsToSync;
@@ -203,23 +204,65 @@ export const syncIncidentsToCloudAtomic = async (incidentsToSync: any[]): Promis
         if (item && item.id) map.set(item.id, item);
       });
 
-      // 2. Gộp phiếu từ máy local: ưu tiên trạng thái mới nhất
+      // 2. Gộp phiếu từ máy local: ưu tiên trạng thái xóa/purged và bản ghi mới hơn
       incidentsToSync.forEach(localItem => {
         if (!localItem || !localItem.id) return;
         const cloudItem = map.get(localItem.id);
         if (!cloudItem) {
-          // Cloud chưa có -> bổ sung thêm
-          map.set(localItem.id, localItem);
-        } else {
-          // Cả 2 đều có -> giữ bản ghi có xóa/khôi phục mới hơn
-          if (localItem.isDeleted && !cloudItem.isDeleted) {
+          // Cloud chưa có -> chỉ bổ sung nếu phiếu chưa bị purged
+          if (!localItem.isPurged) {
             map.set(localItem.id, localItem);
-          } else if (!localItem.isDeleted && cloudItem.isDeleted) {
-            if (!localItem.deletedAt && cloudItem.deletedAt) {
-              map.set(localItem.id, localItem);
+          }
+        } else {
+          // Cả 2 đều có:
+          // Quy tắc 1: Nếu một trong hai đã bị thanh trừng vĩnh viễn (isPurged) -> giữ nguyên là purged!
+          if (cloudItem.isPurged || localItem.isPurged) {
+            map.set(localItem.id, {
+              ...cloudItem,
+              ...localItem,
+              isDeleted: true,
+              isPurged: true,
+            });
+            return;
+          }
+
+          // Quy tắc 2: Xử lý xóa mềm (isDeleted) vs phục hồi (restoredAt)
+          const cloudDeleted = Boolean(cloudItem.isDeleted);
+          const localDeleted = Boolean(localItem.isDeleted);
+
+          if (localDeleted && !cloudDeleted) {
+            // Local mới xóa -> cập nhật trạng thái xóa lên Cloud
+            map.set(localItem.id, {
+              ...cloudItem,
+              ...localItem,
+              isDeleted: true,
+              deletedAt: localItem.deletedAt || new Date().toISOString(),
+              deletedBy: localItem.deletedBy || 'Admin',
+            });
+          } else if (!localDeleted && cloudDeleted) {
+            // Cloud đã bị xóa. Chỉ phục hồi nếu local CÓ CHỦ ĐÍCH khôi phục (restoredAt mới hơn deletedAt)
+            const hasExplicitRestore = Boolean(localItem.restoredAt) && 
+              (!cloudItem.deletedAt || localItem.restoredAt > cloudItem.deletedAt);
+
+            if (hasExplicitRestore) {
+              const restored = { ...cloudItem, ...localItem };
+              delete restored.isDeleted;
+              delete restored.deletedAt;
+              delete restored.deletedBy;
+              map.set(localItem.id, restored);
+            } else {
+              // Local chỉ là bản sao cũ chưa cập nhật từ Cloud -> GIỮ NGUYÊN TRẠNG THÁI XÓA CỦA CLOUD!
+              map.set(localItem.id, cloudItem);
             }
           } else {
-            map.set(localItem.id, { ...cloudItem, ...localItem });
+            // Cả hai cùng bị xóa hoặc cùng chưa xóa -> gộp dữ liệu
+            map.set(localItem.id, {
+              ...cloudItem,
+              ...localItem,
+              isDeleted: cloudDeleted || localDeleted,
+              deletedAt: localItem.deletedAt || cloudItem.deletedAt,
+              deletedBy: localItem.deletedBy || cloudItem.deletedBy,
+            });
           }
         }
       });

@@ -126,8 +126,16 @@ export function App() {
   });
 
   const [incidents, setIncidents] = useState<IncidentRecord[]>(() => {
-    const saved = localStorage.getItem('ncttx_incidents');
-    return saved ? JSON.parse(saved) : initialIncidents;
+    try {
+      const saved = localStorage.getItem('ncttx_incidents');
+      if (saved) {
+        const parsed: IncidentRecord[] = JSON.parse(saved);
+        if (Array.isArray(parsed)) {
+          return parsed.filter(i => i && !i.isPurged && !['INC-2026-001', 'INC-2026-002', 'INC-2026-003', 'INC-2026-004'].includes(i.id));
+        }
+      }
+    } catch (e) {}
+    return initialIncidents;
   });
 
   const [params, setParams] = useState<ParameterConfig>(() => {
@@ -204,10 +212,18 @@ export function App() {
           });
           // Preserve local items created during runtime if not in cloudData yet
           let hasMissingInCloud = false;
+          const now = Date.now();
           prevIncidents.forEach((item: IncidentRecord) => {
-            if (item && item.id && !map.has(item.id)) {
-              map.set(item.id, item);
-              hasMissingInCloud = true;
+            if (item && item.id && !map.has(item.id) && !item.isPurged) {
+              if (['INC-2026-001', 'INC-2026-002', 'INC-2026-003', 'INC-2026-004'].includes(item.id)) {
+                return;
+              }
+              const createdTs = item.createdAt ? new Date(item.createdAt).getTime() : 0;
+              // Only keep genuinely new local items created in the last 15 mins (offline work)
+              if (now - createdTs < 15 * 60 * 1000) {
+                map.set(item.id, item);
+                hasMissingInCloud = true;
+              }
             }
           });
           const merged = Array.from(map.values()).sort((a, b) => {
@@ -222,7 +238,7 @@ export function App() {
           return merged;
         });
       }
-    }, initialIncidents);
+    }, []);
 
     const unsubQuestions = subscribeToCollection('questions', (cloudData) => {
       isCloudLoadedRef.current['questions'] = true;
@@ -530,10 +546,17 @@ export function App() {
           });
         }
         let hasMissingInCloud = false;
+        const now = Date.now();
         prevIncidents.forEach((item: IncidentRecord) => {
-          if (item && item.id && !map.has(item.id)) {
-            map.set(item.id, item);
-            hasMissingInCloud = true;
+          if (item && item.id && !map.has(item.id) && !item.isPurged) {
+            if (['INC-2026-001', 'INC-2026-002', 'INC-2026-003', 'INC-2026-004'].includes(item.id)) {
+              return;
+            }
+            const createdTs = item.createdAt ? new Date(item.createdAt).getTime() : 0;
+            if (now - createdTs < 15 * 60 * 1000) {
+              map.set(item.id, item);
+              hasMissingInCloud = true;
+            }
           }
         });
         const sorted = Array.from(map.values()).sort((a, b) => {
@@ -626,6 +649,8 @@ export function App() {
           delete copy.isDeleted;
           delete copy.deletedAt;
           delete copy.deletedBy;
+          copy.restoredAt = new Date().toISOString();
+          copy.restoredBy = currentUser?.name || 'Admin';
           return copy;
         }
         return i;

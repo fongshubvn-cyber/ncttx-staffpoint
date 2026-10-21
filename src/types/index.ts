@@ -95,6 +95,8 @@ export interface IncidentRecord {
   isDeleted?: boolean;
   deletedAt?: string;
   deletedBy?: string;
+  restoredAt?: string;
+  restoredBy?: string;
   isPurged?: boolean;
 }
 
