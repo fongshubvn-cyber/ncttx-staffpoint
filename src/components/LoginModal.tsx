@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import logoImg from '../assets/logo.png';
 import { AuthUser, Staff } from '../types';
 import { isSystemAdmin } from '../utils/calculator';
+import { getRememberedUserId, savePersistedAuthUser } from '../utils/authCookie';
 import { 
   User, 
   KeyRound, 
@@ -39,9 +40,10 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   onUpdatePassword,
   isStandalone = false,
 }) => {
-  const [idInput, setIdInput] = useState<string>('');
+  const [idInput, setIdInput] = useState<string>(() => getRememberedUserId());
   const [passwordInput, setPasswordInput] = useState<string>('');
   const [showPassword, setShowPassword] = useState<boolean>(false);
+  const [rememberMe, setRememberMe] = useState<boolean>(true);
   const [errorMsg, setErrorMsg] = useState<string>('');
 
   // Password Change Step State
@@ -86,6 +88,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           isAdmin: true,
           mustChangePassword: false,
         };
+        savePersistedAuthUser(adminUser, rememberMe);
         onLogin(adminUser);
         setPasswordInput('');
         setIdInput('');
@@ -134,6 +137,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       return;
     }
 
+    savePersistedAuthUser(authUser, rememberMe);
     onLogin(authUser);
     setPasswordInput('');
     setIdInput('');
@@ -166,6 +170,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
       };
       setChangeSuccessMsg('Đổi mật khẩu thành công! Đang tự động đăng nhập...');
       setTimeout(() => {
+        savePersistedAuthUser(updatedUser, rememberMe);
         onLogin(updatedUser);
         setIsChangingPasswordStep(false);
         setPendingUser(null);
@@ -368,6 +373,24 @@ export const LoginModal: React.FC<LoginModalProps> = ({
                   {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                 </button>
               </div>
+            </div>
+
+            {/* Remember Me Lifetime Checkbox */}
+            <div className="flex items-center justify-between pt-1 pb-1">
+              <label className="flex items-center gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                  className="w-4 h-4 rounded text-[#1B4332] focus:ring-[#1B4332] border-slate-300 accent-[#1B4332] cursor-pointer"
+                />
+                <span className="text-xs font-bold text-slate-700">
+                  Ghi nhớ đăng nhập trọn đời (Lưu Cookie)
+                </span>
+              </label>
+              <span className="text-[10px] text-emerald-800 font-bold bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+                100 năm
+              </span>
             </div>
 
             {/* Submit Button */}

@@ -1,0 +1,36 @@
+{
+  "short_name": "Staffpoint",
+  "name": "Staffpoint - Nhà Của Thời Thanh Xuân",
+  "description": "Hệ thống ghi nhận phản hồi và đánh giá nhân sự Nhà Của Thời Thanh Xuân",
+  "icons": [
+    {
+      "src": "favicon.png",
+      "sizes": "64x64 32x32",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-192.png",
+      "type": "image/png",
+      "sizes": "192x192",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "icon-512.png",
+      "type": "image/png",
+      "sizes": "512x512",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "app-icon.png",
+      "type": "image/png",
+      "sizes": "1024x1024",
+      "purpose": "any"
+    }
+  ],
+  "start_url": "./",
+  "background_color": "#1B4332",
+  "theme_color": "#1B4332",
+  "display": "standalone",
+  "orientation": "portrait",
+  "scope": "./"
+}

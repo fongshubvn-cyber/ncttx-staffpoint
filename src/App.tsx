@@ -51,6 +51,7 @@ import {
   isManagementRole,
   getIncidentTargetPillar
 } from './utils/calculator';
+import { getPersistedAuthUser, savePersistedAuthUser } from './utils/authCookie';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('summary'); // Default: Trang Tổng hợp
@@ -83,10 +84,9 @@ export function App() {
     setShowGlobalIncidentModal(true);
   };
 
-  // Authentication State with Persistence (Default null if not logged in)
+  // Authentication State with Lifetime Cookie & LocalStorage Persistence (100 năm)
   const [currentUser, setCurrentUser] = useState<AuthUser | null>(() => {
-    const saved = localStorage.getItem('ncttx_current_user');
-    return saved ? JSON.parse(saved) : null;
+    return getPersistedAuthUser();
   });
 
   const [userPasswords, setUserPasswords] = useState<Record<string, string>>(() => {
@@ -466,6 +466,18 @@ export function App() {
   useEffect(() => {
     localStorage.setItem('ncttx_incidents', JSON.stringify(incidents));
   }, [incidents]);
+
+  // Synchronize authentication session to lifetime cookie and localStorage
+  useEffect(() => {
+    savePersistedAuthUser(currentUser);
+  }, [currentUser]);
+
+  // Handler: Explicit Logout
+  const handleLogout = () => {
+    savePersistedAuthUser(null);
+    setCurrentUser(null);
+    setShowLoginModal(false);
+  };
 
   // Handler: Password update
   const handleUpdatePassword = (userId: string, newPass: string) => {
@@ -1030,7 +1042,7 @@ export function App() {
         userPasswords={userPasswords}
         onOpenIncidentModal={handleOpenIncidentModal}
         onOpenLoginModal={() => setShowLoginModal(true)}
-        onLogout={() => setCurrentUser(null)}
+        onLogout={handleLogout}
         onAddStaff={handleAddStaff}
         onUpdateStaff={handleUpdateStaff}
         onDeleteStaff={handleDeleteStaff}
@@ -1078,10 +1090,7 @@ export function App() {
         staffList={staffList}
         currentUser={currentUser}
         onLogin={(user) => setCurrentUser(user)}
-        onLogout={() => {
-          setCurrentUser(null);
-          setShowLoginModal(false);
-        }}
+        onLogout={handleLogout}
         userPasswords={userPasswords}
         onUpdatePassword={handleUpdatePassword}
       />
