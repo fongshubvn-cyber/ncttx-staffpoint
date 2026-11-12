@@ -47,7 +47,8 @@ import {
   Star,
   ShieldAlert,
   ClipboardCheck,
-  ChevronRight
+  ChevronRight,
+  ArrowLeft
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole, isSystemAdmin } from '../../utils/calculator';
@@ -154,6 +155,16 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     }
   }, [activeTab]);
 
+  const isSuperAdmin = isSystemAdmin(currentUser);
+
+  // Security Guard: Chỉ Admin / Co-Admin mới có quyền xem được Cấu Hình và Báo Cáo
+  useEffect(() => {
+    const isRestrictedTab = ['config', 'questions', 'baseline', 'policy', 'analytics', 'report'].includes(activeTab);
+    if (!isSuperAdmin && isRestrictedTab) {
+      setActiveTab('summary');
+    }
+  }, [isSuperAdmin, activeTab, setActiveTab]);
+
   const visibleIncidentsBadgeCount = React.useMemo(() => {
     if (!currentUser) return 0;
     const isUpperManager = isSystemAdmin(currentUser) || isHRHeadRole(currentUser) || isDeptHeadOrAboveRole(currentUser);
@@ -164,13 +175,16 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     return incidents.filter(i => !i.isDeleted && i.targetId === currentUser.id).length;
   }, [currentUser, incidents, staffList]);
 
-  const navItems = [
+  // Menu phân quyền: Chỉ hiển thị Cấu Hình & Báo Cáo cho Admin / Co-Admin
+  const navItems = React.useMemo(() => [
     { id: 'summary', label: 'Tổng Quan', icon: LayoutDashboard },
     { id: 'staff', label: 'Nhân Sự', icon: Users },
     { id: 'incidents', label: 'Phản Hồi', icon: Trophy, badge: visibleIncidentsBadgeCount > 0 ? visibleIncidentsBadgeCount : undefined },
-    { id: 'config', label: 'Cấu Hình', icon: Sliders },
-    { id: 'analytics', label: 'Báo Cáo & Hướng Dẫn', icon: BarChart3 },
-  ];
+    ...(isSuperAdmin ? [
+      { id: 'config', label: 'Cấu Hình', icon: Sliders },
+      { id: 'analytics', label: 'Báo Cáo & Hướng Dẫn', icon: BarChart3 },
+    ] : []),
+  ], [visibleIncidentsBadgeCount, isSuperAdmin]);
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-950/5 text-slate-900 flex flex-col font-sans selection:bg-emerald-500 selection:text-white pb-8">
@@ -216,7 +230,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               )}
 
               <span className="text-[10px] font-mono font-bold text-slate-400 border-l border-slate-200 pl-1.5 shrink-0 select-none">
-                v1.013
+                v1.014
               </span>
             </div>
           </div>
@@ -406,7 +420,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                   Danh Mục Chức Năng
                 </span>
                 <span className="text-[10px] font-bold text-slate-400">
-                  5 phân hệ
+                  {navItems.length} phân hệ
                 </span>
               </div>
 
@@ -415,10 +429,10 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                   const Icon = item.icon;
                   const isActive = 
                     activeTab === item.id ||
-                    (item.id === 'config' && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline')) ||
+                    (item.id === 'config' && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline' || activeTab === 'policy')) ||
                     (item.id === 'analytics' && (activeTab === 'analytics' || activeTab === 'report' || activeTab === 'guide'));
                   
-                  const isFullWidth = idx === 4;
+                  const isFullWidth = (navItems.length % 2 !== 0) && (idx === navItems.length - 1);
 
                   return (
                     <button
@@ -445,9 +459,14 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                         <div className="truncate text-xs font-bold leading-tight">
                           {item.label}
                         </div>
-                        {isFullWidth && (
+                        {item.id === 'analytics' && (
                           <div className={`text-[10px] font-medium leading-tight truncate mt-0.5 ${isActive ? 'text-emerald-100' : 'text-slate-400'}`}>
                             Xuất báo cáo, ma trận chuẩn & cẩm nang
+                          </div>
+                        )}
+                        {item.id === 'incidents' && isFullWidth && (
+                          <div className={`text-[10px] font-medium leading-tight truncate mt-0.5 ${isActive ? 'text-emerald-100' : 'text-slate-400'}`}>
+                            Khen thưởng, vi phạm & ghi nhận
                           </div>
                         )}
                       </div>
@@ -491,6 +510,26 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                   </div>
                 </div>
                 <ChevronRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-0.5 transition-transform" />
+              </button>
+
+              {/* Xem Cẩm Nang Quy Trình & Giá Trị (Cho mọi thành viên) */}
+              <button
+                onClick={() => {
+                  setIsMobileMenuOpen(false);
+                  setActiveTab('guide');
+                }}
+                className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-slate-50 hover:bg-slate-100 border border-slate-200/80 text-slate-700 font-bold text-xs shadow-2xs active:scale-[0.98] transition-all cursor-pointer group text-left"
+              >
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-xl bg-emerald-100 text-[#1B4332] flex items-center justify-center shrink-0">
+                    <BookOpen className="w-4 h-4" />
+                  </div>
+                  <div>
+                    <div className="text-xs font-bold text-slate-800">Cẩm Nang Quy Trình & Giá Trị</div>
+                    <div className="text-[10px] text-slate-400 font-medium">Quy chuẩn ứng xử & cách tính điểm</div>
+                  </div>
+                </div>
+                <ChevronRight className="w-4 h-4 text-slate-400 group-hover:translate-x-0.5 transition-transform" />
               </button>
 
               {/* Grid Các Tiện Ích Phụ (Đồng Bộ Cloud & Quản Lý Mật Khẩu / AI) */}
@@ -609,8 +648,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           />
         )}
 
-        {/* CONSOLIDATED TAB: Cấu Hình (10 Nội Quy, Tiêu Chí & Tham Số) */}
-        {(activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline' || activeTab === 'policy') && (
+        {/* CONSOLIDATED TAB: Cấu Hình (Chỉ Admin / Co-Admin mới có quyền xem) */}
+        {isSuperAdmin && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline' || activeTab === 'policy') && (
           <div className="space-y-6">
             {/* Glass Sub-tab Switcher Bar */}
             <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-2 max-w-xl">
@@ -693,8 +732,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           </div>
         )}
 
-        {/* CONSOLIDATED TAB 2: Báo Cáo & Hướng Dẫn */}
-        {(activeTab === 'analytics' || activeTab === 'report' || activeTab === 'guide') && (
+        {/* CONSOLIDATED TAB 2: Báo Cáo & Hướng Dẫn (Chỉ Admin / Co-Admin mới có quyền xem) */}
+        {isSuperAdmin && (activeTab === 'analytics' || activeTab === 'report' || activeTab === 'guide') && (
           <div className="space-y-6">
             {/* Glass Sub-tab Switcher Bar */}
             <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-2 max-w-md">
@@ -743,6 +782,43 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             )}
           </div>
         )}
+
+        {/* Cẩm Nang Hướng Dẫn Dành Cho Nhân Viên Thông Thường (Khi mở từ Menu Tác Vụ Nhanh) */}
+        {!isSuperAdmin && activeTab === 'guide' && (
+          <div className="space-y-4 animate-in fade-in">
+            <button
+              type="button"
+              onClick={() => setActiveTab('summary')}
+              className="inline-flex items-center gap-2 px-3.5 py-2 rounded-2xl bg-white border border-slate-200 text-slate-700 font-bold text-xs hover:bg-slate-50 shadow-2xs transition-all active:scale-95 cursor-pointer"
+            >
+              <ArrowLeft className="w-4 h-4 text-emerald-700" />
+              <span>← Quay về Trang Tổng Quan</span>
+            </button>
+            <GuideView />
+          </div>
+        )}
+
+        {/* Thông Báo Giới Hạn Quyền Hạn Khi Người Dùng Không Phải Admin / Co-Admin */}
+        {!isSuperAdmin && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline' || activeTab === 'policy' || activeTab === 'analytics' || activeTab === 'report') && (
+          <div className="bg-white rounded-3xl p-8 border border-amber-200 text-center max-w-md mx-auto my-12 shadow-sm space-y-4 animate-in fade-in">
+            <div className="w-14 h-14 mx-auto rounded-2xl bg-amber-100 text-amber-800 flex items-center justify-center shadow-xs">
+              <ShieldAlert className="w-7 h-7 text-amber-700" />
+            </div>
+            <div>
+              <h3 className="text-base sm:text-lg font-black text-slate-900">Khu Vực Giới Hạn Quyền Hạn</h3>
+              <p className="text-xs text-slate-500 mt-1.5 leading-relaxed">
+                Chỉ Quản trị viên hệ thống (<strong>Admin</strong> hoặc <strong>Co-Admin</strong>) mới có quyền truy cập vào phân hệ Cấu hình và Báo cáo.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setActiveTab('summary')}
+              className="px-4 py-2 bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-bold rounded-xl transition-all shadow-sm active:scale-95 cursor-pointer"
+            >
+              Về Trang Tổng Quan
+            </button>
+          </div>
+        )}
       </main>
 
       {/* Sticky Floating Action Button (FAB) on Left: NotebookLM AI Rules & Guidelines Lookup */}
@@ -768,7 +844,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 
       {/* Mobile Bottom Navigation Bar (Thanh điều hướng Native cho iPhone / Android) */}
       <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-2xl border-t border-slate-200/90 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom,8px)] pt-1.5 px-2 print:hidden transition-all duration-300">
-        <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
+        <div className={`grid gap-1 mx-auto ${navItems.length <= 3 ? 'grid-cols-3 max-w-sm' : 'grid-cols-5 max-w-md'}`}>
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = 

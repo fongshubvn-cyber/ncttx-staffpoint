@@ -19,7 +19,7 @@ import {
   CloudOff
 } from 'lucide-react';
 import { isFirebaseConfigured, onCloudStateChange, CloudSyncState } from '../config/firebase';
-import { isDeptHeadOrAboveRole } from '../utils/calculator';
+import { isDeptHeadOrAboveRole, isSystemAdmin } from '../utils/calculator';
 
 import { IncidentRecord } from '../types';
 
@@ -65,6 +65,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   }, []);
 
   const isDepartmentHeadOrAbove = isDeptHeadOrAboveRole(currentUser) || isManager;
+  const isSuperAdmin = isSystemAdmin(currentUser);
 
   // Calculate notifications for recipient user (targetId === currentUser.id)
   const recipientNotifCount = currentUser 
@@ -74,14 +75,14 @@ export const Navbar: React.FC<NavbarProps> = ({
   const rawNavItems = [
     { id: 'summary', label: 'Tổng hợp', icon: LayoutDashboard },
     { id: 'incidents', label: 'Phiếu', icon: HeartHandshake },
-    { id: 'policy', label: 'Chấp hành (100đ)', icon: ShieldCheck },
+    { id: 'policy', label: 'Chấp hành (100đ)', icon: ShieldCheck, requiresAdmin: true },
     { id: 'staff', label: 'Đội ngũ', icon: Users },
-    { id: 'questions', label: 'Tiêu chí', icon: Sparkles },
-    { id: 'baseline', label: 'Tham số', icon: BarChart3 },
-    { id: 'report', label: 'Báo cáo', icon: BarChart3, requiresDeptHead: true },
+    { id: 'questions', label: 'Tiêu chí', icon: Sparkles, requiresAdmin: true },
+    { id: 'baseline', label: 'Tham số', icon: BarChart3, requiresAdmin: true },
+    { id: 'report', label: 'Báo cáo', icon: BarChart3, requiresAdmin: true },
   ];
 
-  const navItems = rawNavItems.filter(item => !item.requiresDeptHead || isDepartmentHeadOrAbove);
+  const navItems = rawNavItems.filter(item => !item.requiresAdmin || isSuperAdmin);
 
   return (
     <>
@@ -209,7 +210,7 @@ export const Navbar: React.FC<NavbarProps> = ({
               <h1 className="font-black text-base sm:text-lg tracking-tight text-white flex items-center space-x-1.5 font-heading whitespace-nowrap">
                 <span>Ghi nhận phản hồi nhân sự</span>
                 <span className="text-[10px] sm:text-[11px] font-extrabold px-2 py-0.5 rounded-full bg-[#52B788] text-[#1B4332] shrink-0 shadow-sm">
-                  v1.013
+                  v1.014
                 </span>
               </h1>
               <p className="text-xs text-emerald-100 font-semibold italic whitespace-nowrap truncate">
