@@ -216,7 +216,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               )}
 
               <span className="text-[10px] font-mono font-bold text-slate-400 border-l border-slate-200 pl-1.5 shrink-0 select-none">
-                v1.012
+                v1.013
               </span>
             </div>
           </div>
@@ -555,7 +555,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
         </>
       )}
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-28 md:pb-12">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-[calc(env(safe-area-inset-bottom,8px)+7.5rem)] md:pb-12">
         {activeTab === 'summary' && (
           <Option1SummaryView
             staffList={staffList}
@@ -746,10 +746,10 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
       </main>
 
       {/* Sticky Floating Action Button (FAB) on Left: NotebookLM AI Rules & Guidelines Lookup */}
-      <div className="fixed left-4 bottom-20 md:bottom-5 z-30 print:hidden flex items-center gap-2">
+      <div className="fixed left-4 bottom-[calc(env(safe-area-inset-bottom,8px)+4.75rem)] md:bottom-6 z-40 print:hidden flex items-center gap-2">
         <button
           onClick={() => setShowNotebookLmModal(true)}
-          className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-[#1B4332] via-[#2D6A4F] to-emerald-500 text-white shadow-xl shadow-emerald-900/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/90 backdrop-blur-md relative group"
+          className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-[#1B4332] via-[#2D6A4F] to-emerald-500 text-white shadow-xl shadow-emerald-900/35 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/90 backdrop-blur-md relative group cursor-pointer"
           title="Mở NotebookLM - Tra cứu Sổ tay quy định & Lỗi vi phạm AI"
         >
           <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-300 animate-pulse" />
@@ -760,7 +760,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
       {/* Floating Action Button (FAB) on Right for Mobile */}
       <button
         onClick={() => setShowFeedbackChoiceModal(true)}
-        className="md:hidden fixed right-4 bottom-20 z-30 w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-xl shadow-emerald-600/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/80 backdrop-blur-md print:hidden cursor-pointer"
+        className="md:hidden fixed right-4 bottom-[calc(env(safe-area-inset-bottom,8px)+4.75rem)] z-40 w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-xl shadow-emerald-600/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/90 backdrop-blur-md print:hidden cursor-pointer"
         title="Tạo phản hồi mới"
       >
         <Plus className="w-6 h-6" />
