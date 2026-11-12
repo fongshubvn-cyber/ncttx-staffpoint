@@ -175,9 +175,9 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-100 via-slate-50 to-emerald-950/5 text-slate-900 flex flex-col font-sans selection:bg-emerald-500 selection:text-white pb-8">
       
-      {/* Glassmorphic Floating Top Header */}
-      <header className="sticky top-2 z-40 px-3 sm:px-6 max-w-7xl w-full mx-auto print:hidden">
-        <div className="backdrop-blur-xl bg-white/90 border border-slate-200/70 shadow-[0_4px_24px_rgba(0,0,0,0.06)] rounded-3xl px-3 sm:px-5 py-2 flex items-center justify-between transition-all duration-300 gap-2">
+      {/* Fixed Sticky Top Header with Safe Area Support for iPhone Notch / Dynamic Island */}
+      <header className="sticky top-0 z-40 w-full bg-white/95 backdrop-blur-xl border-b border-slate-200/80 shadow-[0_2px_15px_rgba(0,0,0,0.04)] print:hidden transition-all duration-200 pt-[env(safe-area-inset-top,0px)]">
+        <div className="max-w-7xl mx-auto px-3 sm:px-6 py-2.5 flex items-center justify-between gap-2">
           
           {/* Brand Logo & Cloud Status Pill (Clean & No "StaffPoint" App Name) */}
           <div className="flex items-center gap-2 sm:gap-2.5 shrink-0">
@@ -216,7 +216,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               )}
 
               <span className="text-[10px] font-mono font-bold text-slate-400 border-l border-slate-200 pl-1.5 shrink-0 select-none">
-                v1.011
+                v1.012
               </span>
             </div>
           </div>
@@ -333,7 +333,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             onClick={() => setIsMobileMenuOpen(false)}
           />
 
-          <div className="md:hidden fixed inset-x-3 top-20 z-50 max-h-[calc(100vh-5.5rem)] overflow-y-auto backdrop-blur-2xl bg-white/95 border border-white/90 shadow-2xl rounded-3xl p-3.5 space-y-3.5 transition-all duration-300 animate-in fade-in slide-in-from-top-4">
+          <div className="md:hidden fixed inset-x-3 top-[calc(env(safe-area-inset-top,0px)+3.75rem)] z-50 max-h-[calc(100vh-env(safe-area-inset-top,0px)-5.5rem)] overflow-y-auto backdrop-blur-2xl bg-white/95 border border-white/90 shadow-2xl rounded-3xl p-3.5 space-y-3.5 transition-all duration-300 animate-in fade-in slide-in-from-top-4">
             
             {/* KHỐI 1: THÔNG TIN NGƯỜI DÙNG */}
             {currentUser ? (
@@ -555,7 +555,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
         </>
       )}
 
-      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-6">
+      <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 pt-4 sm:pt-6 pb-28 md:pb-12">
         {activeTab === 'summary' && (
           <Option1SummaryView
             staffList={staffList}
@@ -746,13 +746,13 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
       </main>
 
       {/* Sticky Floating Action Button (FAB) on Left: NotebookLM AI Rules & Guidelines Lookup */}
-      <div className="fixed left-5 bottom-5 z-40 print:hidden flex items-center gap-2">
+      <div className="fixed left-4 bottom-20 md:bottom-5 z-30 print:hidden flex items-center gap-2">
         <button
           onClick={() => setShowNotebookLmModal(true)}
-          className="w-14 h-14 rounded-full bg-gradient-to-tr from-[#1B4332] via-[#2D6A4F] to-emerald-500 text-white shadow-xl shadow-emerald-900/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/90 backdrop-blur-md relative group"
+          className="w-13 h-13 sm:w-14 sm:h-14 rounded-full bg-gradient-to-tr from-[#1B4332] via-[#2D6A4F] to-emerald-500 text-white shadow-xl shadow-emerald-900/30 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/90 backdrop-blur-md relative group"
           title="Mở NotebookLM - Tra cứu Sổ tay quy định & Lỗi vi phạm AI"
         >
-          <Sparkles className="w-6 h-6 text-emerald-300 animate-pulse" />
+          <Sparkles className="w-5 h-5 sm:w-6 sm:h-6 text-emerald-300 animate-pulse" />
           <span className="absolute -top-1 -right-1 w-3.5 h-3.5 bg-emerald-400 rounded-full border-2 border-white animate-ping"></span>
         </button>
       </div>
@@ -760,11 +760,53 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
       {/* Floating Action Button (FAB) on Right for Mobile */}
       <button
         onClick={() => setShowFeedbackChoiceModal(true)}
-        className="md:hidden fixed right-5 bottom-5 z-40 w-14 h-14 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-xl shadow-emerald-600/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/80 backdrop-blur-md print:hidden cursor-pointer"
+        className="md:hidden fixed right-4 bottom-20 z-30 w-13 h-13 rounded-full bg-gradient-to-tr from-emerald-600 to-teal-500 text-white shadow-xl shadow-emerald-600/40 flex items-center justify-center hover:scale-105 active:scale-95 transition-all duration-200 border-2 border-white/80 backdrop-blur-md print:hidden cursor-pointer"
         title="Tạo phản hồi mới"
       >
-        <Plus className="w-7 h-7" />
+        <Plus className="w-6 h-6" />
       </button>
+
+      {/* Mobile Bottom Navigation Bar (Thanh điều hướng Native cho iPhone / Android) */}
+      <nav className="md:hidden fixed bottom-0 left-0 right-0 z-40 bg-white/95 backdrop-blur-2xl border-t border-slate-200/90 shadow-[0_-4px_24px_rgba(0,0,0,0.06)] pb-[env(safe-area-inset-bottom,8px)] pt-1.5 px-2 print:hidden transition-all duration-300">
+        <div className="grid grid-cols-5 gap-1 max-w-md mx-auto">
+          {navItems.map((item) => {
+            const Icon = item.icon;
+            const isActive = 
+              activeTab === item.id ||
+              (item.id === 'config' && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline' || activeTab === 'policy')) ||
+              (item.id === 'analytics' && (activeTab === 'analytics' || activeTab === 'report' || activeTab === 'guide'));
+
+            return (
+              <button
+                key={item.id}
+                onClick={() => {
+                  setActiveTab(item.id);
+                  window.scrollTo({ top: 0, behavior: 'smooth' });
+                }}
+                className={`relative flex flex-col items-center justify-center py-1 px-1 rounded-2xl transition-all duration-200 active:scale-90 cursor-pointer ${
+                  isActive ? 'text-[#1B4332]' : 'text-slate-400 hover:text-slate-600'
+                }`}
+              >
+                <div className={`relative p-1.5 rounded-xl transition-all duration-200 ${
+                  isActive ? 'bg-emerald-100/80 text-[#1B4332] shadow-2xs scale-105' : ''
+                }`}>
+                  <Icon className="w-5 h-5" />
+                  {item.badge !== undefined && (
+                    <span className="absolute -top-1 -right-1 min-w-[15px] h-3.5 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs">
+                      {item.badge}
+                    </span>
+                  )}
+                </div>
+                <span className={`text-[10px] tracking-tight mt-0.5 truncate max-w-full ${
+                  isActive ? 'font-black text-[#1B4332]' : 'font-semibold text-slate-500'
+                }`}>
+                  {item.label}
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      </nav>
 
       {/* Modal Popup Lựa Chọn Loại Phản Hồi ("Đánh giá" vs "Phản ánh nội quy") */}
       {showFeedbackChoiceModal && (
