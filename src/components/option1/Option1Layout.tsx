@@ -21,6 +21,7 @@ import { GuideView } from '../GuideView';
 import { PolicyView } from '../PolicyView';
 import { AiChatModal } from '../AiChatModal';
 import { AdminPasswordModal } from '../AdminPasswordModal';
+import { AppInstallGuideModal } from '../AppInstallGuideModal';
 
 import { 
   LayoutDashboard, 
@@ -48,7 +49,8 @@ import {
   ShieldAlert,
   ClipboardCheck,
   ChevronRight,
-  ArrowLeft
+  ArrowLeft,
+  Smartphone
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole, isSystemAdmin } from '../../utils/calculator';
@@ -130,6 +132,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   const [showNotebookLmModal, setShowNotebookLmModal] = useState(false);
   const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
   const [showFeedbackChoiceModal, setShowFeedbackChoiceModal] = useState(false);
+  const [showInstallGuideModal, setShowInstallGuideModal] = useState(false);
   const [adminPasswordTargetId, setAdminPasswordTargetId] = useState<string | undefined>(undefined);
   const [cloudSyncInfo, setCloudSyncInfo] = useState<{ status: CloudSyncState; errorDetails: string | null }>({
     status: 'connecting',
@@ -230,7 +233,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               )}
 
               <span className="text-[10px] font-mono font-bold text-slate-400 border-l border-slate-200 pl-1.5 shrink-0 select-none">
-                v1.014
+                v1.015
               </span>
             </div>
           </div>
@@ -269,6 +272,17 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 
           {/* Right-side Action Buttons */}
           <div className="flex items-center gap-2 shrink-0">
+            {/* Nút Hướng Dẫn Cài App Lên Màn Hình Cho Mọi Thành Viên */}
+            <button
+              type="button"
+              onClick={() => setShowInstallGuideModal(true)}
+              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-800 border border-emerald-200/90 text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap"
+              title="Xem hướng dẫn cài đặt app Staffpoint lên màn hình chính điện thoại (iPhone & Android)"
+            >
+              <Smartphone className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+              <span className="font-extrabold">Cài App</span>
+            </button>
+
             <button
               onClick={() => setShowFeedbackChoiceModal(true)}
               className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-extrabold shadow-sm active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
@@ -412,6 +426,30 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 </button>
               </div>
             )}
+
+            {/* KHỐI NỔI BẬT: CÀI ĐẶT APP LÊN MÀN HÌNH CHÍNH */}
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileMenuOpen(false);
+                setShowInstallGuideModal(true);
+              }}
+              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white shadow-md shadow-emerald-900/20 active:scale-[0.98] transition-all cursor-pointer text-left group border border-emerald-700/50"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 shadow-inner">
+                  <Smartphone className="w-5 h-5 text-emerald-300 group-hover:scale-110 transition-transform" />
+                </div>
+                <div>
+                  <div className="text-xs font-black flex items-center gap-1.5">
+                    <span>Cài Đặt App Lên Màn Hình</span>
+                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-400 text-emerald-950 text-[9px] font-black uppercase">1 Chạm</span>
+                  </div>
+                  <div className="text-[10px] text-emerald-100 font-medium">Hướng dẫn cho iPhone & Android</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </button>
 
             {/* KHỐI 2: DANH MỤC ĐIỀU HƯỚNG */}
             <div className="space-y-1.5">
@@ -607,6 +645,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             onRefreshCloud={onRefreshCloud}
             isRefreshingCloud={isRefreshingCloud}
             onAppealIncident={onAppealIncident}
+            onOpenInstallGuide={() => setShowInstallGuideModal(true)}
           />
         )}
 
@@ -993,6 +1032,12 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
         onResetAllPasswords={onResetAllPasswords}
         currentUser={currentUser}
         initialSelectedStaffId={adminPasswordTargetId}
+      />
+
+      {/* App Install Guide Modal (iPhone & Android) */}
+      <AppInstallGuideModal
+        isOpen={showInstallGuideModal}
+        onClose={() => setShowInstallGuideModal(false)}
       />
     </div>
   );

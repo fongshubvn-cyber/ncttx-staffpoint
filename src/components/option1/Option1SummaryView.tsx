@@ -32,7 +32,8 @@ import {
   Star,
   ClipboardCheck,
   BookOpen,
-  Bell
+  Bell,
+  Smartphone
 } from 'lucide-react';
 
 interface Option1SummaryViewProps {
@@ -46,6 +47,7 @@ interface Option1SummaryViewProps {
   onRefreshCloud?: () => void;
   isRefreshingCloud?: boolean;
   onAppealIncident?: (incidentId: string, reason: string) => void;
+  onOpenInstallGuide?: () => void;
 }
 
 export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
@@ -59,6 +61,7 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
   onRefreshCloud,
   isRefreshingCloud = false,
   onAppealIncident,
+  onOpenInstallGuide,
 }) => {
   const isAdmin = isSystemAdmin(currentUser);
   const isHRManager = isHRHeadRole(currentUser);
@@ -134,6 +137,35 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
         currentUser={currentUser}
         onAppealIncident={onAppealIncident}
       />
+
+      {/* Quick App Install Bar for All Members */}
+      {onOpenInstallGuide && (
+        <div className="rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/70 to-emerald-50 border border-emerald-200/90 p-3 sm:p-3.5 flex items-center justify-between gap-3 shadow-2xs">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded-xl bg-[#1B4332] text-white flex items-center justify-center shrink-0 shadow-xs">
+              <Smartphone className="w-4 h-4 text-emerald-300" />
+            </div>
+            <div className="min-w-0">
+              <div className="text-xs font-black text-slate-900 flex items-center gap-1.5 flex-wrap">
+                <span>Cài Đặt Staffpoint Lên Màn Hình Chính</span>
+                <span className="px-1.5 py-0.2 rounded-full bg-emerald-100 text-emerald-800 text-[9px] font-extrabold border border-emerald-200">
+                  iPhone & Android
+                </span>
+              </div>
+              <div className="text-[11px] text-slate-500 font-medium truncate">
+                Mở app 1 chạm toàn màn hình, không cần tải từ App Store hay CH Play
+              </div>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={onOpenInstallGuide}
+            className="px-3 py-1.5 rounded-xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white text-xs font-bold transition-all shadow-xs active:scale-95 cursor-pointer shrink-0 whitespace-nowrap"
+          >
+            Xem Hướng Dẫn
+          </button>
+        </div>
+      )}
 
       {/* Top Banner KPI Header */}
       <div className="relative overflow-hidden rounded-3xl bg-gradient-to-br from-emerald-900 via-emerald-800 to-teal-900 text-white p-6 shadow-xl border border-emerald-700/40">
