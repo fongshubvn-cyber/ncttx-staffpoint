@@ -236,23 +236,25 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 w-full sm:w-auto">
           {/* Submit Suggestion Button for ALL Users */}
           <button
             onClick={() => setShowSubmitFeedbackModal(true)}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-semibold text-xs shadow-md shadow-emerald-950/20 transition-all active:scale-95 whitespace-nowrap"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-[#1B4332] hover:bg-[#2D6A4F] text-white font-bold text-xs shadow-md shadow-emerald-950/20 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
             title="Gửi góp ý, đề xuất cải tiến trực tiếp cho Admin"
           >
-            <Inbox className="w-4 h-4 text-emerald-300" />
-            <span>📮 Gửi Góp Ý Cho Admin</span>
+            <Inbox className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-emerald-300" />
+            <span className="sm:hidden">Góp Ý Admin</span>
+            <span className="hidden sm:inline">📮 Gửi Góp Ý Cho Admin</span>
           </button>
 
           <button
             onClick={() => onOpenChoiceModal ? onOpenChoiceModal() : onOpenIncidentModal()}
-            className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
+            className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 sm:px-4 py-2 sm:py-2.5 rounded-2xl bg-emerald-600 text-white font-bold text-xs shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all active:scale-95 whitespace-nowrap cursor-pointer"
           >
-            <Plus className="w-4 h-4" />
-            <span>Tạo Phản Hồi Mới</span>
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
+            <span className="sm:hidden">+ Phản Hồi</span>
+            <span className="hidden sm:inline">Tạo Phản Hồi Mới</span>
           </button>
         </div>
       </div>

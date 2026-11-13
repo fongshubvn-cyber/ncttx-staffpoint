@@ -233,7 +233,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               )}
 
               <span className="text-[10px] font-mono font-bold text-slate-400 border-l border-slate-200 pl-1.5 shrink-0 select-none">
-                v1.015
+                v1.016
               </span>
             </div>
           </div>
@@ -271,16 +271,16 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           </nav>
 
           {/* Right-side Action Buttons */}
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
             {/* Nút Hướng Dẫn Cài App Lên Màn Hình Cho Mọi Thành Viên */}
             <button
               type="button"
               onClick={() => setShowInstallGuideModal(true)}
-              className="flex items-center gap-1 sm:gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-800 border border-emerald-200/90 text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap"
+              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-800 border border-emerald-200/90 text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap"
               title="Xem hướng dẫn cài đặt app Staffpoint lên màn hình chính điện thoại (iPhone & Android)"
             >
               <Smartphone className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-              <span className="font-extrabold">Cài App</span>
+              <span className="font-extrabold hidden xs:inline sm:inline">Cài App</span>
             </button>
 
             <button
@@ -298,7 +298,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <button
                   type="button"
                   onClick={onOpenLoginModal}
-                  className="relative px-2.5 py-1 rounded-xl bg-white hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 border border-slate-200 shadow-2xs transition-all duration-200 active:scale-95 flex items-center gap-1.5 cursor-pointer text-xs font-bold"
+                  className="relative px-2 sm:px-2.5 py-1 rounded-xl bg-white hover:bg-emerald-50 text-slate-800 hover:text-emerald-700 border border-slate-200 shadow-2xs transition-all duration-200 active:scale-95 flex items-center gap-1.5 cursor-pointer text-xs font-bold shrink-0"
                   title={`${currentUser.name} (${currentUser.role}) — Bấm để xem thông tin & đổi mật khẩu`}
                 >
                   <User className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
@@ -306,7 +306,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                   <span className="w-2 h-2 rounded-full bg-emerald-500 ring-2 ring-white shrink-0"></span>
                 </button>
 
-                {/* Admin Password Management Button (Tích hợp gọn trong Account Icon Group) */}
+                {/* Admin Password Management Button (Hiện trên desktop, mobile nằm trong menu trượt) */}
                 {isSystemAdmin(currentUser) && (
                   <button
                     type="button"
@@ -314,18 +314,18 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                       setAdminPasswordTargetId(undefined);
                       setShowAdminPasswordModal(true);
                     }}
-                    className="p-1.5 text-amber-800 hover:text-amber-950 rounded-xl hover:bg-amber-100 bg-amber-50 border border-amber-300 transition-all duration-200 active:scale-95 flex items-center justify-center cursor-pointer shadow-2xs"
+                    className="hidden sm:flex p-1.5 text-amber-800 hover:text-amber-950 rounded-xl hover:bg-amber-100 bg-amber-50 border border-amber-300 transition-all duration-200 active:scale-95 items-center justify-center cursor-pointer shadow-2xs shrink-0"
                     title="Quản lý & Đổi mật khẩu tất cả thành viên (Admin)"
                   >
                     <Key className="w-3.5 h-3.5 text-amber-700 shrink-0" />
                   </button>
                 )}
 
-                {/* Logout Button */}
+                {/* Logout Button (Hiện trên desktop, mobile nằm trong menu trượt) */}
                 <button
                   type="button"
                   onClick={onLogout}
-                  className="p-1.5 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all duration-200 active:scale-95 flex items-center justify-center cursor-pointer"
+                  className="hidden sm:flex p-1.5 text-slate-400 hover:text-rose-600 rounded-xl hover:bg-rose-50 border border-transparent hover:border-rose-200 transition-all duration-200 active:scale-95 items-center justify-center cursor-pointer shrink-0"
                   title="Đăng xuất khỏi hệ thống"
                 >
                   <LogOut className="w-3.5 h-3.5" />
@@ -691,44 +691,47 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
         {isSuperAdmin && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline' || activeTab === 'policy') && (
           <div className="space-y-6">
             {/* Glass Sub-tab Switcher Bar */}
-            <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-2 max-w-xl">
+            <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-1.5 sm:gap-2 max-w-xl">
               <button
                 type="button"
                 onClick={() => setConfigSubTab('policy')}
-                className={`flex-1 py-2 px-3 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 py-2 px-2 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap ${
                   configSubTab === 'policy'
                     ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <ShieldCheck className="w-4 h-4" />
-                <span>🛡️ Chấp Hành & Hoàn Thành (100đ)</span>
+                <ShieldCheck className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="sm:hidden">100đ Chấp Hành</span>
+                <span className="hidden sm:inline">🛡️ Chấp Hành (100đ)</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setConfigSubTab('questions')}
-                className={`flex-1 py-2 px-3 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 py-2 px-2 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap ${
                   configSubTab === 'questions'
                     ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <Layers className="w-4 h-4" />
-                <span>Tiêu Chí Đánh Giá</span>
+                <Layers className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="sm:hidden">Tiêu Chí</span>
+                <span className="hidden sm:inline">Tiêu Chí Đánh Giá</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setConfigSubTab('baseline')}
-                className={`flex-1 py-2 px-3 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 cursor-pointer ${
+                className={`flex-1 py-2 px-2 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap ${
                   configSubTab === 'baseline'
                     ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <Sliders className="w-4 h-4" />
-                <span>Tham Số System</span>
+                <Sliders className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="sm:hidden">Tham Số</span>
+                <span className="hidden sm:inline">Tham Số System</span>
               </button>
             </div>
 
@@ -775,31 +778,33 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
         {isSuperAdmin && (activeTab === 'analytics' || activeTab === 'report' || activeTab === 'guide') && (
           <div className="space-y-6">
             {/* Glass Sub-tab Switcher Bar */}
-            <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-2 max-w-md">
+            <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-1.5 sm:gap-2 max-w-md">
               <button
                 type="button"
                 onClick={() => setAnalyticsSubTab('report')}
-                className={`flex-1 py-2 px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`flex-1 py-2 px-3 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap ${
                   analyticsSubTab === 'report'
                     ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <BarChart3 className="w-4 h-4" />
-                <span>Báo Cáo Phân Tích</span>
+                <BarChart3 className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="sm:hidden">Báo Cáo</span>
+                <span className="hidden sm:inline">Báo Cáo Phân Tích</span>
               </button>
 
               <button
                 type="button"
                 onClick={() => setAnalyticsSubTab('guide')}
-                className={`flex-1 py-2 px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-2 cursor-pointer ${
+                className={`flex-1 py-2 px-3 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 sm:gap-2 cursor-pointer whitespace-nowrap ${
                   analyticsSubTab === 'guide'
                     ? 'bg-gradient-to-r from-emerald-600 to-teal-600 text-white shadow-md shadow-emerald-600/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <HelpCircle className="w-4 h-4" />
-                <span>Hướng Dẫn Sử Dụng</span>
+                <HelpCircle className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="sm:hidden">Hướng Dẫn</span>
+                <span className="hidden sm:inline">Hướng Dẫn Sử Dụng</span>
               </button>
             </div>
 

@@ -268,18 +268,18 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
           </span>
         </div>
 
-        <div className="text-xs text-slate-500 space-y-1">
-          <div className="flex justify-between">
-            <span>Phòng ban:</span>
-            <span className="font-bold text-slate-800">{staff.department || 'Chưa xếp'}</span>
+        <div className="text-xs text-slate-500 space-y-1.5">
+          <div className="flex justify-between items-center gap-2">
+            <span className="shrink-0 text-slate-400">Phòng ban:</span>
+            <span className="font-bold text-slate-800 text-right truncate">{staff.department || 'Chưa xếp'}</span>
           </div>
-          <div className="flex justify-between">
-            <span>Ngạch / Vị trí:</span>
-            <span className="font-semibold text-slate-700">{staff.line} • {staff.role}</span>
+          <div className="flex justify-between items-center gap-2">
+            <span className="shrink-0 text-slate-400">Ngạch / Vị trí:</span>
+            <span className="font-semibold text-slate-700 text-right truncate" title={`${staff.line} • ${staff.role}`}>{staff.line} • {staff.role}</span>
           </div>
-          <div className="flex justify-between">
-            <span>Điểm tổng hợp:</span>
-            <span className="font-bold text-emerald-700">{overallScore}</span>
+          <div className="flex justify-between items-center gap-2">
+            <span className="shrink-0 text-slate-400">Điểm tổng hợp:</span>
+            <span className="font-bold text-emerald-700 text-right font-mono">{overallScore}</span>
           </div>
         </div>
 
@@ -326,12 +326,12 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
           </p>
         </div>
 
-        <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2.5 w-full md:w-auto">
           {/* View Mode Toggle Buttons */}
-          <div className="bg-slate-100 p-1 rounded-2xl border border-slate-200 flex items-center gap-1">
+          <div className="bg-slate-100 p-1 rounded-2xl border border-slate-200 flex items-center justify-center shrink-0">
             <button
               onClick={() => setViewMode('by_dept')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                 viewMode === 'by_dept'
                   ? 'bg-[#1B4332] text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
@@ -339,11 +339,11 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
               title="Sắp xếp & Phân chia nhân sự theo từng Phòng ban"
             >
               <Building2 className="w-3.5 h-3.5" />
-              <span>Phân Theo Phòng Ban</span>
+              <span>Phòng Ban</span>
             </button>
             <button
               onClick={() => setViewMode('all')}
-              className={`px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center gap-1.5 whitespace-nowrap ${
+              className={`flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1.5 whitespace-nowrap cursor-pointer ${
                 viewMode === 'all'
                   ? 'bg-slate-900 text-white shadow-sm'
                   : 'text-slate-600 hover:text-slate-900'
@@ -356,22 +356,24 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
           </div>
 
           {isSystemAdmin(currentUser) && (
-            <div className="flex items-center gap-2">
+            <div className="flex items-center gap-2 w-full sm:w-auto">
               {onOpenAdminPasswordModal && (
                 <button
                   onClick={() => onOpenAdminPasswordModal()}
-                  className="flex items-center justify-center gap-2 px-3.5 py-2.5 rounded-2xl bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs shadow-md shadow-amber-500/20 transition-all whitespace-nowrap"
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-sm transition-all whitespace-nowrap active:scale-95 cursor-pointer"
+                  title="Quản lý & Đổi mật khẩu thành viên"
                 >
-                  <Key className="w-4 h-4" />
-                  <span>Quản Lý Mật Khẩu</span>
+                  <Key className="w-3.5 h-3.5" />
+                  <span>Đổi Mật Khẩu</span>
                 </button>
               )}
               <button
                 onClick={() => setShowAddModal(true)}
-                className="flex items-center justify-center gap-2 px-4 py-2.5 rounded-2xl bg-emerald-600 text-white font-semibold text-xs shadow-md shadow-emerald-600/20 hover:bg-emerald-700 transition-all whitespace-nowrap"
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-sm transition-all whitespace-nowrap active:scale-95 cursor-pointer"
+                title="Thêm nhân sự mới vào hệ thống"
               >
-                <Plus className="w-4 h-4" />
-                <span>Thêm Nhân Sự Mới</span>
+                <Plus className="w-3.5 h-3.5" />
+                <span>+ Thêm Nhân Sự</span>
               </button>
             </div>
           )}
@@ -483,10 +485,10 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="font-black text-base tracking-tight text-white">
+                          <h3 className="font-black text-sm sm:text-base tracking-tight text-white">
                             🏢 PHÒNG BAN: {group.department.toUpperCase()}
                           </h3>
-                          <span className="bg-emerald-500 text-slate-950 text-xs font-black px-2.5 py-0.5 rounded-full shadow-sm">
+                          <span className="bg-emerald-500 text-slate-950 text-[10px] sm:text-xs font-black px-2 sm:px-2.5 py-0.5 rounded-full shadow-sm shrink-0">
                             {deptStaffCount} Nhân sự
                           </span>
                         </div>
@@ -496,7 +498,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 text-xs bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/10 shrink-0">
+                    <div className="flex items-center justify-between sm:justify-end gap-2 text-xs bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/10 shrink-0">
                       <span className="text-emerald-200 font-bold">Điểm Trung Bình Phòng:</span>
                       <strong className="text-emerald-400 font-mono font-black text-sm">
                         {avgDeptScore}

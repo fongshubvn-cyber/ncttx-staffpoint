@@ -125,26 +125,26 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
         </div>
 
         {/* Monthly Period Selector Bar */}
-        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3 bg-[#112d22] p-3.5 rounded-2xl border border-emerald-700/60 relative z-10">
-          <div className="flex items-center gap-2 text-xs font-bold text-emerald-200">
-            <Calendar className="w-4 h-4 text-[#52B788]" />
-            <span>Kỳ Đánh Giá Nội Quy:</span>
-            <span className="text-[10px] text-emerald-400/90 font-medium">
-              (Tháng nào lưu tháng đó • Tự động restart 100đ khi sang tháng mới)
+        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2.5 bg-[#112d22] p-3 sm:p-3.5 rounded-2xl border border-emerald-700/60 relative z-10">
+          <div className="flex items-center gap-2 text-xs font-bold text-emerald-200 flex-wrap">
+            <Calendar className="w-4 h-4 text-[#52B788] shrink-0" />
+            <span>Kỳ Đánh Giá:</span>
+            <span className="text-[10px] text-emerald-300/80 font-normal">
+              Restart 100đ đầu tháng
             </span>
           </div>
-          <div className="flex items-center gap-1.5 overflow-x-auto w-full sm:w-auto">
+          <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar w-full sm:w-auto">
             {recentPeriods.map((p) => (
               <button
                 key={p.key}
                 onClick={() => setActivePeriodKey(p.key)}
-                className={`px-3.5 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
+                className={`flex-1 sm:flex-none px-3 py-1.5 rounded-xl text-xs font-bold transition-all cursor-pointer whitespace-nowrap text-center ${
                   activePeriodKey === p.key
-                    ? 'bg-[#52B788] text-[#1B4332] shadow-md font-extrabold scale-105'
+                    ? 'bg-[#52B788] text-[#1B4332] shadow-md font-extrabold'
                     : 'bg-emerald-950/80 text-emerald-200 hover:bg-emerald-900 border border-emerald-700/40'
                 }`}
               >
-                {p.label}
+                {p.key === recentPeriods[0].key ? `${p.key} (Hiện tại)` : p.key}
               </button>
             ))}
           </div>
@@ -172,29 +172,31 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
       </div>
 
       {/* Sub Navigation Tabs */}
-      <div className="flex items-center space-x-2 border-b border-slate-200 pb-1 overflow-x-auto">
+      <div className="flex items-center gap-2 border-b border-slate-200 pb-1.5 overflow-x-auto no-scrollbar">
         <button
           onClick={() => setActiveTab('rules')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all whitespace-nowrap flex items-center space-x-2 cursor-pointer ${
+          className={`px-3 sm:px-4 py-2 rounded-2xl text-xs font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shrink-0 ${
             activeTab === 'rules'
               ? 'bg-[#1B4332] text-white shadow-md'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <ShieldCheck className="w-4 h-4" />
-          <span>📋 Quy Định Chấp Hành & Hoàn Thành ({rules.length})</span>
+          <ShieldCheck className="w-4 h-4 shrink-0" />
+          <span className="sm:hidden">Quy Định ({rules.length})</span>
+          <span className="hidden sm:inline">📋 Quy Định Chấp Hành ({rules.length})</span>
         </button>
 
         <button
           onClick={() => setActiveTab('staff_scores')}
-          className={`px-4 py-2.5 rounded-2xl text-xs font-black transition-all whitespace-nowrap flex items-center space-x-2 cursor-pointer ${
+          className={`px-3 sm:px-4 py-2 rounded-2xl text-xs font-black transition-all whitespace-nowrap flex items-center gap-1.5 cursor-pointer shrink-0 ${
             activeTab === 'staff_scores'
               ? 'bg-[#1B4332] text-white shadow-md'
               : 'bg-white text-slate-700 hover:bg-slate-100 border border-slate-200'
           }`}
         >
-          <User className="w-4 h-4" />
-          <span>📊 Điểm Chấp Hành Của Nhân Sự</span>
+          <User className="w-4 h-4 shrink-0" />
+          <span className="sm:hidden">Điểm Nhân Sự</span>
+          <span className="hidden sm:inline">📊 Điểm Chấp Hành Nhân Sự</span>
         </button>
       </div>
 
@@ -203,8 +205,8 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
         <div className="space-y-4">
           <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
             <div>
-              <h3 className="text-sm font-extrabold font-heading text-[#1B4332] uppercase tracking-wider">
-                Mức Độ Chấp Hành & Hoàn Thành Công Việc ({rules.length} Quy Định)
+              <h3 className="text-xs sm:text-sm font-black font-heading text-[#1B4332] uppercase tracking-wide">
+                📋 Mức Độ Chấp Hành & Hoàn Thành ({rules.length} Quy Định)
               </h3>
               <p className="text-xs text-slate-500 font-medium">
                 Kỷ luật giờ giấc, điều phối công việc, hoàn thành deadline, diện mạo đồng phục, vệ sinh và sử dụng thiết bị

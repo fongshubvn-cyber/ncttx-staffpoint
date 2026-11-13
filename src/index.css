@@ -109,6 +109,17 @@
   border-radius: 9999px;
 }
 
+/* Hide scrollbar utility for smooth mobile touch carousels */
+.no-scrollbar::-webkit-scrollbar,
+.scrollbar-none::-webkit-scrollbar {
+  display: none;
+}
+.no-scrollbar,
+.scrollbar-none {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
 /* PDF Print & Export Styles */
 @media print {
   @page {

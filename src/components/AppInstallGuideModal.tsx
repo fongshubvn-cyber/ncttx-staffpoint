@@ -399,3 +399,4 @@ export const AppInstallGuideModal: React.FC<AppInstallGuideModalProps> = ({
     </div>
   );
 };
+
