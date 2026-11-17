@@ -49,6 +49,7 @@ import {
   User,
   Key,
   RotateCw,
+  RefreshCw,
   ShieldCheck,
   Star,
   Clock,
@@ -60,6 +61,7 @@ import {
   Bell
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
+import { forceRefreshAppCache } from '../../utils/cacheManager';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole, isSystemAdmin } from '../../utils/calculator';
 
 interface Option1LayoutProps {
@@ -157,6 +159,12 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   const [showShiftEvalModal, setShowShiftEvalModal] = useState(false);
   const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const [adminPasswordTargetId, setAdminPasswordTargetId] = useState<string | undefined>(undefined);
+  const [isHardRefreshing, setIsHardRefreshing] = useState(false);
+
+  const handleForceRefresh = async () => {
+    setIsHardRefreshing(true);
+    await forceRefreshAppCache();
+  };
   const [cloudSyncInfo, setCloudSyncInfo] = useState<{ status: CloudSyncState; errorDetails: string | null }>({
     status: 'connecting',
     errorDetails: null
@@ -265,9 +273,16 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 </button>
               )}
 
-              <span className="text-[10px] font-mono font-bold text-slate-400 border-l border-slate-200 pl-1.5 shrink-0 select-none">
-                v1.020
-              </span>
+              <button
+                type="button"
+                onClick={handleForceRefresh}
+                disabled={isHardRefreshing}
+                className="text-[10px] font-mono font-black text-emerald-800 hover:text-emerald-950 bg-emerald-100/80 hover:bg-emerald-200/90 px-1.5 py-0.5 rounded-md border-l border-slate-200 transition-all flex items-center gap-1 cursor-pointer active:scale-95 shadow-2xs"
+                title="Bấm để xoá Cache & làm mới phiên bản mới nhất ngay lập tức (không cần gỡ app)"
+              >
+                <RefreshCw className={`w-2.5 h-2.5 text-emerald-700 ${isHardRefreshing ? 'animate-spin' : ''}`} />
+                <span>v1.020</span>
+              </button>
             </div>
           </div>
 
@@ -497,6 +512,27 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 </div>
               </div>
               <ChevronRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-0.5 transition-transform shrink-0" />
+            </button>
+
+            {/* Nút Làm Mới Cache & Cập Nhật Phiên Bản (Không cần cài lại app) */}
+            <button
+              onClick={handleForceRefresh}
+              disabled={isHardRefreshing}
+              className="w-full flex items-center justify-between p-2.5 rounded-2xl bg-emerald-50/90 hover:bg-emerald-100/90 border border-emerald-200 text-emerald-950 shadow-2xs active:scale-[0.99] transition-all cursor-pointer group"
+            >
+              <div className="flex items-center gap-2.5">
+                <div className="w-8 h-8 rounded-xl bg-emerald-700 text-white flex items-center justify-center shrink-0 shadow-2xs">
+                  <RefreshCw className={`w-4 h-4 ${isHardRefreshing ? 'animate-spin' : ''}`} />
+                </div>
+                <div className="text-left">
+                  <div className="text-xs font-black flex items-center gap-1.5 text-emerald-900">
+                    <span>Làm Mới Cache & Nhận Bản Mới</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.020</span>
+                  </div>
+                  <div className="text-[10px] text-emerald-700 font-medium">Bấm 1 chạm xoá cache & cập nhật tính năng mới</div>
+                </div>
+              </div>
+              <ChevronRight className="w-4 h-4 text-emerald-700 group-hover:translate-x-0.5 transition-transform shrink-0" />
             </button>
 
             {/* KHỐI 2: DANH MỤC ĐIỀU HƯỚNG */}

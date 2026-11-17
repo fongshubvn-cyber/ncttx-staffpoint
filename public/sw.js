@@ -1,10 +1,32 @@
 // Staffpoint Service Worker for Mobile Notifications & PWA
+const CACHE_NAME = 'staffpoint-v1.020';
+
 self.addEventListener('install', (event) => {
   self.skipWaiting();
 });
 
 self.addEventListener('activate', (event) => {
-  event.waitUntil(self.clients.claim());
+  event.waitUntil(
+    caches.keys().then((keys) => {
+      return Promise.all(
+        keys.map((k) => {
+          if (k !== CACHE_NAME) {
+            return caches.delete(k);
+          }
+        })
+      );
+    }).then(() => self.clients.claim())
+  );
+});
+
+// Network-First Strategy for HTML and JS scripts to avoid stale cache on mobile
+self.addEventListener('fetch', (event) => {
+  const req = event.request;
+  if (req.mode === 'navigate' || req.destination === 'script' || req.destination === 'style') {
+    event.respondWith(
+      fetch(req).catch(() => caches.match(req))
+    );
+  }
 });
 
 self.addEventListener('notificationclick', (event) => {
