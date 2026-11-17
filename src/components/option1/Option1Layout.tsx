@@ -16,6 +16,7 @@ import { Option1StaffView } from './Option1StaffView';
 import { Option1IncidentsView } from './Option1IncidentsView';
 import { Option1QuestionsView } from './Option1QuestionsView';
 import { Option1ReportView } from './Option1ReportView';
+import { Option1ShiftConfigView } from './Option1ShiftConfigView';
 import { BaselineView } from '../BaselineView';
 import { GuideView } from '../GuideView';
 import { PolicyView } from '../PolicyView';
@@ -47,6 +48,7 @@ import {
   RotateCw,
   ShieldCheck,
   Star,
+  Clock,
   ShieldAlert,
   ClipboardCheck,
   ChevronRight,
@@ -150,7 +152,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     return () => unsub();
   }, []);
 
-  const [configSubTab, setConfigSubTab] = useState<'policy' | 'questions' | 'baseline'>('policy');
+  const [configSubTab, setConfigSubTab] = useState<'policy' | 'shifts' | 'questions' | 'baseline'>('policy');
   const [analyticsSubTab, setAnalyticsSubTab] = useState<'report' | 'guide'>('report');
 
   useEffect(() => {
@@ -696,11 +698,11 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
         {isSuperAdmin && (activeTab === 'config' || activeTab === 'questions' || activeTab === 'baseline' || activeTab === 'policy') && (
           <div className="space-y-6">
             {/* Glass Sub-tab Switcher Bar */}
-            <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-1.5 sm:gap-2 max-w-xl">
+            <div className="bg-white/80 backdrop-blur-md p-1.5 rounded-2xl border border-slate-200/80 shadow-sm flex items-center gap-1.5 sm:gap-2 max-w-2xl overflow-x-auto scrollbar-none">
               <button
                 type="button"
                 onClick={() => setConfigSubTab('policy')}
-                className={`flex-1 py-2 px-2 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap ${
+                className={`flex-1 py-2 px-2 sm:px-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap ${
                   configSubTab === 'policy'
                     ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -713,8 +715,22 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 
               <button
                 type="button"
+                onClick={() => setConfigSubTab('shifts')}
+                className={`flex-1 py-2 px-2 sm:px-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap ${
+                  configSubTab === 'shifts'
+                    ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25'
+                    : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
+                }`}
+              >
+                <Clock className="w-3.5 h-3.5 sm:w-4 sm:h-4 shrink-0" />
+                <span className="sm:hidden">Lịch Ca</span>
+                <span className="hidden sm:inline">⏰ Lịch Ca & Sheet</span>
+              </button>
+
+              <button
+                type="button"
                 onClick={() => setConfigSubTab('questions')}
-                className={`flex-1 py-2 px-2 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap ${
+                className={`flex-1 py-2 px-2 sm:px-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap ${
                   configSubTab === 'questions'
                     ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -728,7 +744,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               <button
                 type="button"
                 onClick={() => setConfigSubTab('baseline')}
-                className={`flex-1 py-2 px-2 sm:px-4 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap ${
+                className={`flex-1 py-2 px-2 sm:px-3 rounded-xl text-xs font-extrabold transition-all flex items-center justify-center gap-1 sm:gap-1.5 cursor-pointer whitespace-nowrap ${
                   configSubTab === 'baseline'
                     ? 'bg-gradient-to-r from-emerald-700 to-teal-700 text-white shadow-md shadow-emerald-700/25'
                     : 'text-slate-600 hover:text-slate-900 hover:bg-slate-100'
@@ -754,7 +770,16 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               />
             )}
 
-            {/* Sub-tab 2 Content: Tiêu Chí */}
+            {/* Sub-tab 2 Content: Lịch Ca & Google Sheet */}
+            {configSubTab === 'shifts' && (
+              <Option1ShiftConfigView
+                params={params}
+                onUpdateParams={onUpdateParams}
+                currentUser={currentUser}
+              />
+            )}
+
+            {/* Sub-tab 3 Content: Tiêu Chí */}
             {configSubTab === 'questions' && (
               <Option1QuestionsView
                 questions={questions}
@@ -767,7 +792,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               />
             )}
 
-            {/* Sub-tab 2 Content: Tham Số */}
+            {/* Sub-tab 4 Content: Tham Số */}
             {configSubTab === 'baseline' && (
               <BaselineView
                 baselinePoints={baselinePoints}

@@ -175,6 +175,12 @@ export function App() {
       policyRules: (parsed.policyRules && Array.isArray(parsed.policyRules) && parsed.policyVersion === '2026_v5' && parsed.policyRules.length >= 9)
         ? parsed.policyRules
         : initialPolicyRules,
+      shiftSheetUrl: parsed.shiftSheetUrl || defaultParameters.shiftSheetUrl,
+      shiftScanIntervalSeconds: parsed.shiftScanIntervalSeconds || defaultParameters.shiftScanIntervalSeconds,
+      defaultShiftPenaltyPoints: (typeof parsed.defaultShiftPenaltyPoints === 'number') ? parsed.defaultShiftPenaltyPoints : -0.5,
+      defaultShiftRewardPoints: (typeof parsed.defaultShiftRewardPoints === 'number') ? parsed.defaultShiftRewardPoints : 0.5,
+      shiftStaffSheetName: parsed.shiftStaffSheetName || defaultParameters.shiftStaffSheetName,
+      vioMinorPoints: (typeof parsed.vioMinorPoints === 'number') ? parsed.vioMinorPoints : -0.5,
     };
   });
 

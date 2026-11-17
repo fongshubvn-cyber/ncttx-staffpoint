@@ -62,6 +62,11 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
     return `${y}-${m}-${day}`;
   };
 
+  const defaultPenalty = params?.defaultShiftPenaltyPoints ?? -0.5;
+  const defaultReward = params?.defaultShiftRewardPoints ?? 0.5;
+  const sheetUrl = params?.shiftSheetUrl || DEFAULT_SHIFT_SHEET_URL;
+  const scanInterval = params?.shiftScanIntervalSeconds || 60;
+
   // State: Shifts data from Google Sheet
   const [shifts, setShifts] = useState<ShiftGroup[]>(() => {
     const cached = getCachedShiftData();
@@ -76,7 +81,7 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
     }
     return '';
   });
-  const [scanCountdown, setScanCountdown] = useState<number>(60);
+  const [scanCountdown, setScanCountdown] = useState<number>(scanInterval);
   const [scanError, setScanError] = useState<string | null>(null);
 
   // Filter States
@@ -90,9 +95,9 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
   // Evaluation Form State
   const [evalCategory, setEvalCategory] = useState<'nhac_nho' | 'khen_thuong' | 'vi_pham'>('nhac_nho');
   const [selectedKeyword, setSelectedKeyword] = useState<string>('all');
-  const [title, setTitle] = useState<string>('');
+  const [title, setTitle] = useState<string>('Nhắc nhở nề nếp ca làm việc');
   const [description, setDescription] = useState<string>('');
-  const [impactPoints, setImpactPoints] = useState<number>(-0.2);
+  const [impactPoints, setImpactPoints] = useState<number>(defaultPenalty);
   const [policyRuleId, setPolicyRuleId] = useState<string>('NQ01');
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -109,7 +114,7 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
     if (!isSilent) setIsScanning(true);
     setScanError(null);
     try {
-      const data = await fetchAndParseShiftWorkbook(DEFAULT_SHIFT_SHEET_URL);
+      const data = await fetchAndParseShiftWorkbook(sheetUrl);
       if (data && data.shifts) {
         setShifts(data.shifts);
         setLastScanTime(new Date().toLocaleTimeString('vi-VN'));
@@ -121,7 +126,7 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
       }
     } finally {
       setIsScanning(false);
-      setScanCountdown(60);
+      setScanCountdown(scanInterval);
     }
   };
 
@@ -132,20 +137,20 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
     }
   }, []);
 
-  // 1-Minute Polling Timer (Mỗi 1 phút quét 1 lần)
+  // Polling Timer (Mỗi chu kỳ quét tự động từ cấu hình)
   useEffect(() => {
     const timer = setInterval(() => {
       setScanCountdown(prev => {
         if (prev <= 1) {
           scanSchedule(true);
-          return 60;
+          return scanInterval;
         }
         return prev - 1;
       });
     }, 1000);
 
     return () => clearInterval(timer);
-  }, []);
+  }, [scanInterval, sheetUrl]);
 
   // Department Options available in shifts
   const departmentOptions = useMemo(() => {
@@ -212,10 +217,10 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
   const handleChangeEvalCategory = (cat: 'nhac_nho' | 'khen_thuong' | 'vi_pham') => {
     setEvalCategory(cat);
     if (cat === 'nhac_nho') {
-      setImpactPoints(-0.2);
+      setImpactPoints(defaultPenalty);
       setTitle('Nhắc nhở nề nếp ca làm việc');
     } else if (cat === 'khen_thuong') {
-      setImpactPoints(0.2);
+      setImpactPoints(defaultReward);
       setTitle('Khen thưởng sự phối hợp xuất sắc trong ca làm');
     } else {
       const rule = policyRulesList.find(r => r.id === policyRuleId) || policyRulesList[0];

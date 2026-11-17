@@ -5199,9 +5199,14 @@ export const defaultParameters: ParameterConfig = {
   recMinorPoints: 0.5,
   recModeratePoints: 1.0,
   recMajorPoints: 1.5,
-  vioMinorPoints: -0.2,
+  vioMinorPoints: -0.5, // Mức trừ mặc định 0.5đ
   vioModeratePoints: -0.5,
   vioMajorPoints: -1.0,
   vioBoundaryPoints: -1.5,
   notebookLmUrl: 'https://notebooklm.google.com',
+  shiftSheetUrl: 'https://docs.google.com/spreadsheets/d/1Mae0rgz6ozO5_PdnJgdsWPRUjw6ddxeHnJp23IcKUUQ/edit',
+  shiftScanIntervalSeconds: 60,
+  defaultShiftPenaltyPoints: -0.5,
+  defaultShiftRewardPoints: 0.5,
+  shiftStaffSheetName: '👥 Nhân sự điểm bán',
 };

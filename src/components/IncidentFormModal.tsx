@@ -321,7 +321,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     const recMod = params?.recModeratePoints ?? 1.0;
     const recMaj = params?.recMajorPoints ?? 1.5;
 
-    const vioMin = params?.vioMinorPoints ?? -0.2;
+    const vioMin = params?.vioMinorPoints ?? -0.5;
     const vioMod = params?.vioModeratePoints ?? -0.5;
     const vioMaj = params?.vioMajorPoints ?? -1.0;
     const vioBou = params?.vioBoundaryPoints ?? -1.5;

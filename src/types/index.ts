@@ -169,13 +169,20 @@ export interface ParameterConfig {
   recMinorPoints?: number;    // +0.5 (Ghi nhận mức Nhẹ)
   recModeratePoints?: number; // +1.0 (Ghi nhận mức Vừa)
   recMajorPoints?: number;    // +1.5 (Ghi nhận Tuyên dương/Xuất sắc)
-  vioMinorPoints?: number;    // -0.2 (Vi phạm Nhắc nhở nhẹ)
+  vioMinorPoints?: number;    // -0.5 (Vi phạm Nhắc nhở nhẹ - Mặc định -0.5đ)
   vioModeratePoints?: number; // -0.5 (Vi phạm Mức Vừa)
   vioMajorPoints?: number;    // -1.0 (Vi phạm Nghiêm trọng)
   vioBoundaryPoints?: number; // -1.5 (Vi phạm Ranh giới đỏ ⚠️)
   googleAppsScriptUrl?: string; // Webhook URL từ Google Apps Script
   notebookLmUrl?: string; // Đường dẫn kết nối Trợ lý AI NotebookLM của công ty
   geminiApiKey?: string; // Google Gemini API Key cho Trợ Lý AI Chat Trực Tiếp
+
+  // Shift Evaluation & Schedule Settings
+  shiftSheetUrl?: string; // Link Google Sheet lịch ca làm việc
+  shiftScanIntervalSeconds?: number; // Chu kỳ quét tự động (mặc định 60 giây)
+  defaultShiftPenaltyPoints?: number; // Điểm trừ nhắc nhở mặc định (mặc định -0.5đ)
+  defaultShiftRewardPoints?: number; // Điểm cộng khen thưởng mặc định (mặc định +0.5đ)
+  shiftStaffSheetName?: string; // Tên sheet nhân sự điểm bán ('👥 Nhân sự điểm bán')
 }
 
 export interface PolicyRule {
