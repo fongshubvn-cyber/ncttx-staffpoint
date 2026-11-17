@@ -1,7 +1,14 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
 ## 🚀 [v1.029] - 17/11/2026 20:41
-* **Mô tả:** \
+* **Mô tả:**
+  * **Đồng bộ Banner chuyên biệt cho tất cả các tab phản hồi:**
+    * 🌟 **Tab Ghi Nhận:** Bổ sung banner xanh ngọc *"Sổ Tuyên Dương & Ghi Nhận Khen Thưởng"* kèm huy hiệu `+ Thang 5.0đ Khen Thưởng` và nút bấm nhanh `[+ Lập Phiếu Ghi Nhận]`.
+    * ⚠️ **Tab Vi Phạm CV:** Chuẩn hóa banner đỏ hồng *"Biên Bản Vi Phạm Tiêu Chuẩn Công Việc"* kèm huy hiệu `- Thang 5.0đ Chuyên Môn` và nút bấm nhanh `[+ Lập Phiếu Vi Phạm]`.
+    * 📖 **Tab Nội Quy:** Chuẩn hóa banner vàng hổ phách *"Sổ Ghi Nhận Nội Quy Lao Động"* kèm nút `[+ Lập Phiếu Nội Quy]`.
+    * ⚖️ **Tab Kháng Nghị 48h:** Bổ sung banner xanh chàm *"Sổ Kháng Nghị & Khiếu Nại 48h"*.
+  * **Cải tiến Empty State thông minh theo từng Tab:**
+    * Khi chưa có dữ liệu trong tab tương ứng, hiển thị thông điệp và lời giải thích hướng dẫn trực quan theo đúng ngữ cảnh của từng loại phiếu thay vì câu chung chung.
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
 
 ---
