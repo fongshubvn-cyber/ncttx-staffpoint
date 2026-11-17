@@ -226,12 +226,12 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
 
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
             <span className="text-xs text-emerald-200/80 font-medium block">
-              {isAdmin ? `Biên Bản Vi Phạm (${currentPeriodObj.mStr}/${currentPeriodObj.year})` : `Biên Bản Của Bạn (${currentPeriodObj.mStr}/${currentPeriodObj.year})`}
+              {isAdmin ? `Biên Bản Nội Quy (${currentPeriodObj.mStr}/${currentPeriodObj.year})` : `Biên Bản Của Bạn (${currentPeriodObj.mStr}/${currentPeriodObj.year})`}
             </span>
-            <span className="text-xl font-bold text-rose-300 mt-1 block">
+            <span className="text-xl font-bold text-amber-300 mt-1 block">
               {isAdmin 
-                ? activePeriodIncidents.filter(i => i.type === 'vi_pham').length 
-                : staffIncidents.filter(i => i.type === 'vi_pham').length} phiếu
+                ? activePeriodIncidents.filter(i => Boolean(i.policyRuleId) || i.type === 'vi_pham').length 
+                : staffIncidents.filter(i => Boolean(i.policyRuleId) || i.type === 'vi_pham').length} phiếu
             </span>
           </div>
 
@@ -597,28 +597,39 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
             <div className="space-y-3">
               {staffIncidents.map((incident) => {
                 const isRecognition = incident.type === 'ghi_nhan';
+                const isPolicyIncident = Boolean(incident.policyRuleId) || incident.type === 'vi_pham';
                 return (
                   <div
                     key={incident.id}
                     className={`p-4 rounded-2xl border transition-all ${
                       isRecognition
                         ? 'bg-emerald-50/50 border-emerald-200/80 text-emerald-950'
+                        : isPolicyIncident
+                        ? 'bg-amber-50/70 border-amber-300 text-amber-950'
                         : 'bg-rose-50/50 border-rose-200/80 text-rose-950'
                     }`}
                   >
                     <div className="flex items-start justify-between gap-3">
                       <div className="flex items-start gap-3">
-                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 ${
-                          isRecognition ? 'bg-emerald-600 text-white' : 'bg-rose-600 text-white'
+                        <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 font-bold ${
+                          isRecognition 
+                            ? 'bg-emerald-600 text-white' 
+                            : isPolicyIncident 
+                            ? 'bg-amber-400 text-amber-950 shadow-xs' 
+                            : 'bg-rose-600 text-white'
                         }`}>
-                          {isRecognition ? <Award className="w-4 h-4" /> : <ShieldAlert className="w-4 h-4" />}
+                          {isRecognition ? <Award className="w-4 h-4" /> : isPolicyIncident ? <BookOpen className="w-4 h-4 text-amber-950" /> : <ShieldAlert className="w-4 h-4" />}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
-                              isRecognition ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                              isRecognition 
+                                ? 'bg-emerald-100 text-emerald-800' 
+                                : isPolicyIncident 
+                                ? 'bg-amber-200 text-amber-950 font-black' 
+                                : 'bg-rose-100 text-rose-800'
                             }`}>
-                              {isRecognition ? 'Tuyên Dương' : 'Vi Phạm'}
+                              {isRecognition ? 'Tuyên Dương' : isPolicyIncident ? (incident.policyRuleId ? `📖 Nội Quy (${incident.policyRuleId})` : '📖 Nội Quy') : 'Vi Phạm'}
                             </span>
                             <span className="text-xs text-slate-500">{incident.date}</span>
                           </div>

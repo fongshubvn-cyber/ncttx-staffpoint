@@ -24,7 +24,8 @@ import {
   Eye,
   Scale,
   XCircle,
-  Check
+  Check,
+  BookOpen
 } from 'lucide-react';
 
 interface Option1IncidentsViewProps {
@@ -197,14 +198,14 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
     }
 
     const targetStaff = staffList.find(s => s.id === item.targetId);
-    const staffName = targetStaff ? targetStaff.name : item.targetId;
+    const staffName = targetStaff ? targetStaff.name : (item.targetId || '');
     const reporterName = item.reporterName || '';
-    const term = searchTerm.toLowerCase();
+    const term = (searchTerm || '').toLowerCase();
     const matchesSearch = !term || 
                           staffName.toLowerCase().includes(term) ||
                           reporterName.toLowerCase().includes(term) ||
-                          item.title.toLowerCase().includes(term) ||
-                          item.targetId.toLowerCase().includes(term) ||
+                          (item.title && item.title.toLowerCase().includes(term)) ||
+                          (item.targetId && item.targetId.toLowerCase().includes(term)) ||
                           (item.reporterId && item.reporterId.toLowerCase().includes(term));
 
     if (!matchesSearch) return false;
@@ -644,6 +645,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
             </div>
           ) : (
             filteredIncidents.map((incident) => {
+              if (!incident) return null;
               const isRecognition = incident.type === 'ghi_nhan';
               const isPolicyIncident = Boolean(incident.policyRuleId) || incident.type === 'vi_pham';
               const staff = staffList.find(s => s.id === incident.targetId);

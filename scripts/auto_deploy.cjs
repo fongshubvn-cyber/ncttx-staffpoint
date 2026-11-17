@@ -102,18 +102,21 @@ if (fs.existsSync(logPath)) {
   }
 }
 
-// 11. Run Build
-console.log('\n📦 [1/3] Building production bundle with Vite...');
+// 11. Run Type Check & Build
+console.log('\n🔍 [1/4] Running TypeScript compiler check...');
+execSync('npx.cmd tsc --noEmit', { cwd: rootDir, stdio: 'inherit' });
+
+console.log('\n📦 [2/4] Building production bundle with Vite...');
 execSync('npm.cmd run build', { cwd: rootDir, stdio: 'inherit' });
 
 // 12. Push source to GitHub main (Vercel triggers automatic deployment)
-console.log('\n📤 [2/3] Committing & pushing to GitHub main (triggers Vercel deployment)...');
+console.log('\n📤 [3/4] Committing & pushing to GitHub main (triggers Vercel deployment)...');
 execSync('git add -A', { cwd: rootDir, stdio: 'inherit' });
 execSync(`git commit -m "release: bump to ${newTag} - ${logMsg}"`, { cwd: rootDir, stdio: 'inherit' });
 execSync('git push origin main', { cwd: rootDir, stdio: 'inherit' });
 
 // 13. Deploy to GitHub Pages (Backup)
-console.log('\n🌐 [3/3] Uploading to GitHub Pages (gh-pages)...');
+console.log('\n🌐 [4/4] Uploading to GitHub Pages (gh-pages)...');
 execSync('call npm.cmd run deploy', { cwd: rootDir, stdio: 'inherit' });
 
 console.log('\n====================================================');
