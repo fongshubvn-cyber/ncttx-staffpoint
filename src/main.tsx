@@ -15,7 +15,8 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
 // Register Service Worker for Mobile Native Notifications & PWA
 if ('serviceWorker' in navigator) {
   window.addEventListener('load', () => {
-    navigator.serviceWorker.register('/sw.js').then((reg) => {
+    const swUrl = `${import.meta.env.BASE_URL}sw.js`;
+    navigator.serviceWorker.register(swUrl).then((reg) => {
       // Force check for updates on startup
       reg.update();
     }).catch((err) => {
