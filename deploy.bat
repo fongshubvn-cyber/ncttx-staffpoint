@@ -5,39 +5,17 @@ setlocal enableextensions enabledelayedexpansion
 set "PATH=C:\Program Files\Git\cmd;C:\Program Files\nodejs;%PATH%"
 
 echo ========================================================
-echo   STAFFPOINT v1.020 - DEPLOY TO GITHUB PAGES
-echo   Link: https://fongshubvn-cyber.github.io/ncttx-staffpoint/
+echo   STAFFPOINT - AUTO DEPLOY & VERSION BUMP
+echo   Link Vercel: https://ncttx-staffpoint.vercel.app/
+echo   Link GitHub: https://fongshubvn-cyber.github.io/ncttx-staffpoint/
 echo ========================================================
 echo.
 
-echo [1/3] Building production bundle (v1.020)...
-call npm.cmd run build
-if %errorlevel% neq 0 (
-    echo.
-    echo ERROR: Build failed. Please fix errors before deploying.
-    pause
-    exit /b %errorlevel%
-)
-
-echo.
-echo [2/3] Pushing source code to GitHub main branch...
-git add .
 set "msg=%~1"
 if "%msg%"=="" (
-    set "msg=Release v1.020-stable %date% %time%"
+    set "msg=Update website %date% %time%"
 )
-git commit -m "%msg%"
-git push origin main
 
-echo.
-echo [3/3] Uploading site to GitHub Pages (gh-pages branch)...
-call npm.cmd run deploy
+node scripts\auto_deploy.cjs "%msg%"
 
-echo.
-echo ========================================================
-echo SUCCESS: Deployed v1.020 successfully!
-echo Link: https://fongshubvn-cyber.github.io/ncttx-staffpoint/
-echo (Note: GitHub Pages may take 1-2 minutes to reflect updates)
-echo ========================================================
-echo.
 pause
