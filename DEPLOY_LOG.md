@@ -1,7 +1,12 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
 ## 🚀 [v1.027] - 17/11/2026 19:24
-* **Mô tả:** \
+* **Mô tả:**
+  * **Bỏ hoàn toàn phần Góp ý Admin:** Loại bỏ tính năng, nút bấm, tab và modal Hòm thư góp ý Admin khỏi giao diện Phản Hồi (`Option1IncidentsView`), giữ giao diện tinh gọn, tập trung hoàn toàn vào 3 trụ cột cốt lõi: Nội Quy Lao Động (Quỹ 100đ), Ghi Nhận Công Việc (+5.0đ), Vi Phạm Chuyên Môn (-5.0đ) & Kháng Nghị 48h.
+  * **Bổ sung và chuẩn hóa các bộ phận trong Ca theo Google Sheet:**
+    * Sửa thuật toán trích xuất tên bộ phận từ tiêu đề Cell A1 của Google Sheet (`parts[3]` thay vì `parts[2]`).
+    * Chuẩn hóa và phân loại đầy đủ các bộ phận: **☕ Pha chế**, **🛍️ Thương mại & Dịch vụ**, **💁 Phục vụ**, **🥖 Bếp Bánh**.
+    * Tích hợp bộ lọc bộ phận linh hoạt trong Modal Đánh giá Ca làm việc (`ShiftEvaluationModal`).
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
 
 ---
