@@ -8,7 +8,8 @@ import {
   DepartmentLine, 
   ParameterConfig, 
   BaselinePoint,
-  AuthUser 
+  AuthUser,
+  AppNotification
 } from '../../types';
 
 import { Option1SummaryView } from './Option1SummaryView';
@@ -24,6 +25,8 @@ import { AiChatModal } from '../AiChatModal';
 import { AdminPasswordModal } from '../AdminPasswordModal';
 import { AppInstallGuideModal } from '../AppInstallGuideModal';
 import { ShiftEvaluationModal } from '../ShiftEvaluationModal';
+import { NotificationCenterModal } from '../NotificationCenterModal';
+import { RealtimeToastNotification } from '../RealtimeToastNotification';
 
 import { 
   LayoutDashboard, 
@@ -53,7 +56,8 @@ import {
   ClipboardCheck,
   ChevronRight,
   ArrowLeft,
-  Smartphone
+  Smartphone,
+  Bell
 } from 'lucide-react';
 import { onCloudStateChange, CloudSyncState } from '../../config/firebase';
 import { canUserViewIncident, isHRHeadRole, isDeptHeadOrAboveRole, isSystemAdmin } from '../../utils/calculator';
@@ -92,6 +96,12 @@ interface Option1LayoutProps {
   onAppealIncident: (incidentId: string, reason: string) => void;
   onResolveAppeal: (incidentId: string, approved: boolean) => void;
   onSyncStaffFromSheet?: () => Promise<void>;
+  notifications?: AppNotification[];
+  onMarkNotificationAsRead?: (id: string) => void;
+  onMarkAllNotificationsAsRead?: () => void;
+  onClearAllNotifications?: () => void;
+  toastNotification?: AppNotification | null;
+  onCloseToastNotification?: () => void;
   uiOption?: 'default' | 'option1';
   onSelectUiOption?: (option: 'default' | 'option1') => void;
 }
@@ -130,6 +140,12 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   onAppealIncident,
   onResolveAppeal,
   onSyncStaffFromSheet,
+  notifications = [],
+  onMarkNotificationAsRead,
+  onMarkAllNotificationsAsRead,
+  onClearAllNotifications,
+  toastNotification = null,
+  onCloseToastNotification,
   uiOption = 'option1',
   onSelectUiOption,
 }) => {
@@ -139,6 +155,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   const [showFeedbackChoiceModal, setShowFeedbackChoiceModal] = useState(false);
   const [showInstallGuideModal, setShowInstallGuideModal] = useState(false);
   const [showShiftEvalModal, setShowShiftEvalModal] = useState(false);
+  const [showNotificationCenter, setShowNotificationCenter] = useState(false);
   const [adminPasswordTargetId, setAdminPasswordTargetId] = useState<string | undefined>(undefined);
   const [cloudSyncInfo, setCloudSyncInfo] = useState<{ status: CloudSyncState; errorDetails: string | null }>({
     status: 'connecting',
@@ -183,6 +200,16 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
     // Subordinates below Trưởng phòng: show count of received tickets
     return incidents.filter(i => !i.isDeleted && i.targetId === currentUser.id).length;
   }, [currentUser, incidents, staffList]);
+
+  // Unread Notifications Count for current user
+  const unreadNotifCount = React.useMemo(() => {
+    return (notifications || []).filter(n => {
+      if (n.isRead) return false;
+      if (!currentUser) return true;
+      if (currentUser.isAdmin || currentUser.jobLevel === 'Founder' || currentUser.jobLevel === 'Trưởng phòng') return true;
+      return n.recipientId === currentUser.id || n.recipientId === 'ALL';
+    }).length;
+  }, [notifications, currentUser]);
 
   // Menu phân quyền: Chỉ hiển thị Cấu Hình & Báo Cáo cho Admin / Co-Admin
   const navItems = React.useMemo(() => [
@@ -278,6 +305,21 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 
           {/* Right-side Action Buttons */}
           <div className="flex items-center gap-1.5 sm:gap-2 shrink-0">
+            {/* Nút Chuông Thông Báo */}
+            <button
+              type="button"
+              onClick={() => setShowNotificationCenter(true)}
+              className="relative p-2 rounded-xl bg-slate-100 hover:bg-emerald-50 text-slate-700 hover:text-emerald-800 transition-all cursor-pointer shadow-2xs active:scale-95 shrink-0 border border-slate-200/60"
+              title={`Thông báo hệ thống (${unreadNotifCount} chưa đọc)`}
+            >
+              <Bell className="w-4 h-4" />
+              {unreadNotifCount > 0 && (
+                <span className="absolute -top-1 -right-1 min-w-[17px] h-4 px-1 rounded-full bg-rose-500 text-white text-[9px] font-black flex items-center justify-center shadow-xs animate-pulse">
+                  {unreadNotifCount > 9 ? '9+' : unreadNotifCount}
+                </span>
+              )}
+            </button>
+
             {/* Nút Hướng Dẫn Cài App Lên Màn Hình Cho Mọi Thành Viên */}
             <button
               type="button"
@@ -1111,6 +1153,29 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
       <AppInstallGuideModal
         isOpen={showInstallGuideModal}
         onClose={() => setShowInstallGuideModal(false)}
+      />
+
+      {/* Notification Center Modal */}
+      <NotificationCenterModal
+        show={showNotificationCenter}
+        onClose={() => setShowNotificationCenter(false)}
+        notifications={notifications}
+        currentUser={currentUser}
+        onMarkAsRead={onMarkNotificationAsRead || (() => {})}
+        onMarkAllAsRead={onMarkAllNotificationsAsRead || (() => {})}
+        onClearAll={onClearAllNotifications || (() => {})}
+        onSelectIncident={() => {
+          setActiveTab('incidents');
+        }}
+      />
+
+      {/* Realtime Toast Notification Floating Alert */}
+      <RealtimeToastNotification
+        notification={toastNotification}
+        onClose={onCloseToastNotification || (() => {})}
+        onClick={() => {
+          setShowNotificationCenter(true);
+        }}
       />
     </div>
   );

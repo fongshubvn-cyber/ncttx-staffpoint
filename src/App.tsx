@@ -21,7 +21,8 @@ import {
   DepartmentLine,
   BaselinePoint,
   ParameterConfig,
-  AuthUser
+  AuthUser,
+  AppNotification
 } from './types';
 
 import {
@@ -53,6 +54,13 @@ import {
 } from './utils/calculator';
 import { getPersistedAuthUser, savePersistedAuthUser } from './utils/authCookie';
 import { fetchAndParseShiftWorkbook, convertSheetStaffToStaff } from './services/shiftService';
+import { 
+  getSavedNotifications, 
+  persistNotifications, 
+  buildIncidentNotification, 
+  triggerBrowserNotification, 
+  playNotificationSound 
+} from './services/notificationService';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('summary'); // Default: Trang Tổng hợp
@@ -64,6 +72,8 @@ export function App() {
   const [incidentModalType, setIncidentModalType] = useState<IncidentType | undefined>(undefined);
   const [showLoginModal, setShowLoginModal] = useState<boolean>(false);
   const [incidentsFilterType, setIncidentsFilterType] = useState<string>('all');
+  const [notifications, setNotifications] = useState<AppNotification[]>(() => getSavedNotifications());
+  const [toastNotification, setToastNotification] = useState<AppNotification | null>(null);
 
   const [uiOption, setUiOption] = useState<'default' | 'option1'>(() => {
     try {
@@ -180,6 +190,8 @@ export function App() {
       defaultShiftPenaltyPoints: (typeof parsed.defaultShiftPenaltyPoints === 'number') ? parsed.defaultShiftPenaltyPoints : -0.5,
       defaultShiftRewardPoints: (typeof parsed.defaultShiftRewardPoints === 'number') ? parsed.defaultShiftRewardPoints : 0.5,
       shiftStaffSheetName: parsed.shiftStaffSheetName || defaultParameters.shiftStaffSheetName,
+      staffSyncIntervalHours: (typeof parsed.staffSyncIntervalHours === 'number') ? parsed.staffSyncIntervalHours : 1,
+      enableWebNotifications: parsed.enableWebNotifications ?? true,
       vioMinorPoints: (typeof parsed.vioMinorPoints === 'number') ? parsed.vioMinorPoints : -0.5,
     };
   });
@@ -617,6 +629,47 @@ export function App() {
     }
   };
 
+  // Notification Dispatcher
+  const handleDispatchNotification = (notif: AppNotification) => {
+    setNotifications(prev => {
+      const updated = [notif, ...prev.filter(n => n.id !== notif.id)];
+      persistNotifications(updated);
+      return updated;
+    });
+
+    const isTarget = !currentUser || notif.recipientId === currentUser.id || notif.recipientId === 'ALL';
+    const isStoreAdmin = isSystemAdmin(currentUser);
+
+    if (isTarget || isStoreAdmin) {
+      setToastNotification(notif);
+      playNotificationSound();
+      if (params.enableWebNotifications !== false) {
+        triggerBrowserNotification(notif.title, notif.body);
+      }
+    }
+  };
+
+  const handleMarkNotificationAsRead = (id: string) => {
+    setNotifications(prev => {
+      const updated = prev.map(n => n.id === id ? { ...n, isRead: true } : n);
+      persistNotifications(updated);
+      return updated;
+    });
+  };
+
+  const handleMarkAllNotificationsAsRead = () => {
+    setNotifications(prev => {
+      const updated = prev.map(n => ({ ...n, isRead: true }));
+      persistNotifications(updated);
+      return updated;
+    });
+  };
+
+  const handleClearAllNotifications = () => {
+    setNotifications([]);
+    persistNotifications([]);
+  };
+
   // Handler: Add new incident record (accessible to any account)
   const handleAddIncident = (newIncident: IncidentRecord) => {
     setIncidents(prev => {
@@ -628,6 +681,10 @@ export function App() {
     if (newIncident.status === 'Đã duyệt' || newIncident.status === 'Đã ghi nhận' || newIncident.type === 'vi_pham') {
       applyIncidentScoreImpact(newIncident);
     }
+
+    // Trigger Notification for Target Staff & Web App
+    const notif = buildIncidentNotification(newIncident, currentUser?.id === newIncident.targetId);
+    handleDispatchNotification(notif);
   };
 
   // Handler: Admin & Co-Admin soft-deletes an incident record (moves to Trash Bin)
@@ -730,6 +787,21 @@ export function App() {
       notifySync('incidents', updated);
       return updated;
     });
+
+    const targetInc = incidents.find(i => i.id === incidentId);
+    if (targetInc) {
+      handleDispatchNotification({
+        id: `NOTIF-APPEAL-${Date.now()}`,
+        recipientId: 'ADMIN',
+        title: `⚖️ Có kháng nghị biên bản mới`,
+        body: `[${currentUser?.name || targetInc.targetName}] đã gửi kháng nghị đối với biên bản "${targetInc.title}": ${reason}`,
+        type: 'khang_nghi',
+        incidentId,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        senderName: currentUser?.name || targetInc.targetName,
+      });
+    }
   };
 
   // Handler: HR Head / Admin resolves 48h appeal
@@ -752,6 +824,21 @@ export function App() {
       notifySync('incidents', updated);
       return updated;
     });
+
+    const targetInc = incidents.find(i => i.id === incidentId);
+    if (targetInc) {
+      handleDispatchNotification({
+        id: `NOTIF-RESOLVE-${Date.now()}`,
+        recipientId: targetInc.targetId,
+        title: approved ? `✅ Kháng nghị được chấp nhận` : `❌ Kháng nghị bị từ chối`,
+        body: `Kháng nghị cho biên bản "${targetInc.title}" đã được ban quản lý xem xét và ${approved ? 'chấp thuận (hoàn trả điểm)' : 'từ chối'}.`,
+        type: 'khang_nghi',
+        incidentId,
+        createdAt: new Date().toISOString(),
+        isRead: false,
+        senderName: currentUser?.name || 'Ban Quản Lý',
+      });
+    }
   };
 
   // Helper: Safe number parser
@@ -915,9 +1002,10 @@ export function App() {
   };
 
   // Handler: Sync staff roster directly from Google Sheet (Sheet "👥 Nhân sự điểm bán")
-  const handleSyncStaffFromSheet = async () => {
+  const handleSyncStaffFromSheet = async (isSilent = false) => {
     try {
-      const data = await fetchAndParseShiftWorkbook();
+      const sheetUrl = params.shiftSheetUrl || undefined;
+      const data = await fetchAndParseShiftWorkbook(sheetUrl);
       let addedCount = 0;
       let updatedCount = 0;
 
@@ -951,11 +1039,50 @@ export function App() {
         return list;
       });
 
-      alert(`✅ Đồng bộ Google Sheet thành công!\n• Bổ sung mới: ${addedCount} nhân sự\n• Cập nhật trạng thái: ${updatedCount} nhân sự\n• Điểm bán: Cửa hàng số 9 Triệu Việt Vương`);
+      localStorage.setItem('ncttx_last_staff_sync_time', Date.now().toString());
+
+      if (addedCount > 0) {
+        handleDispatchNotification({
+          id: `NOTIF-STAFF-SYNC-${Date.now()}`,
+          recipientId: 'ADMIN',
+          title: `👥 Tự động cập nhật nhân sự`,
+          body: `Hệ thống vừa đồng bộ bổ sung ${addedCount} nhân sự mới từ Google Sheet vào danh sách điểm bán.`,
+          type: 'system',
+          createdAt: new Date().toISOString(),
+          isRead: false,
+        });
+      }
+
+      if (!isSilent) {
+        alert(`✅ Đồng bộ Google Sheet thành công!\n• Bổ sung mới: ${addedCount} nhân sự\n• Cập nhật trạng thái: ${updatedCount} nhân sự\n• Điểm bán: Cửa hàng số 9 Triệu Việt Vương`);
+      }
     } catch (err: any) {
-      alert(`⚠️ Không thể đồng bộ từ Google Sheet:\n${err.message || err}`);
+      if (!isSilent) {
+        alert(`⚠️ Không thể đồng bộ từ Google Sheet:\n${err.message || err}`);
+      }
     }
   };
+
+  // Background Auto-Sync Staff: Quét định kỳ 1 tiếng / lần (hoặc theo cấu hình)
+  useEffect(() => {
+    const syncHours = params.staffSyncIntervalHours ?? 1;
+    if (syncHours <= 0) return;
+    const syncIntervalMs = syncHours * 60 * 60 * 1000;
+
+    const lastSync = Number(localStorage.getItem('ncttx_last_staff_sync_time') || 0);
+    if (!lastSync || Date.now() - lastSync >= syncIntervalMs) {
+      handleSyncStaffFromSheet(true);
+    }
+
+    const timer = setInterval(() => {
+      const last = Number(localStorage.getItem('ncttx_last_staff_sync_time') || 0);
+      if (Date.now() - last >= syncIntervalMs) {
+        handleSyncStaffFromSheet(true);
+      }
+    }, 60 * 1000); // Check every minute
+
+    return () => clearInterval(timer);
+  }, [params.staffSyncIntervalHours, params.shiftSheetUrl]);
 
   // Handler: Add new question
   const handleAddQuestion = (newQuestion: Question) => {
@@ -1117,6 +1244,12 @@ export function App() {
         onRefreshCloud={handleRefreshCloudData}
         isRefreshingCloud={isRefreshingCloud}
         onSyncStaffFromSheet={handleSyncStaffFromSheet}
+        notifications={notifications}
+        onMarkNotificationAsRead={handleMarkNotificationAsRead}
+        onMarkAllNotificationsAsRead={handleMarkAllNotificationsAsRead}
+        onClearAllNotifications={handleClearAllNotifications}
+        toastNotification={toastNotification}
+        onCloseToastNotification={() => setToastNotification(null)}
       />
 
       <IncidentFormModal

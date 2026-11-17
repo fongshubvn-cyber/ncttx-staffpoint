@@ -5209,4 +5209,6 @@ export const defaultParameters: ParameterConfig = {
   defaultShiftPenaltyPoints: -0.5,
   defaultShiftRewardPoints: 0.5,
   shiftStaffSheetName: '👥 Nhân sự điểm bán',
+  staffSyncIntervalHours: 1, // Tự động đồng bộ nhân sự 1 tiếng 1 lần
+  enableWebNotifications: true,
 };

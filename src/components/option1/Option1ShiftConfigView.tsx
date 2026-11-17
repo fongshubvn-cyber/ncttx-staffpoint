@@ -14,8 +14,16 @@ import {
   Megaphone, 
   Users, 
   FileSpreadsheet,
-  Info
+  Info,
+  Bell,
+  Volume2
 } from 'lucide-react';
+import { 
+  triggerBrowserNotification, 
+  playNotificationSound, 
+  requestBrowserNotificationPermission,
+  isBrowserNotificationGranted 
+} from '../../services/notificationService';
 
 interface Option1ShiftConfigViewProps {
   params: ParameterConfig;
@@ -33,6 +41,8 @@ export const Option1ShiftConfigView: React.FC<Option1ShiftConfigViewProps> = ({
   const [defaultPenalty, setDefaultPenalty] = useState<number>(params.defaultShiftPenaltyPoints ?? -0.5);
   const [defaultReward, setDefaultReward] = useState<number>(params.defaultShiftRewardPoints ?? 0.5);
   const [staffSheetName, setStaffSheetName] = useState<string>(params.shiftStaffSheetName || '👥 Nhân sự điểm bán');
+  const [staffSyncInterval, setStaffSyncInterval] = useState<number>(params.staffSyncIntervalHours ?? 1);
+  const [enableNotifications, setEnableNotifications] = useState<boolean>(params.enableWebNotifications ?? true);
 
   // Test Connection State
   const [isTesting, setIsTesting] = useState(false);
@@ -71,6 +81,8 @@ export const Option1ShiftConfigView: React.FC<Option1ShiftConfigViewProps> = ({
       setDefaultPenalty(-0.5);
       setDefaultReward(0.5);
       setStaffSheetName('👥 Nhân sự điểm bán');
+      setStaffSyncInterval(1);
+      setEnableNotifications(true);
       setTestResult(null);
     }
   };
@@ -91,13 +103,15 @@ export const Option1ShiftConfigView: React.FC<Option1ShiftConfigViewProps> = ({
       defaultShiftPenaltyPoints: Number(defaultPenalty),
       defaultShiftRewardPoints: Number(defaultReward),
       shiftStaffSheetName: staffSheetName.trim() || '👥 Nhân sự điểm bán',
+      staffSyncIntervalHours: Number(staffSyncInterval),
+      enableWebNotifications: enableNotifications,
       vioMinorPoints: Number(defaultPenalty), // Đồng bộ mức trừ nhẹ mặc định về mức này
     };
 
     onUpdateParams(newParams);
     setIsSaved(true);
     setTimeout(() => setIsSaved(false), 3000);
-    alert('✅ Đã lưu cấu hình Lịch Ca Làm Việc & Google Sheet thành công!');
+    alert('✅ Đã lưu cấu hình Lịch Ca Làm Việc & Thông Báo thành công!');
   };
 
   return (
@@ -387,6 +401,122 @@ export const Option1ShiftConfigView: React.FC<Option1ShiftConfigViewProps> = ({
           <p className="text-[11px] text-slate-500 font-medium">
             Hệ thống sẽ tìm sheet có chứa từ khóa này để đồng bộ danh sách mã nhân viên, họ tên và phân quyền nhân sự điểm bán.
           </p>
+        </div>
+
+        <hr className="border-slate-100" />
+
+        {/* Section 5: Chu kỳ tự động đồng bộ nhân sự (1 tiếng 1 lần) */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <label className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Clock className="w-4 h-4 text-emerald-700" />
+              5. Chu Kỳ Tự Động Đồng Bộ Nhân Sự (Google Sheet ➔ App)
+            </label>
+            <span className="text-[11px] font-extrabold text-emerald-800 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200">
+              Quét ngầm định kỳ
+            </span>
+          </div>
+
+          <p className="text-[11px] text-slate-500 font-medium">
+            Hệ thống sẽ chạy ngầm và tự động quét sheet <strong>"{staffSheetName}"</strong> để bổ sung ngay các bạn nhân sự mới vào hệ thống:
+          </p>
+
+          <div className="grid grid-cols-2 sm:grid-cols-5 gap-2.5">
+            {[
+              { val: 1, label: '1 Tiếng', sub: 'Mỗi 60 phút', badge: 'Khuyên dùng' },
+              { val: 2, label: '2 Tiếng', sub: 'Mỗi 120 phút' },
+              { val: 6, label: '6 Tiếng', sub: '4 lần/ngày' },
+              { val: 12, label: '12 Tiếng', sub: '2 lần/ngày' },
+              { val: 24, label: '24 Tiếng', sub: '1 lần/ngày' },
+            ].map(opt => {
+              const isSelected = staffSyncInterval === opt.val;
+              return (
+                <button
+                  key={opt.val}
+                  type="button"
+                  disabled={!isAdmin}
+                  onClick={() => setStaffSyncInterval(opt.val)}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer relative ${
+                    isSelected
+                      ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/30 shadow-2xs'
+                      : 'bg-slate-50/60 border-slate-200 hover:bg-slate-100'
+                  }`}
+                >
+                  {opt.badge && (
+                    <span className="absolute top-2 right-2 px-1.5 py-0.5 rounded-full bg-emerald-200 text-emerald-900 text-[9px] font-black uppercase">
+                      {opt.badge}
+                    </span>
+                  )}
+                  <div className="text-xs font-black text-slate-900">{opt.label}</div>
+                  <div className="text-[10px] text-slate-500 font-medium mt-0.5">{opt.sub}</div>
+                </button>
+              );
+            })}
+          </div>
+        </div>
+
+        <hr className="border-slate-100" />
+
+        {/* Section 6: Cấu hình Notification cho Web App */}
+        <div className="space-y-3">
+          <div className="flex items-center justify-between flex-wrap gap-2">
+            <label className="text-xs font-black text-slate-900 uppercase tracking-wider flex items-center gap-1.5">
+              <Bell className="w-4 h-4 text-emerald-700" />
+              6. Cơ Chế Thông Báo Web App (Web Push & Âm Thanh)
+            </label>
+            <span className="text-[11px] font-extrabold text-blue-800 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-200">
+              Thông báo tức thì
+            </span>
+          </div>
+
+          <p className="text-[11px] text-slate-500 font-medium">
+            Mỗi khi nhân sự bị đánh giá, nhắc nhở hoặc được khen thưởng, hệ thống sẽ gửi thông báo đến chuông thông báo trong app và thông báo nổi của trình duyệt.
+          </p>
+
+          <div className="flex items-center justify-between p-4 rounded-2xl bg-slate-50 border border-slate-200 flex-wrap gap-3">
+            <div className="flex items-center gap-3">
+              <div className="p-2.5 rounded-xl bg-emerald-100 text-emerald-800">
+                <Volume2 className="w-5 h-5" />
+              </div>
+              <div>
+                <div className="text-xs font-black text-slate-900">Âm thanh chuông báo & Thông báo nổi trình duyệt</div>
+                <div className="text-[11px] text-slate-500 font-medium">Phát âm thanh chuông nhẹ và bật popup thông báo khi có phản hồi mới</div>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={async () => {
+                  playNotificationSound();
+                  const granted = await requestBrowserNotificationPermission();
+                  if (granted) {
+                    triggerBrowserNotification('🌟 Thông báo thử nghiệm', 'Cơ chế thông báo Web App Staffpoint đang hoạt động hoàn hảo!');
+                  } else {
+                    alert('Âm thanh chuông đã phát. Vui lòng cho phép quyền thông báo (Allow Notifications) trên trình duyệt để nhận thông báo nổi!');
+                  }
+                }}
+                className="px-3 py-2 rounded-xl bg-slate-200 hover:bg-slate-300 text-slate-800 font-bold text-xs transition-colors cursor-pointer"
+              >
+                🔔 Test thử thông báo
+              </button>
+
+              <button
+                type="button"
+                disabled={!isAdmin}
+                onClick={() => setEnableNotifications(!enableNotifications)}
+                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
+                  enableNotifications ? 'bg-emerald-600' : 'bg-slate-300'
+                }`}
+              >
+                <span
+                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                    enableNotifications ? 'translate-x-5' : 'translate-x-0'
+                  }`}
+                />
+              </button>
+            </div>
+          </div>
         </div>
 
         {/* Save Bar at Bottom */}

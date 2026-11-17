@@ -183,6 +183,22 @@ export interface ParameterConfig {
   defaultShiftPenaltyPoints?: number; // Điểm trừ nhắc nhở mặc định (mặc định -0.5đ)
   defaultShiftRewardPoints?: number; // Điểm cộng khen thưởng mặc định (mặc định +0.5đ)
   shiftStaffSheetName?: string; // Tên sheet nhân sự điểm bán ('👥 Nhân sự điểm bán')
+  staffSyncIntervalHours?: number; // Chu kỳ tự động đồng bộ danh sách nhân sự (mặc định 1 tiếng = 1 giờ)
+  enableWebNotifications?: boolean; // Bật/tắt thông báo Web Push trên trình duyệt
+}
+
+export interface AppNotification {
+  id: string;
+  recipientId: string; // Mã NV người nhận hoặc 'ALL' / 'ADMIN'
+  title: string;
+  body: string;
+  type: 'khen_thuong' | 'nhac_nho' | 'vi_pham' | 'khang_nghi' | 'system';
+  incidentId?: string;
+  impactPoints?: number;
+  createdAt: string;
+  isRead: boolean;
+  senderName?: string;
+  reporterId?: string;
 }
 
 export interface PolicyRule {
