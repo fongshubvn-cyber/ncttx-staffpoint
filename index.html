@@ -1,34 +1,199 @@
 <!DOCTYPE html>
 <html lang="vi">
-  <head>
-    <meta charset="UTF-8" />
-    <link rel="icon" type="image/png" href="favicon.png" />
-    <link rel="apple-touch-icon" href="apple-touch-icon.png" />
-    <link rel="apple-touch-icon" sizes="180x180" href="apple-touch-icon.png" />
-    <link rel="apple-touch-icon" sizes="192x192" href="icon-192.png" />
-    <link rel="apple-touch-icon" sizes="512x512" href="icon-512.png" />
-    <link rel="manifest" href="manifest.json" />
-    
-    <!-- iOS Safari PWA / Add to Home Screen -->
-    <meta name="apple-mobile-web-app-capable" content="yes" />
-    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-    <meta name="apple-mobile-web-app-title" content="Staffpoint" />
-    
-    <!-- Android / Chrome Theme -->
-    <meta name="application-name" content="Staffpoint" />
-    <meta name="theme-color" content="#FFFFFF" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover" />
-    <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
-    <meta http-equiv="Pragma" content="no-cache" />
-    <meta http-equiv="Expires" content="0" />
-    <title>Staffpoint - Ghi Nhận Phản Hồi Nhân Sự (Nhà Của Thời Thanh Xuân)</title>
-    <link rel="preconnect" href="https://fonts.googleapis.com">
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600;700;800;900&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
-    <script type="module" crossorigin src="./assets/index-L1JGM9YM.js"></script>
-    <link rel="stylesheet" crossorigin href="./assets/index-DNXRNXNU.css">
-  </head>
-  <body class="bg-[#EDEAE3] text-[#2D3748] font-sans antialiased selection:bg-[#2D6A4F] selection:text-white min-h-screen">
-    <div id="root"></div>
-  </body>
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+  <meta http-equiv="Pragma" content="no-cache" />
+  <meta http-equiv="Expires" content="0" />
+  <title>Staffpoint - Hệ Thống Đang Nâng Cấp & Bảo Trì</title>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body {
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+      background-color: #EDEAE3;
+      color: #2D3748;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 1.5rem;
+    }
+    .card {
+      background: #FFFFFF;
+      max-width: 480px;
+      width: 100%;
+      border-radius: 24px;
+      padding: 2.25rem 2rem;
+      box-shadow: 0 20px 40px -15px rgba(27, 67, 50, 0.15), 0 0 0 1px rgba(0, 0, 0, 0.05);
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+    .brand-bar {
+      position: absolute;
+      top: 0; left: 0; right: 0;
+      height: 6px;
+      background: linear-gradient(90deg, #1B4332, #2D6A4F, #52B788);
+    }
+    .icon-wrapper {
+      width: 72px;
+      height: 72px;
+      margin: 0 auto 1.25rem auto;
+      background: #E8F5E9;
+      border: 2px solid #C8E6C9;
+      border-radius: 20px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 34px;
+      animation: pulse 2s infinite ease-in-out;
+    }
+    @keyframes pulse {
+      0%, 100% { transform: scale(1); }
+      50% { transform: scale(1.06); }
+    }
+    h1 {
+      font-size: 1.35rem;
+      font-weight: 800;
+      color: #1B4332;
+      margin-bottom: 0.5rem;
+      line-height: 1.3;
+    }
+    .subtitle {
+      font-size: 0.85rem;
+      color: #718096;
+      font-weight: 600;
+      margin-bottom: 1.25rem;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    p {
+      font-size: 0.95rem;
+      line-height: 1.6;
+      color: #4A5568;
+      margin-bottom: 1.5rem;
+    }
+    .status-box {
+      background: #F7FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 14px;
+      padding: 0.85rem 1rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.65rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: #2D6A4F;
+      margin-bottom: 1.5rem;
+    }
+    .dot {
+      width: 10px;
+      height: 10px;
+      background: #38A169;
+      border-radius: 50%;
+      animation: blink 1.2s infinite ease-in-out;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; transform: scale(1); }
+      50% { opacity: 0.4; transform: scale(0.8); }
+    }
+    .note {
+      font-size: 0.8rem;
+      color: #A0AEC0;
+      line-height: 1.5;
+    }
+    .btn-reload {
+      display: inline-block;
+      margin-top: 1.25rem;
+      background: #1B4332;
+      color: #FFFFFF;
+      font-weight: 700;
+      font-size: 0.9rem;
+      padding: 0.75rem 1.5rem;
+      border-radius: 12px;
+      border: none;
+      cursor: pointer;
+      box-shadow: 0 4px 12px rgba(27, 67, 50, 0.25);
+      transition: all 0.2s;
+    }
+    .btn-reload:active { transform: scale(0.96); }
+  </style>
+</head>
+<body>
+  <div class="card">
+    <div class="brand-bar"></div>
+    <div class="icon-wrapper">🌱</div>
+    <h1>Nhà Của Thời Thanh Xuân</h1>
+    <div class="subtitle">Hệ Thống Staffpoint</div>
+    <p>
+      Hệ thống đang được nâng cấp phiên bản mới để hoàn thiện tính năng và tối ưu trải nghiệm của bạn.
+    </p>
+
+    <div class="status-box">
+      <div class="dot"></div>
+      <span id="status-text">Đang dọn sạch cache & chuẩn bị phiên bản mới...</span>
+    </div>
+
+    <div class="note">
+      💡 Trang web sẽ <strong>tự động chuyển về app mới</strong> ngay khi quá trình hoàn tất. Bạn không cần làm gì cả.
+    </div>
+
+    <button type="button" class="btn-reload" onclick="forceReload()">
+      🔄 Tải Lại Ngay
+    </button>
+  </div>
+
+  <script>
+    // 1. Tự động xoá toàn bộ Service Worker cũ
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(registrations) {
+        for (var i = 0; i < registrations.length; i++) {
+          registrations[i].unregister();
+        }
+      });
+    }
+
+    // 2. Tự động xoá toàn bộ Cache Storage của trình duyệt
+    if ('caches' in window) {
+      caches.keys().then(function(names) {
+        for (var i = 0; i < names.length; i++) {
+          caches.delete(names[i]);
+        }
+      });
+    }
+
+    // 3. Tự động kiểm tra xem bản deploy mới đã xong chưa mỗi 4 giây
+    var checkCount = 0;
+    var statusText = document.getElementById('status-text');
+
+    function checkDeployStatus() {
+      checkCount++;
+      var testUrl = window.location.pathname + '?_check=' + Date.now();
+      fetch(testUrl, { cache: 'no-store' })
+        .then(function(res) { return res.text(); })
+        .then(function(html) {
+          // Nếu trang chứa id="root" nghĩa là app React đã deploy xong!
+          if (html.indexOf('id="root"') !== -1) {
+            statusText.innerText = 'Phiên bản mới đã sẵn sàng! Đang nạp app...';
+            setTimeout(function() {
+              window.location.replace(window.location.pathname + '?_t=' + Date.now());
+            }, 800);
+          } else {
+            statusText.innerText = 'Đang bảo trì & nâng cấp (đang kiểm tra lần ' + checkCount + ')...';
+          }
+        })
+        .catch(function(err) {
+          // Bỏ qua lỗi mạng
+        });
+    }
+
+    setInterval(checkDeployStatus, 4000);
+
+    function forceReload() {
+      window.location.replace(window.location.pathname + '?_t=' + Date.now());
+    }
+  </script>
+</body>
 </html>
