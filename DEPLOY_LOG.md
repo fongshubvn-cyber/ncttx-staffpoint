@@ -1,5 +1,11 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
+## 🚀 [v1.026] - 17/11/2026 19:00
+* **Mô tả:** \
+* **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
+
+---
+
 ## 🚀 [v1.025] - 17/11/2026 18:52
 * **Mô tả:** Khắc phục lỗi nội dung thông báo (Notification & Popup Toast):
   * Phiếu nội quy hiển thị chuẩn xác: *"📖 Bạn có biên bản vi phạm nội quy mới"* và *"Lập biên bản vi phạm quy định: [Tên phiếu]. Trừ điểm quỹ nội quy"* (kèm icon `BookOpen` và màu vàng hổ phách), tuyệt đối không bị nhầm thành *"Khen thưởng"*.

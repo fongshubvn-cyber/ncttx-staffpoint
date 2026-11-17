@@ -141,20 +141,23 @@ export function buildIncidentNotification(
   let body = '';
 
   if (isPolicy) {
+    const penalty = incident.policyPenaltyPoints || 10;
     title = isSelfRecipient 
-      ? `📖 Bạn có biên bản vi phạm nội quy mới`
-      : `📖 Vi phạm quy định nội quy: ${incident.targetName}`;
-    body = `[${incident.reporterName}] đã lập biên bản vi phạm quy định: "${incident.title}". Trừ -${incident.policyPenaltyPoints || 10}đ quỹ nội quy.`;
+      ? `📖 Bạn bị trừ -${penalty}đ quỹ nội quy`
+      : `📖 Vi phạm nội quy (-${penalty}đ): ${incident.targetName}`;
+    body = `[${incident.reporterName}] đã lập biên bản vi phạm quy định: "${incident.title}". Mức trừ: -${penalty}đ quỹ chấp hành nội quy.`;
   } else if (isWorkVio) {
+    const impact = incident.impactPoints || 0;
     title = isSelfRecipient
-      ? `⚠️ Bạn có biên bản vi phạm tiêu chuẩn công việc`
-      : `⚠️ Vi phạm công việc: ${incident.targetName}`;
-    body = `[${incident.reporterName}] đã gửi biên bản vi phạm: "${incident.title}". Mức tác động: ${incident.impactPoints}đ (Thang 5.0).`;
+      ? `⚠️ Bạn bị trừ ${impact}đ tiêu chuẩn công việc`
+      : `⚠️ Vi phạm công việc (${impact}đ): ${incident.targetName}`;
+    body = `[${incident.reporterName}] đã gửi biên bản vi phạm: "${incident.title}". Mức tác động: ${impact}đ (Thang 5.0).`;
   } else {
+    const impact = incident.impactPoints || 0;
     title = isSelfRecipient
-      ? `🌟 Bạn vừa được khen thưởng ghi nhận tốt!`
-      : `🌟 Khen thưởng mới: ${incident.targetName}`;
-    body = `[${incident.reporterName}] đã khen thưởng: "${incident.title}". Mức tác động: +${incident.impactPoints}đ.`;
+      ? `🌟 Bạn được cộng +${impact}đ khen thưởng!`
+      : `🌟 Khen thưởng (+${impact}đ): ${incident.targetName}`;
+    body = `[${incident.reporterName}] đã khen thưởng: "${incident.title}". Mức tác động: +${impact}đ (Thang 5.0).`;
   }
 
   return {

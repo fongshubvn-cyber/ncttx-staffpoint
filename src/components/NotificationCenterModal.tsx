@@ -260,11 +260,17 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
                     {notif.impactPoints !== undefined && notif.impactPoints !== 0 && (
                       <div className="flex items-center gap-1.5 pt-0.5">
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-black font-mono ${
-                          notif.impactPoints > 0 
+                          notif.type === 'noi_quy'
+                            ? 'bg-amber-100 text-amber-950 border border-amber-300'
+                            : notif.impactPoints > 0 
                             ? 'bg-emerald-100 text-emerald-800' 
                             : 'bg-rose-100 text-rose-800'
                         }`}>
-                          {notif.impactPoints > 0 ? `+${notif.impactPoints}đ` : `${notif.impactPoints}đ`}
+                          {notif.type === 'noi_quy'
+                            ? `-${Math.abs(notif.impactPoints)}đ Quỹ Nội Quy`
+                            : notif.impactPoints > 0 
+                            ? `+${notif.impactPoints}đ (Thang 5.0)` 
+                            : `${notif.impactPoints}đ (Thang 5.0)`}
                         </span>
                         {notif.senderName && (
                           <span className="text-[10px] text-slate-400">

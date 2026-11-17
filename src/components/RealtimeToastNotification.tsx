@@ -76,6 +76,23 @@ export const RealtimeToastNotification: React.FC<RealtimeToastNotificationProps>
           <p className="text-[11px] text-slate-600 line-clamp-2 font-medium">
             {notification.body}
           </p>
+          {notification.impactPoints !== undefined && notification.impactPoints !== 0 && (
+            <div className="pt-0.5">
+              <span className={`inline-block px-2 py-0.5 rounded-md text-[10px] font-black font-mono ${
+                notification.type === 'noi_quy'
+                  ? 'bg-amber-100 text-amber-950 border border-amber-300'
+                  : notification.impactPoints > 0
+                  ? 'bg-emerald-100 text-emerald-800'
+                  : 'bg-rose-100 text-rose-800'
+              }`}>
+                {notification.type === 'noi_quy'
+                  ? `-${Math.abs(notification.impactPoints)}đ Quỹ Nội Quy`
+                  : notification.impactPoints > 0
+                  ? `+${notification.impactPoints}đ (Thang 5.0)`
+                  : `${notification.impactPoints}đ (Thang 5.0)`}
+              </span>
+            </div>
+          )}
         </div>
 
         <button
