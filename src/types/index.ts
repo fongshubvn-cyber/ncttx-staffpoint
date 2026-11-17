@@ -192,7 +192,7 @@ export interface AppNotification {
   recipientId: string; // Mã NV người nhận hoặc 'ALL' / 'ADMIN'
   title: string;
   body: string;
-  type: 'khen_thuong' | 'nhac_nho' | 'vi_pham' | 'khang_nghi' | 'system';
+  type: 'khen_thuong' | 'nhac_nho' | 'vi_pham' | 'noi_quy' | 'khang_nghi' | 'system';
   incidentId?: string;
   impactPoints?: number;
   createdAt: string;

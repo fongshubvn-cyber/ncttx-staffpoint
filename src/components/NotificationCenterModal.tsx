@@ -13,7 +13,8 @@ import {
   ExternalLink,
   ShieldCheck,
   CheckCircle2,
-  Volume2
+  Volume2,
+  ShieldAlert
 } from 'lucide-react';
 import { requestBrowserNotificationPermission, isBrowserNotificationGranted } from '../services/notificationService';
 
@@ -87,10 +88,12 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
     switch (type) {
       case 'khen_thuong':
         return <Sparkles className="w-4 h-4 text-emerald-600" />;
+      case 'noi_quy':
+        return <BookOpen className="w-4 h-4 text-amber-900" />;
+      case 'vi_pham':
+        return <ShieldAlert className="w-4 h-4 text-rose-600" />;
       case 'nhac_nho':
         return <Megaphone className="w-4 h-4 text-amber-600" />;
-      case 'vi_pham':
-        return <BookOpen className="w-4 h-4 text-rose-600" />;
       case 'khang_nghi':
         return <Scale className="w-4 h-4 text-indigo-600" />;
       default:
@@ -229,11 +232,13 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
                   <div className={`p-2.5 rounded-2xl shrink-0 shadow-2xs ${
                     notif.type === 'khen_thuong' 
                       ? 'bg-emerald-100' 
-                      : notif.type === 'vi_pham' 
-                        ? 'bg-rose-100' 
-                        : notif.type === 'nhac_nho' 
-                          ? 'bg-amber-100' 
-                          : 'bg-blue-100'
+                      : notif.type === 'noi_quy'
+                        ? 'bg-amber-100'
+                        : notif.type === 'vi_pham' 
+                          ? 'bg-rose-100' 
+                          : notif.type === 'nhac_nho' 
+                            ? 'bg-amber-100' 
+                            : 'bg-blue-100'
                   }`}>
                     {getNotifIcon(notif.type)}
                   </div>

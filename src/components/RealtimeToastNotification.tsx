@@ -1,6 +1,6 @@
 import React, { useEffect } from 'react';
 import { AppNotification } from '../types';
-import { Sparkles, Megaphone, BookOpen, Scale, Info, X } from 'lucide-react';
+import { Sparkles, Megaphone, BookOpen, Scale, Info, X, ShieldAlert } from 'lucide-react';
 
 interface RealtimeToastNotificationProps {
   notification: AppNotification | null;
@@ -27,10 +27,12 @@ export const RealtimeToastNotification: React.FC<RealtimeToastNotificationProps>
     switch (notification.type) {
       case 'khen_thuong':
         return <Sparkles className="w-5 h-5 text-emerald-600" />;
+      case 'noi_quy':
+        return <BookOpen className="w-5 h-5 text-amber-900" />;
+      case 'vi_pham':
+        return <ShieldAlert className="w-5 h-5 text-rose-600" />;
       case 'nhac_nho':
         return <Megaphone className="w-5 h-5 text-amber-600" />;
-      case 'vi_pham':
-        return <BookOpen className="w-5 h-5 text-rose-600" />;
       case 'khang_nghi':
         return <Scale className="w-5 h-5 text-indigo-600" />;
       default:
@@ -50,11 +52,13 @@ export const RealtimeToastNotification: React.FC<RealtimeToastNotificationProps>
         <div className={`p-2.5 rounded-2xl shrink-0 shadow-sm ${
           notification.type === 'khen_thuong' 
             ? 'bg-emerald-100' 
-            : notification.type === 'vi_pham' 
-              ? 'bg-rose-100' 
-              : notification.type === 'nhac_nho' 
-                ? 'bg-amber-100' 
-                : 'bg-blue-100'
+            : notification.type === 'noi_quy'
+              ? 'bg-amber-100'
+              : notification.type === 'vi_pham' 
+                ? 'bg-rose-100' 
+                : notification.type === 'nhac_nho' 
+                  ? 'bg-amber-100' 
+                  : 'bg-blue-100'
         }`}>
           {getIcon()}
         </div>

@@ -1,4 +1,5 @@
 import { AppNotification, IncidentRecord, AuthUser } from '../types';
+import { isPolicyIncident, isWorkViolation, isRecognitionIncident } from '../utils/calculator';
 
 const NOTIFICATIONS_STORAGE_KEY = 'ncttx_notifications_v1';
 
@@ -132,23 +133,23 @@ export function buildIncidentNotification(
   incident: IncidentRecord,
   isSelfRecipient: boolean = true
 ): AppNotification {
-  const isPolicy = incident.type === 'vi_pham';
-  const isMinus = (incident.impactPoints || 0) < 0;
+  const isPolicy = isPolicyIncident(incident);
+  const isWorkVio = isWorkViolation(incident);
   
-  let type: AppNotification['type'] = isPolicy ? 'vi_pham' : (isMinus ? 'nhac_nho' : 'khen_thuong');
+  let type: AppNotification['type'] = isPolicy ? 'noi_quy' : (isWorkVio ? 'vi_pham' : 'khen_thuong');
   let title = '';
   let body = '';
 
   if (isPolicy) {
     title = isSelfRecipient 
-      ? `📋 Bạn có biên bản vi phạm nội quy mới`
-      : `📋 Biên bản vi phạm mới: ${incident.targetName}`;
-    body = `[${incident.reporterName}] đã lập biên bản: "${incident.title}". Trừ -${incident.policyPenaltyPoints || 10}đ chấp hành.`;
-  } else if (isMinus) {
+      ? `📖 Bạn có biên bản vi phạm nội quy mới`
+      : `📖 Vi phạm quy định nội quy: ${incident.targetName}`;
+    body = `[${incident.reporterName}] đã lập biên bản vi phạm quy định: "${incident.title}". Trừ -${incident.policyPenaltyPoints || 10}đ quỹ nội quy.`;
+  } else if (isWorkVio) {
     title = isSelfRecipient
-      ? `📢 Bạn nhận được một nhắc nhở công việc`
-      : `📢 Nhắc nhở công việc: ${incident.targetName}`;
-    body = `[${incident.reporterName}] đã gửi nhắc nhở: "${incident.title}". Mức tác động: ${incident.impactPoints}đ.`;
+      ? `⚠️ Bạn có biên bản vi phạm tiêu chuẩn công việc`
+      : `⚠️ Vi phạm công việc: ${incident.targetName}`;
+    body = `[${incident.reporterName}] đã gửi biên bản vi phạm: "${incident.title}". Mức tác động: ${incident.impactPoints}đ (Thang 5.0).`;
   } else {
     title = isSelfRecipient
       ? `🌟 Bạn vừa được khen thưởng ghi nhận tốt!`

@@ -426,39 +426,61 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
             </div>
 
             {/* Incident Summary Card */}
-            <div className="bg-[#EDEAE3]/60 p-4 rounded-2xl border border-emerald-900/10 text-left space-y-2 text-xs">
-              <div className="flex items-center justify-between border-b border-emerald-900/10 pb-2">
-                <span className="font-mono font-bold text-[11px] text-slate-600 bg-white px-2.5 py-0.5 rounded-full border border-slate-200">
-                  {submittedSuccess.id}
-                </span>
-                <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-extrabold ${
-                  submittedSuccess.type === 'vi_pham'
-                    ? 'bg-amber-100 text-[#DD6B20] border border-amber-300'
-                    : 'bg-emerald-100 text-[#1B4332] border border-emerald-300'
-                }`}>
-                  {submittedSuccess.type === 'vi_pham' ? '📢 BIÊN BẢN VI PHẠM' : '🌟 PHIẾU KHEN THƯỞNG'}
-                </span>
-              </div>
+            {(() => {
+              const isSubPolicy = submittedSuccess.type === 'noi_quy' || Boolean(submittedSuccess.policyRuleId);
+              const isSubVio = submittedSuccess.type === 'vi_pham';
+              return (
+                <div className="bg-[#EDEAE3]/60 p-4 rounded-2xl border border-emerald-900/10 text-left space-y-2 text-xs">
+                  <div className="flex items-center justify-between border-b border-emerald-900/10 pb-2">
+                    <span className="font-mono font-bold text-[11px] text-slate-600 bg-white px-2.5 py-0.5 rounded-full border border-slate-200">
+                      {submittedSuccess.id}
+                    </span>
+                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
+                      isSubPolicy
+                        ? 'bg-amber-100 text-amber-950 border border-amber-300'
+                        : isSubVio
+                        ? 'bg-rose-100 text-rose-900 border border-rose-300'
+                        : 'bg-emerald-100 text-emerald-950 border border-emerald-300'
+                    }`}>
+                      {isSubPolicy 
+                        ? '📖 BIÊN BẢN NỘI QUY' 
+                        : isSubVio 
+                        ? '⚠️ VI PHẠM CÔNG VIỆC' 
+                        : '🌟 PHIẾU KHEN THƯỞNG'}
+                    </span>
+                  </div>
 
-              <div>
-                <p className="text-[10px] text-slate-500 font-bold uppercase">Người nhận phản hồi:</p>
-                <p className="font-extrabold text-[#1B4332] text-sm">
-                  {submittedSuccess.targetName} ({submittedSuccess.targetRole})
-                </p>
-              </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">Người nhận phản hồi:</p>
+                    <p className="font-extrabold text-[#1B4332] text-sm">
+                      {submittedSuccess.targetName} ({submittedSuccess.targetRole})
+                    </p>
+                  </div>
 
-              <div>
-                <p className="text-[10px] text-slate-500 font-bold uppercase">Nội dung ghi nhận:</p>
-                <p className="font-bold text-[#2D3748]">{submittedSuccess.title}</p>
-              </div>
+                  <div>
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">Nội dung ghi nhận:</p>
+                    <p className="font-bold text-[#2D3748]">{submittedSuccess.title}</p>
+                  </div>
 
-              <div className="pt-1 flex items-center justify-between text-[11px]">
-                <span className="text-slate-500">Điểm tác động:</span>
-                <span className={`font-black text-sm ${submittedSuccess.impactPoints > 0 ? 'text-[#2D6A4F]' : 'text-rose-600'}`}>
-                  {submittedSuccess.impactPoints > 0 ? `+${submittedSuccess.impactPoints}` : submittedSuccess.impactPoints} điểm
-                </span>
-              </div>
-            </div>
+                  <div className="pt-1 flex items-center justify-between text-[11px]">
+                    <span className="text-slate-500">Mức tác động:</span>
+                    <span className={`font-black text-sm ${
+                      isSubPolicy 
+                        ? 'text-amber-800' 
+                        : isSubVio 
+                        ? 'text-rose-600' 
+                        : 'text-emerald-700'
+                    }`}>
+                      {isSubPolicy
+                        ? `-${submittedSuccess.policyPenaltyPoints || 10}đ (Quỹ 100đ)`
+                        : isSubVio
+                        ? `${submittedSuccess.impactPoints}đ (Thang 5.0đ)`
+                        : `+${submittedSuccess.impactPoints}đ (Thang 5.0đ)`}
+                    </span>
+                  </div>
+                </div>
+              );
+            })()}
 
             {/* Notification Alert Info */}
             <div className="bg-emerald-50 p-3 rounded-xl border border-emerald-200 text-left text-xs text-emerald-900 space-y-1">
@@ -467,7 +489,11 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
               </p>
               <p className="text-[11px] leading-relaxed text-emerald-800">
                 Hệ thống đã tự động gửi thông báo đến nhân sự <strong>{submittedSuccess.targetName}</strong>. 
-                {submittedSuccess.type === 'vi_pham' ? ' Bạn ấy có 48 giờ để xem và gửi ý kiến/kháng nghị.' : ' Phiếu khen thưởng sẽ hiển thị sau khi duyệt.'}
+                {submittedSuccess.type === 'noi_quy' 
+                  ? ' Bạn ấy đã nhận thông báo vi phạm quy định nội quy và có 48 giờ để xem và gửi ý kiến/kháng nghị.' 
+                  : submittedSuccess.type === 'vi_pham'
+                  ? ' Bạn ấy đã nhận thông báo vi phạm tiêu chuẩn công việc và có 48 giờ để xem và gửi ý kiến/kháng nghị.'
+                  : ' Phiếu khen thưởng đã được gửi thành công đến nhân sự.'}
               </p>
             </div>
 
