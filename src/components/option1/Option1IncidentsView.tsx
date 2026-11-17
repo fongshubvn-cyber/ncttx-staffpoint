@@ -384,17 +384,6 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
           )}
           
           <button
-            onClick={() => setFilterType('ghi_nhan')}
-            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap ${
-              filterType === 'ghi_nhan'
-                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
-            }`}
-          >
-            Ghi Nhận (+{activeIncidents.filter(i => i.type === 'ghi_nhan').length})
-          </button>
-
-          <button
             onClick={() => setFilterType('vi_pham')}
             className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap ${
               filterType === 'vi_pham'
@@ -403,6 +392,17 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
             }`}
           >
             Biên Bản Vi Phạm ({activeIncidents.filter(i => i.type === 'vi_pham').length})
+          </button>
+
+          <button
+            onClick={() => setFilterType('ghi_nhan')}
+            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap ${
+              filterType === 'ghi_nhan'
+                ? 'bg-emerald-600 text-white border-emerald-600 shadow-sm'
+                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            }`}
+          >
+            Ghi Nhận (+{activeIncidents.filter(i => i.type === 'ghi_nhan').length})
           </button>
 
           <button

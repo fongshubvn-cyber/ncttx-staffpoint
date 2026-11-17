@@ -4,6 +4,73 @@ import { isManagementRole, isSystemAdmin } from '../utils/calculator';
 import { initialPolicyRules } from '../data/seedData';
 import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert, ClipboardCheck, BookOpen, AlertTriangle } from 'lucide-react';
 
+export interface KeywordCategory {
+  id: string;
+  name: string;
+  icon: string;
+  description: string;
+  matchWords: string[];
+}
+
+export const INCIDENT_KEYWORDS: KeywordCategory[] = [
+  {
+    id: 'all',
+    name: 'Tất cả',
+    icon: '✨',
+    description: 'Hiển thị tất cả tiêu chí và quy định',
+    matchWords: [],
+  },
+  {
+    id: 'khong_gian',
+    name: 'Không gian',
+    icon: '🌿',
+    description: 'Âm thanh tĩnh lặng, mùi hương Sả Java, giữ trật tự không gian chung',
+    matchWords: ['không gian', 'mùi', 'hương', 'âm thanh', 'tĩnh lặng', 'ồn', 'nhạc', 'khuôn viên', 'bầu không khí'],
+  },
+  {
+    id: 'cay_coi',
+    name: 'Cây cối',
+    icon: '🌱',
+    description: 'Chăm sóc cây xanh, bảo tồn cây cổ thụ, gìn giữ mầm cây Nhà',
+    matchWords: ['cây', 'hoa', 'sân vườn', 'tưới', 'lá', 'cảnh quan', 'héo', 'mầm'],
+  },
+  {
+    id: 'rac_thai',
+    name: 'Rác thải & Vệ sinh',
+    icon: '🗑️',
+    description: 'Đổ rác đúng 4 dấu hiệu, phân loại rác, dọn dẹp vệ sinh quầy/xưởng/bàn ghế',
+    matchWords: ['rác', 'vệ sinh', 'sạch', 'dọn', 'thùng', 'ly', 'tách', 'khăn', 'lau', 'khử trùng', 'bẩn'],
+  },
+  {
+    id: 'hut_thuoc',
+    name: 'Hút thuốc & PCCC',
+    icon: '🚭',
+    description: 'Nghiêm cấm hút thuốc sai nơi, an toàn điện nước, phòng cháy chữa cháy',
+    matchWords: ['thuốc', 'cháy', 'pccc', 'lửa', 'thoát hiểm', 'an toàn', 'chập', 'điện'],
+  },
+  {
+    id: 'noi_tuc',
+    name: 'Nói tục & Ứng xử',
+    icon: '🗣️',
+    description: 'Không nói tục chửi thề, tôn trọng đồng đội khiếm thính, một tiếng nói thống nhất',
+    matchWords: ['nói tục', 'chửi', 'giao tiếp', 'khiếm thính', 'điếc', 'xúc phạm', 'thái độ', 'ngôn ngữ', 'ký hiệu', 'tử tế', 'sứ mệnh', 'lời nói', 'phát ngôn'],
+  },
+  {
+    id: 'gio_giac',
+    name: 'Giờ giấc',
+    icon: '⏰',
+    description: 'Đi làm đúng giờ, chấm công, không bỏ vị trí trong ca, giao nhận ca đầy đủ',
+    matchWords: ['giờ', 'trễ', 'muộn', 'ca', 'chấm công', 'bỏ vị trí', 'về sớm', 'vào ca', 'deadline', 'tiến độ'],
+  },
+  {
+    id: 'tai_san',
+    name: 'Tài sản & Thiết bị',
+    icon: '🛠️',
+    description: 'Bảo quản máy móc pha chế/xưởng, tránh hao hụt nguyên vật liệu, không dùng điện thoại riêng',
+    matchWords: ['tài sản', 'thiết bị', 'điện thoại', 'máy', 'nguyên liệu', 'hỏng', 'mất', 'thất thoát', 'bảo quản', 'công cụ'],
+  },
+];
+
 interface IncidentFormModalProps {
   show: boolean;
   onClose: () => void;
@@ -39,26 +106,30 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     ? params.policyRules 
     : initialPolicyRules;
 
-  // Form State
-  const [formCategory, setFormCategory] = useState<'policy' | 'work'>(initialType === 'vi_pham' ? 'policy' : 'work');
-  const [workEvalMode, setWorkEvalMode] = useState<'plus' | 'minus'>('plus');
-  const [type, setType] = useState<IncidentType>(initialType || 'ghi_nhan');
+  // Form State: Default to 'vi_pham' (Đánh giá vi phạm) and 'policy'
+  const isInitialGhiNhan = initialType === 'ghi_nhan';
+  const [formCategory, setFormCategory] = useState<'policy' | 'work'>(isInitialGhiNhan ? 'work' : 'policy');
+  const [workEvalMode, setWorkEvalMode] = useState<'plus' | 'minus'>(isInitialGhiNhan ? 'plus' : 'minus');
+  const [type, setType] = useState<IncidentType>(initialType || 'vi_pham');
   const [reporterId, setReporterId] = useState<string>(currentUser?.id || staffList[0]?.id || '');
   const [targetId, setTargetId] = useState<string>(initialTargetId || staffList[1]?.id || staffList[0]?.id || '');
   const [criteriaScope, setCriteriaScope] = useState<string>('Chung'); // 'Chung', 'Department', 'Management', or 'Boundary'
   const [policyRuleId, setPolicyRuleId] = useState<string>(() => (policyRulesList[0]?.id || 'NQ01'));
+  const [selectedKeyword, setSelectedKeyword] = useState<string>('all');
   const [submittedSuccess, setSubmittedSuccess] = useState<IncidentRecord | null>(null);
 
   React.useEffect(() => {
     if (show) {
       if (currentUser?.id) setReporterId(currentUser.id);
       if (initialTargetId) setTargetId(initialTargetId);
-      const isPol = initialType === 'vi_pham';
-      setFormCategory(isPol ? 'policy' : 'work');
-      setWorkEvalMode('plus');
-      setType(isPol ? 'vi_pham' : 'ghi_nhan');
+      const isGhiNhan = initialType === 'ghi_nhan';
+      setFormCategory(isGhiNhan ? 'work' : 'policy');
+      setWorkEvalMode(isGhiNhan ? 'plus' : 'minus');
+      setType(isGhiNhan ? 'ghi_nhan' : 'vi_pham');
+      setSelectedKeyword('all');
+      setSearchCriteriaTerm('');
       
-      if (isPol) {
+      if (!isGhiNhan) {
         const firstRule = policyRulesList.find(r => r.active !== false) || policyRulesList[0];
         if (firstRule) {
           setPolicyRuleId(firstRule.id);
@@ -179,7 +250,45 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
 
   const [searchCriteriaTerm, setSearchCriteriaTerm] = useState<string>('');
 
+  const filteredPolicyRules = policyRulesList.filter(rule => {
+    if (rule.active === false) return false;
+    if (selectedKeyword === 'all') return true;
+    const kw = INCIDENT_KEYWORDS.find(k => k.id === selectedKeyword);
+    if (!kw || kw.matchWords.length === 0) return true;
+    const targetText = `${rule.code} ${rule.title} ${rule.description} ${rule.category}`.toLowerCase();
+    return kw.matchWords.some(w => targetText.includes(w.toLowerCase()));
+  });
+
+  const handleSelectKeyword = (kwId: string) => {
+    setSelectedKeyword(kwId);
+    setSearchCriteriaTerm('');
+    if (formCategory === 'policy' && kwId !== 'all') {
+      const kw = INCIDENT_KEYWORDS.find(k => k.id === kwId);
+      if (kw) {
+        const matched = policyRulesList.filter(rule => {
+          if (rule.active === false) return false;
+          const targetText = `${rule.code} ${rule.title} ${rule.description} ${rule.category}`.toLowerCase();
+          return kw.matchWords.some(w => targetText.includes(w.toLowerCase()));
+        });
+        if (matched.length > 0) {
+          const first = matched[0];
+          setPolicyRuleId(first.id);
+          setTitle(`[${first.code}] ${first.title}`);
+          setDescription(first.description);
+        }
+      }
+    }
+  };
+
   const filteredAvailableQuestions = availableQuestions.filter(q => {
+    if (selectedKeyword !== 'all') {
+      const kw = INCIDENT_KEYWORDS.find(k => k.id === selectedKeyword);
+      if (kw && kw.matchWords.length > 0) {
+        const qText = `${q.id} ${q.groupCode} ${q.groupName} ${q.text} ${q.scope || ''}`.toLowerCase();
+        const hasMatch = kw.matchWords.some(w => qText.includes(w.toLowerCase()));
+        if (!hasMatch) return false;
+      }
+    }
     if (!searchCriteriaTerm) return true;
     const term = searchCriteriaTerm.toLowerCase().trim();
     return (
@@ -437,6 +546,24 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                   <button
                     type="button"
                     onClick={() => {
+                      setWorkEvalMode('minus');
+                      setType('vi_pham');
+                      setQuestionId('');
+                      setTitle('');
+                      setDescription('');
+                    }}
+                    className={`p-3 rounded-2xl border font-black font-heading flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
+                      workEvalMode === 'minus'
+                        ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/30'
+                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-amber-50'
+                    }`}
+                  >
+                    <span>📢 NHẮC NHỞ (- TRỪ ĐIỂM)</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => {
                       setWorkEvalMode('plus');
                       setType('ghi_nhan');
                       if (criteriaScope === 'Boundary') {
@@ -453,24 +580,6 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                     }`}
                   >
                     <span>🌟 KHEN THƯỞNG (+ CỘNG ĐIỂM)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setWorkEvalMode('minus');
-                      setType('vi_pham');
-                      setQuestionId('');
-                      setTitle('');
-                      setDescription('');
-                    }}
-                    className={`p-3 rounded-2xl border font-black font-heading flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
-                      workEvalMode === 'minus'
-                        ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/30'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-amber-50'
-                    }`}
-                  >
-                    <span>📢 NHẮC NHỞ (- TRỪ ĐIỂM)</span>
                   </button>
                 </div>
               </div>
@@ -542,9 +651,58 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
             </div>
           </div>
 
+          {/* Quick Keyword Group Filter (Nhóm Từ Khóa Gợi Ý Nhanh) */}
+          <div className="space-y-1.5 p-3 rounded-2xl bg-[#EDEAE3]/70 border border-emerald-900/10">
+            <div className="flex items-center justify-between text-xs font-bold text-slate-700">
+              <span className="flex items-center gap-1.5">
+                <span className="font-extrabold text-[#1B4332]">🏷️ Nhóm Từ Khóa Gợi Ý:</span>
+                {selectedKeyword !== 'all' && (
+                  <span className="text-[10px] bg-[#1B4332] text-[#52B788] px-2 py-0.5 rounded-full font-black">
+                    {INCIDENT_KEYWORDS.find(k => k.id === selectedKeyword)?.name}
+                  </span>
+                )}
+              </span>
+              {selectedKeyword !== 'all' && (
+                <button
+                  type="button"
+                  onClick={() => handleSelectKeyword('all')}
+                  className="text-[10px] text-emerald-800 hover:text-emerald-950 font-bold underline cursor-pointer"
+                >
+                  ✕ Xem tất cả
+                </button>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar">
+              {INCIDENT_KEYWORDS.map((kw) => {
+                const isSelected = selectedKeyword === kw.id;
+                return (
+                  <button
+                    key={kw.id}
+                    type="button"
+                    onClick={() => handleSelectKeyword(kw.id)}
+                    className={`shrink-0 px-2.5 py-1.5 rounded-xl text-xs font-extrabold transition-all cursor-pointer flex items-center gap-1 border ${
+                      isSelected
+                        ? 'bg-[#1B4332] text-white border-[#1B4332] shadow-sm ring-2 ring-[#2D6A4F]/30 scale-102'
+                        : 'bg-white border-slate-200 text-slate-700 hover:bg-emerald-50/70 hover:border-emerald-300'
+                    }`}
+                  >
+                    <span>{kw.icon}</span>
+                    <span>{kw.name}</span>
+                  </button>
+                );
+              })}
+            </div>
+            {selectedKeyword !== 'all' && (
+              <p className="text-[10px] text-[#2D6A4F] font-medium italic pt-0.5">
+                💡 {INCIDENT_KEYWORDS.find(k => k.id === selectedKeyword)?.description}
+              </p>
+            )}
+          </div>
+
           {/* 4 & 5. SELECT CRITERIA (BIÊN BẢN NỘI QUY (100đ) VS ĐÁNH GIÁ CÔNG VIỆC (5.0đ)) */}
           {formCategory === 'policy' ? (
-            /* DÀNH CHO NỘI QUY: CHỈ HIỂN THỊ 10 NỘI QUY */
+            /* DÀNH CHO NỘI QUY: HIỂN THỊ CÁC NỘI QUY (HỖ TRỢ LỌC TỪ KHÓA) */
             <div className="space-y-3 p-3.5 bg-rose-50/70 border border-rose-200 rounded-2xl">
               <div className="flex items-center justify-between">
                 <label className="block text-rose-950 font-extrabold font-heading text-xs flex items-center gap-1.5">
@@ -552,9 +710,47 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                   <span>4. Chọn Điều Khoản Quy Định Vi Phạm (Thang 100đ)</span>
                 </label>
                 <span className="text-[10px] text-rose-700 font-bold bg-white px-2 py-0.5 rounded-full border border-rose-200">
-                  {policyRulesList.length} Quy định
+                  {filteredPolicyRules.length} Quy định {selectedKeyword !== 'all' ? 'phù hợp' : ''}
                 </span>
               </div>
+
+              {/* Quick Clickable Suggestions for Policy Rules when keyword selected */}
+              {selectedKeyword !== 'all' && filteredPolicyRules.length > 0 && (
+                <div className="space-y-1.5">
+                  <p className="text-[10px] font-bold text-rose-800 uppercase">
+                    Quy định khớp từ khóa "{INCIDENT_KEYWORDS.find(k => k.id === selectedKeyword)?.name}":
+                  </p>
+                  <div className="space-y-1 max-h-36 overflow-y-auto">
+                    {filteredPolicyRules.map(r => (
+                      <button
+                        key={r.id}
+                        type="button"
+                        onClick={() => {
+                          setPolicyRuleId(r.id);
+                          setTitle(`[${r.code}] ${r.title}`);
+                          setDescription(r.description);
+                        }}
+                        className={`w-full text-left p-2 rounded-xl border text-xs transition-all cursor-pointer flex items-start justify-between gap-2 ${
+                          policyRuleId === r.id
+                            ? 'bg-rose-100 border-rose-400 text-rose-950 font-bold shadow-xs'
+                            : 'bg-white border-rose-200 text-slate-700 hover:bg-rose-50'
+                        }`}
+                      >
+                        <div className="min-w-0 flex-1">
+                          <div className="flex items-center gap-1.5">
+                            <span className="font-mono text-[10px] font-black px-1.5 py-0.2 rounded bg-rose-200 text-rose-900">{r.code}</span>
+                            <span className="text-[11px] font-extrabold line-clamp-1">{r.title}</span>
+                          </div>
+                          <p className="text-[10px] text-slate-500 line-clamp-1 mt-0.5">{r.description}</p>
+                        </div>
+                        <span className="shrink-0 font-mono text-[10px] font-black text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-200">
+                          -{r.penaltyPoints}đ
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               <select
                 value={policyRuleId}
@@ -570,32 +766,11 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 className="w-full p-2.5 bg-white border border-rose-300 rounded-xl text-slate-900 font-bold text-xs focus:outline-none focus:ring-2 focus:ring-rose-500 cursor-pointer"
               >
                 <option value="">-- Chọn Điều Khoản Quy Định Vi Phạm --</option>
-                {policyRulesList.some(r => r.active !== false && (r.track === 'Văn hóa & Tác phong' || r.id.startsWith('VH'))) ? (
-                  <>
-                    <optgroup label="🔴 NGẠCH 1: PHÁP QUY & KỶ LUẬT (KHUNG TUÂN THỦ CỨNG)">
-                      {policyRulesList.filter(r => r.active !== false && (r.track !== 'Văn hóa & Tác phong' && !r.id.startsWith('VH'))).map((rule) => (
-                        <option key={rule.id} value={rule.id}>
-                          [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
-                        </option>
-                      ))}
-                    </optgroup>
-                    <optgroup label="🟢 NGẠCH 2: VĂN HÓA & TÁC PHONG VẬN HÀNH (KHUNG RÈN LUYỆN MỀM)">
-                      {policyRulesList.filter(r => r.active !== false && (r.track === 'Văn hóa & Tác phong' || r.id.startsWith('VH'))).map((rule) => (
-                        <option key={rule.id} value={rule.id}>
-                          [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
-                        </option>
-                      ))}
-                    </optgroup>
-                  </>
-                ) : (
-                  <optgroup label="📋 MỨC ĐỘ CHẤP HÀNH & HOÀN THÀNH CÔNG VIỆC (THANG 100 ĐIỂM)">
-                    {policyRulesList.filter(r => r.active !== false).map((rule) => (
-                      <option key={rule.id} value={rule.id}>
-                        [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
-                      </option>
-                    ))}
-                  </optgroup>
-                )}
+                {(filteredPolicyRules.length > 0 ? filteredPolicyRules : policyRulesList).map((rule) => (
+                  <option key={rule.id} value={rule.id}>
+                    [{rule.code}] {rule.title} (Trừ -{rule.penaltyPoints}đ • Mức {rule.severity})
+                  </option>
+                ))}
               </select>
 
               {/* Selected Rule Detail Box */}
@@ -733,12 +908,17 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 </select>
 
                 {/* Quick Clickable Suggestions List */}
-                {searchCriteriaTerm && filteredAvailableQuestions.length > 0 && (
-                  <div className="space-y-1 max-h-44 overflow-y-auto p-2 bg-emerald-50/80 rounded-xl border border-emerald-200">
-                    <span className="text-[10px] text-[#1B4332] font-black uppercase tracking-wider block mb-1">
-                      🎯 Đề xuất kết quả tìm kiếm nhanh:
-                    </span>
-                    {filteredAvailableQuestions.slice(0, 6).map((q) => (
+                {(searchCriteriaTerm || selectedKeyword !== 'all') && filteredAvailableQuestions.length > 0 && (
+                  <div className="space-y-1 max-h-48 overflow-y-auto p-2 bg-emerald-50/80 rounded-xl border border-emerald-200">
+                    <div className="flex items-center justify-between mb-1">
+                      <span className="text-[10px] text-[#1B4332] font-black uppercase tracking-wider block">
+                        🎯 {selectedKeyword !== 'all' ? `Tiêu chí khớp từ khóa "${INCIDENT_KEYWORDS.find(k => k.id === selectedKeyword)?.name}":` : 'Kết quả tìm kiếm:'}
+                      </span>
+                      <span className="text-[10px] text-emerald-800 font-bold">
+                        {filteredAvailableQuestions.length} tiêu chí
+                      </span>
+                    </div>
+                    {filteredAvailableQuestions.slice(0, 10).map((q) => (
                       <button
                         key={q.id}
                         type="button"
@@ -768,6 +948,15 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                         {questionId === q.id && <Check className="w-4 h-4 shrink-0 text-emerald-300 mt-0.5" />}
                       </button>
                     ))}
+                  </div>
+                )}
+
+                {(searchCriteriaTerm || selectedKeyword !== 'all') && filteredAvailableQuestions.length === 0 && (
+                  <div className="p-3 bg-amber-50 rounded-xl border border-amber-200 text-xs text-amber-900 text-center space-y-1">
+                    <p className="font-bold">Không tìm thấy tiêu chí nào phù hợp trong phạm vi đang chọn.</p>
+                    <p className="text-[10px] text-amber-700">
+                      Vui lòng thử đổi "Phạm vi tiêu chí" (Khung chung / Ngạch bộ phận) hoặc chọn "✨ Tất cả".
+                    </p>
                   </div>
                 )}
               </div>

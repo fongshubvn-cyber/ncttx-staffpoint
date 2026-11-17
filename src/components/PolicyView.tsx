@@ -48,7 +48,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
   const [filterTrack, setFilterTrack] = useState<'all' | 'Pháp quy & Kỷ luật' | 'Văn hóa & Tác phong'>('all');
   const [isEditingRules, setIsEditingRules] = useState(false);
   const [rules, setRules] = useState<PolicyRule[]>(() => {
-    if (params.policyRules && Array.isArray(params.policyRules) && params.policyRules.length >= 6) {
+    if (params.policyRules && Array.isArray(params.policyRules) && params.policyRules.length >= 9) {
       return params.policyRules;
     }
     return initialPolicyRules;
@@ -62,7 +62,7 @@ export const PolicyView: React.FC<PolicyViewProps> = ({
     if (!onUpdateParams) return;
     onUpdateParams({
       ...params,
-      policyVersion: '2026_v4',
+      policyVersion: '2026_v5',
       policyRules: rules,
       defaultPolicyScore: 100,
     });

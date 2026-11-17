@@ -233,7 +233,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               )}
 
               <span className="text-[10px] font-mono font-bold text-slate-400 border-l border-slate-200 pl-1.5 shrink-0 select-none">
-                v1.016
+                v1.017
               </span>
             </div>
           </div>
@@ -951,33 +951,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             </div>
 
             <div className="grid grid-cols-1 gap-3.5 pt-1">
-              {/* Lựa chọn 1: Ghi nhận và đánh giá */}
-              <button
-                onClick={() => {
-                  setShowFeedbackChoiceModal(false);
-                  onOpenIncidentModal(undefined, 'ghi_nhan');
-                }}
-                className="group relative p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-100/30 hover:from-emerald-100 hover:to-teal-100/80 border border-emerald-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
-              >
-                <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
-                  <ClipboardCheck className="w-6 h-6 text-white" />
-                </div>
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-extrabold text-[#1B4332] group-hover:text-emerald-950">
-                      📝 Ghi nhận và đánh giá
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 text-[10px] font-black font-mono">
-                      Thang 5.0đ
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Ghi nhận thành tích, khen thưởng tuyên dương hoặc đánh giá hiệu quả công việc (Thang điểm 5.0).
-                  </p>
-                </div>
-              </button>
-
-              {/* Lựa chọn 2: Nội quy */}
+              {/* Lựa chọn 1: Vi phạm nội quy & Chấp hành công việc (Mặc định trước) */}
               <button
                 onClick={() => {
                   setShowFeedbackChoiceModal(false);
@@ -991,14 +965,40 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-extrabold text-rose-950 group-hover:text-rose-900">
-                      📋 Mức độ chấp hành & hoàn thành công việc
+                      📋 Đánh giá vi phạm & Mức độ chấp hành
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-rose-200/80 text-rose-900 text-[10px] font-black font-mono">
                       100đ Chấp hành
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Lập biên bản phản ánh vi phạm mức độ chấp hành & hoàn thành công việc (Quỹ điểm 100đ).
+                    Lập biên bản phản ánh vi phạm nội quy, giờ giấc, trật tự, rác thải, hút thuốc hoặc ứng xử (Quỹ điểm 100đ).
+                  </p>
+                </div>
+              </button>
+
+              {/* Lựa chọn 2: Ghi nhận và đóng góp */}
+              <button
+                onClick={() => {
+                  setShowFeedbackChoiceModal(false);
+                  onOpenIncidentModal(undefined, 'ghi_nhan');
+                }}
+                className="group relative p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-100/30 hover:from-emerald-100 hover:to-teal-100/80 border border-emerald-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
+              >
+                <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
+                  <ClipboardCheck className="w-6 h-6 text-white" />
+                </div>
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-extrabold text-[#1B4332] group-hover:text-emerald-950">
+                      📝 Ghi nhận đóng góp & Khen thưởng
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 text-[10px] font-black font-mono">
+                      Thang 5.0đ
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Ghi nhận việc tốt, khen thưởng tuyên dương hoặc đánh giá hiệu quả công việc (Thang điểm 5.0).
                   </p>
                 </div>
               </button>
