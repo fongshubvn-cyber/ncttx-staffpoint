@@ -1,6 +1,27 @@
 import { ParameterConfig, Staff, IncidentRecord, PolicyRule, PolicyHealthStatus, BaselinePoint } from '../types';
 
 /**
+ * Phân biệt rõ ràng 3 thể loại phản hồi trong hệ thống:
+ * 1. Nội Quy (Chấp hành kỷ luật lao động, quỹ 100đ)
+ * 2. Vi Phạm Công Việc (Sự cố chuyên môn, ranh giới đỏ, trừ điểm đánh giá 5.0đ)
+ * 3. Ghi Nhận (Khen thưởng, tuyên dương, cộng điểm đánh giá 5.0đ)
+ */
+export function isPolicyIncident(inc?: IncidentRecord | null): boolean {
+  if (!inc) return false;
+  return inc.type === 'noi_quy' || Boolean(inc.policyRuleId) || (typeof inc.policyPenaltyPoints === 'number' && inc.policyPenaltyPoints > 0);
+}
+
+export function isWorkViolation(inc?: IncidentRecord | null): boolean {
+  if (!inc) return false;
+  return inc.type === 'vi_pham' && !isPolicyIncident(inc);
+}
+
+export function isRecognitionIncident(inc?: IncidentRecord | null): boolean {
+  if (!inc) return false;
+  return inc.type === 'ghi_nhan';
+}
+
+/**
  * Checks if a staff member holds a management position.
  * Management roles: Founder, CEO, C-Level, Trưởng phòng, Quản lý, Lead, Trưởng ca.
  * Non-management roles: Nhân viên, Tập sự, Chuyên viên, Kế toán chức năng, v.v.
@@ -723,12 +744,12 @@ export function getStaffScoresForPeriod(
   });
 
   const approvedIncidents = periodIncidents.filter(
-    i => (i.type === 'ghi_nhan' && (i.status === 'Đã duyệt' || i.status === 'Đã ghi nhận')) || 
-         (i.type === 'vi_pham' && i.status !== 'Kháng nghị được chấp nhận')
+    i => (isRecognitionIncident(i) && (i.status === 'Đã duyệt' || i.status === 'Đã ghi nhận')) || 
+         (isWorkViolation(i) && i.status !== 'Kháng nghị được chấp nhận')
   );
 
-  const violationsCount = approvedIncidents.filter(i => i.type === 'vi_pham').length;
-  const recognitionsCount = approvedIncidents.filter(i => i.type === 'ghi_nhan').length;
+  const violationsCount = approvedIncidents.filter(isWorkViolation).length;
+  const recognitionsCount = approvedIncidents.filter(isRecognitionIncident).length;
 
   const baselines = getStaffBaselineScores(staff, params);
   const hasMgmt = isManagementRole(staff);
@@ -972,7 +993,7 @@ export function getStaffPolicyScoreForPeriod(
   const periodIncidents = incidents.filter(inc => {
     if (!inc || inc.isDeleted) return false;
     if (inc.targetId !== staff.id) return false;
-    if (inc.type !== 'vi_pham') return false;
+    if (!isPolicyIncident(inc)) return false;
     if (inc.status === 'Kháng nghị được chấp nhận') return false;
 
     if (inc.createdAt && inc.createdAt.startsWith(patternDash)) return true;

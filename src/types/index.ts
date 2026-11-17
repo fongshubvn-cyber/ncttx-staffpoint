@@ -1,5 +1,5 @@
 export type SpeechType = 'Người nói' | 'Người điếc/ khiếm thính';
-export type IncidentType = 'vi_pham' | 'ghi_nhan';
+export type IncidentType = 'vi_pham' | 'ghi_nhan' | 'noi_quy';
 export type IncidentStatus = 
   | 'Chờ duyệt' 
   | 'Đang xem xét'

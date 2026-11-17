@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { Staff, Question, DepartmentLine, IncidentRecord, IncidentType, SeverityLevel, ParameterConfig, AuthUser } from '../types';
 import { isManagementRole, isSystemAdmin } from '../utils/calculator';
 import { initialPolicyRules } from '../data/seedData';
-import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert, ClipboardCheck, BookOpen, AlertTriangle } from 'lucide-react';
+import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert, ClipboardCheck, BookOpen, AlertTriangle, Award } from 'lucide-react';
 
 export interface KeywordCategory {
   id: string;
@@ -106,11 +106,12 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     ? params.policyRules 
     : initialPolicyRules;
 
-  // Form State: Default to 'minus' (Nhắc nhở)
-  const isInitialWork = initialType === 'ghi_nhan';
-  const [formCategory, setFormCategory] = useState<'policy' | 'work'>(isInitialWork ? 'work' : 'policy');
-  const [workEvalMode, setWorkEvalMode] = useState<'plus' | 'minus'>('minus');
-  const [type, setType] = useState<IncidentType>('vi_pham');
+  // Form State: 3 phân hệ độc lập: 'ghi_nhan' | 'vi_pham' | 'noi_quy'
+  const isInitialPolicy = initialType === 'noi_quy';
+  const isInitialGhiNhan = initialType === 'ghi_nhan';
+  const [formCategory, setFormCategory] = useState<'policy' | 'work'>(isInitialPolicy ? 'policy' : 'work');
+  const [workEvalMode, setWorkEvalMode] = useState<'plus' | 'minus'>(isInitialGhiNhan ? 'plus' : 'minus');
+  const [type, setType] = useState<IncidentType>(initialType || 'vi_pham');
   const [reporterId, setReporterId] = useState<string>(currentUser?.id || staffList[0]?.id || '');
   const [targetId, setTargetId] = useState<string>(initialTargetId || staffList[1]?.id || staffList[0]?.id || '');
   const [criteriaScope, setCriteriaScope] = useState<string>('Chung'); // 'Chung', 'Department', 'Management', or 'Boundary'
@@ -122,24 +123,33 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     if (show) {
       if (currentUser?.id) setReporterId(currentUser.id);
       if (initialTargetId) setTargetId(initialTargetId);
-      const isPolicy = initialType === 'vi_pham';
-      setFormCategory(isPolicy ? 'policy' : 'work');
-      setWorkEvalMode('minus'); // Luôn mặc định là "Nhắc nhở" khi mở
-      setType('vi_pham'); // Luôn mặc định là vi phạm / nhắc nhở
-      setSelectedKeyword('all');
-      setSearchCriteriaTerm('');
       
-      if (isPolicy) {
+      if (initialType === 'noi_quy') {
+        setFormCategory('policy');
+        setType('noi_quy');
         const firstRule = policyRulesList.find(r => r.active !== false) || policyRulesList[0];
         if (firstRule) {
           setPolicyRuleId(firstRule.id);
           setTitle(`[${firstRule.code}] ${firstRule.title}`);
           setDescription(firstRule.description);
         }
+      } else if (initialType === 'ghi_nhan') {
+        setFormCategory('work');
+        setWorkEvalMode('plus');
+        setType('ghi_nhan');
+        setTitle('');
+        setDescription('');
       } else {
+        // Mặc định hoặc 'vi_pham' (Vi phạm công việc)
+        setFormCategory('work');
+        setWorkEvalMode('minus');
+        setType('vi_pham');
         setTitle('');
         setDescription('');
       }
+
+      setSelectedKeyword('all');
+      setSearchCriteriaTerm('');
       setSubmittedSuccess(null);
     }
   }, [show, initialTargetId, initialType, currentUser]);
@@ -203,9 +213,9 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
   const targetStaff = staffList.find(s => s.id === targetId) || staffList[0];
   const isTargetManager = targetStaff ? isManagementRole(targetStaff) : false;
 
-  // Xác định chính xác người dùng đang lập phiếu Ghi Nhận (Khen thưởng) hay Vi Phạm (Nhắc nhở)
+  // Xác định chính xác người dùng đang lập phiếu: 'ghi_nhan' | 'vi_pham' | 'noi_quy'
   const currentEvalType: IncidentType = formCategory === 'policy'
-    ? 'vi_pham'
+    ? 'noi_quy'
     : workEvalMode === 'minus'
       ? 'vi_pham'
       : 'ghi_nhan';
@@ -332,7 +342,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
         ? (isBoundaryRecord ? vioBou : severity === 'Nghiêm trọng' ? vioMaj : severity === 'Vừa' ? vioMod : vioMin)
         : (isBoundaryRecord ? recMaj : severity === 'Nghiêm trọng' ? recMaj : severity === 'Vừa' ? recMod : recMin);
 
-    const recordType: IncidentType = (isPolicy || isMinusWork) ? 'vi_pham' : 'ghi_nhan';
+    const recordType: IncidentType = isPolicy ? 'noi_quy' : (isMinusWork ? 'vi_pham' : 'ghi_nhan');
 
     let formattedTitle = title;
     if (isPolicy) {
@@ -507,10 +517,15 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                       <BookOpen className="w-5 h-5 text-amber-700" />
                       <span>Phiếu Ghi Nhận Nội Quy Lao Động (Quỹ 100đ)</span>
                     </>
+                  ) : workEvalMode === 'minus' ? (
+                    <>
+                      <ShieldAlert className="w-5 h-5 text-rose-600" />
+                      <span>Biên Bản Vi Phạm Công Việc (Thang 5.0đ)</span>
+                    </>
                   ) : (
                     <>
-                      <ClipboardCheck className={`w-5 h-5 ${workEvalMode === 'minus' ? 'text-amber-600' : 'text-emerald-600'}`} />
-                      <span>{workEvalMode === 'minus' ? 'Phiếu Đánh Giá & Nhắc Nhở Công Việc (Thang 5.0đ)' : 'Phiếu Ghi Nhận & Khen Thưởng (Thang 5.0đ)'}</span>
+                      <Award className="w-5 h-5 text-emerald-600" />
+                      <span>Phiếu Ghi Nhận & Tuyên Dương (Thang 5.0đ)</span>
                     </>
                   )}
                 </h2>
@@ -525,65 +540,99 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
 
         <form onSubmit={handleSubmit} className="space-y-3.5 text-xs">
           
-          {/* 1. Loại Phiếu Banner / Toggle */}
-          <div>
-            {formCategory === 'policy' ? (
-              <div className="p-3 bg-amber-50 border border-amber-300 rounded-2xl flex items-center justify-between text-xs text-amber-950 font-bold shadow-2xs">
-                <span className="flex items-center gap-2">
-                  <BookOpen className="w-4.5 h-4.5 text-amber-700 shrink-0" />
-                  <span>Loại Phiếu: <strong>Ghi nhận chấp hành nội quy lao động</strong> (Trừ quỹ 100đ)</span>
-                </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-amber-950 text-[10px] font-black font-mono shadow-2xs">
-                  100đ Quỹ Nội Quy
-                </span>
-              </div>
-            ) : (
-              <div>
-                <label className="block text-slate-700 font-extrabold font-heading mb-1.5">
-                  1. Hình Thức Đánh Giá Công Việc (Thang 5.0) <span className="text-rose-500">*</span>
-                </label>
-                <div className="grid grid-cols-2 gap-2">
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setWorkEvalMode('minus');
-                      setType('vi_pham');
-                      setQuestionId('');
-                      setTitle('');
-                      setDescription('');
-                    }}
-                    className={`p-3 rounded-2xl border font-black font-heading flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
-                      workEvalMode === 'minus'
-                        ? 'bg-amber-600 text-white border-amber-600 shadow-md ring-2 ring-amber-600/30'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-amber-50'
-                    }`}
-                  >
-                    <span>📢 NHẮC NHỞ (- TRỪ ĐIỂM)</span>
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setWorkEvalMode('plus');
-                      setType('ghi_nhan');
-                      if (criteriaScope === 'Boundary') {
-                        setCriteriaScope('Chung');
-                      }
-                      setQuestionId('');
-                      setTitle('');
-                      setDescription('');
-                    }}
-                    className={`p-3 rounded-2xl border font-black font-heading flex items-center justify-center space-x-1.5 transition-all cursor-pointer ${
-                      workEvalMode === 'plus'
-                        ? 'bg-[#2D6A4F] text-white border-[#2D6A4F] shadow-md ring-2 ring-[#2D6A4F]/30'
-                        : 'bg-slate-50 text-slate-600 border-slate-200 hover:bg-emerald-50'
-                    }`}
-                  >
-                    <span>🌟 KHEN THƯỞNG (+ CỘNG ĐIỂM)</span>
-                  </button>
+          {/* 1. Universal 3-way Category Switcher */}
+          <div className="space-y-1.5">
+            <label className="block text-slate-700 font-extrabold font-heading text-xs">
+              1. Thể Loại Phản Hồi (Chọn 1 trong 3 nhóm độc lập) <span className="text-rose-500">*</span>
+            </label>
+            <div className="grid grid-cols-3 gap-2">
+              {/* Option 1: Ghi nhận */}
+              <button
+                type="button"
+                onClick={() => {
+                  setFormCategory('work');
+                  setWorkEvalMode('plus');
+                  setType('ghi_nhan');
+                  if (criteriaScope === 'Boundary') setCriteriaScope('Chung');
+                  setQuestionId('');
+                  setTitle('');
+                  setDescription('');
+                }}
+                className={`p-2.5 sm:p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                  formCategory === 'work' && workEvalMode === 'plus'
+                    ? 'bg-emerald-600 text-white border-emerald-600 shadow-md ring-2 ring-emerald-500/30'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-emerald-50 hover:border-emerald-300'
+                }`}
+              >
+                <div className="flex items-center gap-1 text-xs font-black">
+                  <Award className="w-4 h-4" />
+                  <span>Ghi Nhận</span>
                 </div>
-              </div>
-            )}
+                <span className={`text-[10px] font-bold ${
+                  formCategory === 'work' && workEvalMode === 'plus' ? 'text-emerald-100' : 'text-emerald-700'
+                }`}>
+                  + Điểm 5.0đ
+                </span>
+              </button>
+
+              {/* Option 2: Vi phạm công việc */}
+              <button
+                type="button"
+                onClick={() => {
+                  setFormCategory('work');
+                  setWorkEvalMode('minus');
+                  setType('vi_pham');
+                  setQuestionId('');
+                  setTitle('');
+                  setDescription('');
+                }}
+                className={`p-2.5 sm:p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                  formCategory === 'work' && workEvalMode === 'minus'
+                    ? 'bg-rose-600 text-white border-rose-600 shadow-md ring-2 ring-rose-500/30'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-rose-50 hover:border-rose-300'
+                }`}
+              >
+                <div className="flex items-center gap-1 text-xs font-black">
+                  <ShieldAlert className="w-4 h-4" />
+                  <span>Vi Phạm CV</span>
+                </div>
+                <span className={`text-[10px] font-bold ${
+                  formCategory === 'work' && workEvalMode === 'minus' ? 'text-rose-100' : 'text-rose-700'
+                }`}>
+                  - Điểm 5.0đ
+                </span>
+              </button>
+
+              {/* Option 3: Nội quy */}
+              <button
+                type="button"
+                onClick={() => {
+                  setFormCategory('policy');
+                  setType('noi_quy');
+                  const firstRule = policyRulesList.find(r => r.active !== false) || policyRulesList[0];
+                  if (firstRule) {
+                    setPolicyRuleId(firstRule.id);
+                    setTitle(`[${firstRule.code}] ${firstRule.title}`);
+                    setDescription(firstRule.description);
+                  }
+                }}
+                className={`p-2.5 sm:p-3 rounded-2xl border flex flex-col items-center justify-center gap-1 transition-all cursor-pointer ${
+                  formCategory === 'policy'
+                    ? 'bg-amber-400 text-amber-950 border-amber-500 shadow-md ring-2 ring-amber-300 font-black'
+                    : 'bg-white text-slate-700 border-slate-200 hover:bg-amber-50 hover:border-amber-300'
+                }`}
+              >
+                <div className="flex items-center gap-1 text-xs font-black">
+                  <BookOpen className="w-4 h-4 text-amber-900" />
+                  <span>Nội Quy</span>
+                </div>
+                <span className={`text-[10px] font-bold ${
+                  formCategory === 'policy' ? 'text-amber-950' : 'text-amber-800'
+                }`}>
+                  Quỹ 100đ
+                </span>
+              </button>
+            </div>
           </div>
 
           {/* 2. Select Reporter */}

@@ -77,7 +77,7 @@ interface Option1LayoutProps {
   currentUser: AuthUser | null;
   isManager: boolean;
   userPasswords?: Record<string, string>;
-  onOpenIncidentModal: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham') => void;
+  onOpenIncidentModal: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham' | 'noi_quy') => void;
   onOpenLoginModal: () => void;
   onLogout: () => void;
   onAddStaff: (staff: Staff) => void;
@@ -281,7 +281,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 title="Bấm để xoá Cache & làm mới phiên bản mới nhất ngay lập tức (không cần gỡ app)"
               >
                 <RefreshCw className={`w-2.5 h-2.5 text-emerald-700 ${isHardRefreshing ? 'animate-spin' : ''}`} />
-                <span>v1.023</span>
+                <span>v1.024</span>
               </button>
             </div>
           </div>
@@ -527,7 +527,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <div className="text-left">
                   <div className="text-xs font-black flex items-center gap-1.5 text-emerald-900">
                     <span>Làm Mới Cache & Nhận Bản Mới</span>
-                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.023</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.024</span>
                   </div>
                   <div className="text-[10px] text-emerald-700 font-medium">Bấm 1 chạm xoá cache & cập nhật tính năng mới</div>
                 </div>
@@ -1058,43 +1058,69 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               </button>
             </div>
 
-            <div className="grid grid-cols-1 gap-3.5 pt-1">
+            <div className="grid grid-cols-1 gap-3 pt-1">
               {/* Lựa chọn 1: Ghi nhận đóng góp và khen thưởng */}
               <button
                 onClick={() => {
                   setShowFeedbackChoiceModal(false);
                   onOpenIncidentModal(undefined, 'ghi_nhan');
                 }}
-                className="group relative p-4 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-100/30 hover:from-emerald-100 hover:to-teal-100/80 border border-emerald-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
+                className="group relative p-3.5 rounded-2xl bg-gradient-to-br from-emerald-50 via-teal-50/40 to-emerald-100/30 hover:from-emerald-100 hover:to-teal-100/80 border border-emerald-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-3.5"
               >
-                <div className="p-3 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
-                  <ClipboardCheck className="w-6 h-6 text-white" />
+                <div className="p-2.5 bg-gradient-to-br from-emerald-600 to-teal-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
+                  <ClipboardCheck className="w-5 h-5 text-white" />
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center justify-between">
                     <span className="text-sm font-extrabold text-[#1B4332] group-hover:text-emerald-950">
-                      📝 Ghi nhận đóng góp và khen thưởng
+                      🌟 Ghi nhận & Khen thưởng
                     </span>
                     <span className="px-2 py-0.5 rounded-full bg-emerald-200/80 text-emerald-900 text-[10px] font-black font-mono">
-                      Thang 5.0đ
+                      + Thang 5.0đ
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Ghi nhận việc tốt, khen thưởng tuyên dương hoặc đánh giá hiệu quả công việc (Thang điểm 5.0).
+                    Ghi nhận việc tốt, khen thưởng tuyên dương hoặc đánh giá tích cực hiệu quả công việc.
                   </p>
                 </div>
               </button>
 
-              {/* Lựa chọn 2: Đánh giá nội quy - chấp hành */}
+              {/* Lựa chọn 2: Vi phạm tiêu chuẩn công việc */}
               <button
                 onClick={() => {
                   setShowFeedbackChoiceModal(false);
                   onOpenIncidentModal(undefined, 'vi_pham');
                 }}
-                className="group relative p-4 rounded-2xl bg-gradient-to-br from-amber-50 via-yellow-50/70 to-amber-100/50 hover:from-amber-100/90 hover:to-yellow-100/90 border border-amber-300 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
+                className="group relative p-3.5 rounded-2xl bg-gradient-to-br from-rose-50 via-red-50/40 to-rose-100/30 hover:from-rose-100 hover:to-red-100/80 border border-rose-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-3.5"
               >
-                <div className="p-3 bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-950 rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
-                  <BookOpen className="w-6 h-6 text-amber-950" />
+                <div className="p-2.5 bg-gradient-to-br from-rose-600 to-red-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
+                  <ShieldAlert className="w-5 h-5 text-white" />
+                </div>
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-extrabold text-rose-950 group-hover:text-rose-900">
+                      ⚠️ Vi phạm tiêu chuẩn công việc
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-rose-200 text-rose-900 text-[10px] font-black font-mono">
+                      - Thang 5.0đ
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Lập biên bản vi phạm quy trình chuyên môn, sự cố công việc hoặc nhắc nhở ranh giới không thỏa hiệp.
+                  </p>
+                </div>
+              </button>
+
+              {/* Lựa chọn 3: Đánh giá nội quy - chấp hành */}
+              <button
+                onClick={() => {
+                  setShowFeedbackChoiceModal(false);
+                  onOpenIncidentModal(undefined, 'noi_quy');
+                }}
+                className="group relative p-3.5 rounded-2xl bg-gradient-to-br from-amber-50 via-yellow-50/70 to-amber-100/50 hover:from-amber-100/90 hover:to-yellow-100/90 border border-amber-300 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-3.5"
+              >
+                <div className="p-2.5 bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-950 rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
+                  <BookOpen className="w-5 h-5 text-amber-950" />
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center justify-between">
@@ -1106,21 +1132,21 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Lập biên bản phản ánh vi phạm nội quy, giờ giấc, trật tự, rác thải, hút thuốc hoặc ứng xử (Quỹ điểm 100đ).
+                    Lập biên bản phản ánh vi phạm nội quy, giờ giấc, trật tự, tác phong hoặc ứng xử (Quỹ 100đ).
                   </p>
                 </div>
               </button>
 
-              {/* Lựa chọn 3: Đánh giá tập thể ca làm việc (Lịch Google Sheet) */}
+              {/* Lựa chọn 4: Đánh giá tập thể ca làm việc (Lịch Google Sheet) */}
               <button
                 onClick={() => {
                   setShowFeedbackChoiceModal(false);
                   setShowShiftEvalModal(true);
                 }}
-                className="group relative p-4 rounded-2xl bg-gradient-to-br from-blue-50/80 via-indigo-50/40 to-teal-100/30 hover:from-blue-100/90 hover:to-indigo-100/80 border border-blue-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
+                className="group relative p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/80 via-indigo-50/40 to-teal-100/30 hover:from-blue-100/90 hover:to-indigo-100/80 border border-blue-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-3.5"
               >
-                <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
-                  <Users className="w-6 h-6 text-white" />
+                <div className="p-2.5 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
+                  <Users className="w-5 h-5 text-white" />
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center justify-between">

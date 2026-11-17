@@ -11,7 +11,10 @@ import {
   getStaffScoresForPeriod,
   getStaffPolicyScoreForPeriod,
   getDepartmentTrackName,
-  isSystemAdmin
+  isSystemAdmin,
+  isPolicyIncident,
+  isWorkViolation,
+  isRecognitionIncident
 } from '../../utils/calculator';
 import { PolicyHealthModal } from '../PolicyHealthModal';
 import { 
@@ -41,7 +44,7 @@ interface Option1SummaryViewProps {
   incidents: IncidentRecord[];
   questions: Question[];
   params: ParameterConfig;
-  onOpenIncidentModal: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham') => void;
+  onOpenIncidentModal: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham' | 'noi_quy') => void;
   isManager: boolean;
   currentUser: AuthUser | null;
   onRefreshCloud?: () => void;
@@ -202,8 +205,8 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
           </div>
         </div>
 
-        {/* Quick Stats Grid */}
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mt-6 pt-5 border-t border-emerald-700/50">
+        {/* Quick Stats Grid: Phân tách rõ 3 nhánh Ghi nhận (+), Vi phạm (-), Nội quy (100đ) */}
+        <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3 mt-6 pt-5 border-t border-emerald-700/50">
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
             <span className="text-xs text-emerald-200/80 font-medium block">
               {isAdmin ? 'Tổng Nhân Sự' : 'Hồ Sơ Của Bạn'}
@@ -215,31 +218,42 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
 
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
             <span className="text-xs text-emerald-200/80 font-medium block">
-              {isAdmin ? `Tuyên Dương (${currentPeriodObj.mStr}/${currentPeriodObj.year})` : `Tuyên Dương Của Bạn (${currentPeriodObj.mStr}/${currentPeriodObj.year})`}
+              {isAdmin ? `Tuyên Dương (${currentPeriodObj.mStr}/${currentPeriodObj.year})` : `Tuyên Dương Của Bạn`}
             </span>
             <span className="text-xl font-bold text-emerald-300 mt-1 block">
               +{isAdmin 
-                ? activePeriodIncidents.filter(i => i.type === 'ghi_nhan').length 
-                : staffIncidents.filter(i => i.type === 'ghi_nhan').length} phiếu
+                ? activePeriodIncidents.filter(isRecognitionIncident).length 
+                : staffIncidents.filter(isRecognitionIncident).length} phiếu
             </span>
           </div>
 
           <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
-            <span className="text-xs text-emerald-200/80 font-medium block">
-              {isAdmin ? `Biên Bản Nội Quy (${currentPeriodObj.mStr}/${currentPeriodObj.year})` : `Biên Bản Của Bạn (${currentPeriodObj.mStr}/${currentPeriodObj.year})`}
+            <span className="text-xs text-rose-200/80 font-medium block">
+              {isAdmin ? `Vi Phạm CV (${currentPeriodObj.mStr}/${currentPeriodObj.year})` : `Vi Phạm CV Của Bạn`}
+            </span>
+            <span className="text-xl font-bold text-rose-300 mt-1 block">
+              {isAdmin 
+                ? activePeriodIncidents.filter(isWorkViolation).length 
+                : staffIncidents.filter(isWorkViolation).length} phiếu
+            </span>
+          </div>
+
+          <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
+            <span className="text-xs text-amber-200/80 font-medium block">
+              {isAdmin ? `Nội Quy (${currentPeriodObj.mStr}/${currentPeriodObj.year})` : `Nội Quy Của Bạn`}
             </span>
             <span className="text-xl font-bold text-amber-300 mt-1 block">
               {isAdmin 
-                ? activePeriodIncidents.filter(i => Boolean(i.policyRuleId) || i.type === 'vi_pham').length 
-                : staffIncidents.filter(i => Boolean(i.policyRuleId) || i.type === 'vi_pham').length} phiếu
+                ? activePeriodIncidents.filter(isPolicyIncident).length 
+                : staffIncidents.filter(isPolicyIncident).length} phiếu
             </span>
           </div>
 
-          <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20">
+          <div className="bg-emerald-950/40 backdrop-blur-md rounded-2xl p-3.5 border border-emerald-500/20 col-span-2 sm:col-span-1">
             <span className="text-xs text-emerald-200/80 font-medium block">
               {isAdmin ? 'Kháng Nghị Chờ Xử Lý' : 'Kháng Nghị Của Bạn'}
             </span>
-            <span className="text-xl font-bold text-amber-300 mt-1 block">
+            <span className="text-xl font-bold text-orange-300 mt-1 block">
               {isAdmin 
                 ? pendingAppeals.length 
                 : staffIncidents.filter(i => i.status === 'Đang kháng nghị').length} phiếu
@@ -379,22 +393,32 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
             )}
           </div>
 
-          {/* Action Buttons (+ Ghi nhận và đánh giá / + Nội quy) */}
+          {/* Action Buttons: 3 Nhánh Độc Lập (+ Ghi nhận / + Vi phạm / + Nội quy) */}
           {isHRManager && (
-            <div className="flex items-center gap-2 shrink-0">
+            <div className="flex flex-wrap items-center gap-1.5 shrink-0">
               <button
                 onClick={() => onOpenIncidentModal(staff.id, 'ghi_nhan')}
-                className="px-3.5 py-2 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-all border border-emerald-200/80 shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                className="px-3 py-1.5 rounded-2xl bg-emerald-50 hover:bg-emerald-100 text-emerald-800 text-xs font-bold transition-all border border-emerald-200/80 shadow-2xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                title="Ghi nhận thành tích, khen thưởng (+ Điểm công việc 5.0đ)"
               >
-                <ClipboardCheck className="w-4 h-4 text-emerald-600" />
-                <span>Ghi nhận và đánh giá</span>
+                <ClipboardCheck className="w-3.5 h-3.5 text-emerald-600" />
+                <span>+ Ghi nhận</span>
               </button>
               <button
                 onClick={() => onOpenIncidentModal(staff.id, 'vi_pham')}
-                className="px-3.5 py-2 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-950 text-xs font-bold transition-all border border-amber-300 shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                className="px-3 py-1.5 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-bold transition-all border border-rose-200 shadow-2xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                title="Biên bản vi phạm chuyên môn / sự cố (- Điểm công việc 5.0đ)"
               >
-                <BookOpen className="w-4 h-4 text-amber-700" />
-                <span>Nội quy</span>
+                <ShieldAlert className="w-3.5 h-3.5 text-rose-600" />
+                <span>+ Vi phạm</span>
+              </button>
+              <button
+                onClick={() => onOpenIncidentModal(staff.id, 'noi_quy')}
+                className="px-3 py-1.5 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-950 text-xs font-bold transition-all border border-amber-300 shadow-2xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                title="Ghi nhận vi phạm nội quy lao động (Trừ Quỹ 100đ chấp hành)"
+              >
+                <BookOpen className="w-3.5 h-3.5 text-amber-700" />
+                <span>+ Nội quy</span>
               </button>
             </div>
           )}
@@ -596,15 +620,15 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
           ) : (
             <div className="space-y-3">
               {staffIncidents.map((incident) => {
-                const isRecognition = incident.type === 'ghi_nhan';
-                const isPolicyIncident = Boolean(incident.policyRuleId) || incident.type === 'vi_pham';
+                const isRecognition = isRecognitionIncident(incident);
+                const isPolicy = isPolicyIncident(incident);
                 return (
                   <div
                     key={incident.id}
                     className={`p-4 rounded-2xl border transition-all ${
                       isRecognition
                         ? 'bg-emerald-50/50 border-emerald-200/80 text-emerald-950'
-                        : isPolicyIncident
+                        : isPolicy
                         ? 'bg-amber-50/70 border-amber-300 text-amber-950'
                         : 'bg-rose-50/50 border-rose-200/80 text-rose-950'
                     }`}
@@ -614,22 +638,22 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                         <div className={`w-8 h-8 rounded-xl flex items-center justify-center flex-shrink-0 font-bold ${
                           isRecognition 
                             ? 'bg-emerald-600 text-white' 
-                            : isPolicyIncident 
+                            : isPolicy 
                             ? 'bg-amber-400 text-amber-950 shadow-xs' 
-                            : 'bg-rose-600 text-white'
+                            : 'bg-rose-600 text-white shadow-xs'
                         }`}>
-                          {isRecognition ? <Award className="w-4 h-4" /> : isPolicyIncident ? <BookOpen className="w-4 h-4 text-amber-950" /> : <ShieldAlert className="w-4 h-4" />}
+                          {isRecognition ? <Award className="w-4 h-4" /> : isPolicy ? <BookOpen className="w-4 h-4 text-amber-950" /> : <ShieldAlert className="w-4 h-4" />}
                         </div>
                         <div>
                           <div className="flex items-center gap-2">
                             <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
                               isRecognition 
                                 ? 'bg-emerald-100 text-emerald-800' 
-                                : isPolicyIncident 
+                                : isPolicy 
                                 ? 'bg-amber-200 text-amber-950 font-black' 
-                                : 'bg-rose-100 text-rose-800'
+                                : 'bg-rose-100 text-rose-800 font-bold'
                             }`}>
-                              {isRecognition ? 'Tuyên Dương' : isPolicyIncident ? (incident.policyRuleId ? `📖 Nội Quy (${incident.policyRuleId})` : '📖 Nội Quy') : 'Vi Phạm'}
+                              {isRecognition ? '🌟 Tuyên Dương' : isPolicy ? (incident.policyRuleId ? `📖 Nội Quy (${incident.policyRuleId})` : '📖 Nội Quy') : '⚠️ Vi Phạm Công Việc'}
                             </span>
                             <span className="text-xs text-slate-500">{incident.date}</span>
                           </div>

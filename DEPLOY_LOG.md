@@ -1,5 +1,11 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
+## 🚀 [v1.024] - 17/11/2026 18:38
+* **Mô tả:** \
+* **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
+
+---
+
 ## 🚀 [v1.023] - 17/11/2026 18:22
 * **Mô tả:** Khắc phục lỗi sự cố hiển thị (ErrorBoundary do thiếu import BookOpen) trên tab Phản Hồi; tối ưu bộ lọc an toàn và hoàn thiện giao diện Tab Nội Quy màu vàng nổi bật.
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
