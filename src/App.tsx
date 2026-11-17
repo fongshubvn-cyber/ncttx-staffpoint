@@ -11,6 +11,7 @@ import { GuideView } from './components/GuideView';
 import { IncidentFormModal } from './components/IncidentFormModal';
 import { LoginModal } from './components/LoginModal';
 import { Option1Layout } from './components/option1/Option1Layout';
+import { NotificationPermissionBanner } from './components/NotificationPermissionBanner';
 
 import {
   Staff,
@@ -1284,6 +1285,8 @@ export function App() {
         userPasswords={userPasswords}
         onUpdatePassword={handleUpdatePassword}
       />
+
+      <NotificationPermissionBanner />
     </>
   );
 }
