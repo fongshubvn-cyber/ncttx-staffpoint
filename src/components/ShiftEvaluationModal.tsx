@@ -174,6 +174,41 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
     return [...standardDepts, ...extras];
   }, [shifts]);
 
+  // Available dates that actually have shifts for the selected department
+  const availableDatesForDept = useMemo(() => {
+    const datesSet = new Set<string>();
+    shifts.forEach(s => {
+      let matches = false;
+      if (selectedDept === 'all') matches = true;
+      else if (s.department === selectedDept) matches = true;
+      else if (selectedDept === 'Phục vụ' && (s.department.includes('Thương mại') || s.department.includes('Dịch vụ'))) matches = true;
+      else if ((selectedDept === 'Thương mại' || selectedDept === 'Thương mại & Dịch vụ') && (s.department.includes('Thương mại') || s.department.includes('Dịch vụ'))) matches = true;
+
+      if (matches && s.members && s.members.length > 0) {
+        datesSet.add(s.date);
+      }
+    });
+    return Array.from(datesSet).sort();
+  }, [shifts, selectedDept]);
+
+  // Closest available date with shifts for department
+  const closestDateForDept = useMemo(() => {
+    if (availableDatesForDept.length === 0) return null;
+    if (availableDatesForDept.includes(selectedDate)) return selectedDate;
+    const past = availableDatesForDept.filter(d => d <= selectedDate);
+    if (past.length > 0) return past[past.length - 1];
+    return availableDatesForDept[availableDatesForDept.length - 1];
+  }, [availableDatesForDept, selectedDate]);
+
+  // Auto-switch date if current date has no shifts for selected department
+  useEffect(() => {
+    if (availableDatesForDept.length > 0 && !availableDatesForDept.includes(selectedDate)) {
+      if (closestDateForDept) {
+        setSelectedDate(closestDateForDept);
+      }
+    }
+  }, [selectedDept, availableDatesForDept, closestDateForDept]);
+
   // Filter Shifts for Selected Date & Department
   const matchingShifts = useMemo(() => {
     return shifts.filter(s => {
@@ -498,15 +533,18 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                     onChange={(e) => setSelectedDate(e.target.value)}
                     className="w-full px-3 py-2 bg-white rounded-xl border border-slate-300 text-xs font-bold text-slate-800 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-600 shadow-2xs"
                   />
-                  <div className="flex gap-1.5 mt-1.5">
+                  <div className="flex items-center gap-1.5 mt-1.5 flex-wrap">
                     <button
                       type="button"
                       onClick={() => setSelectedDate(getTodayStr())}
-                      className="text-[10px] font-extrabold text-emerald-700 hover:underline cursor-pointer"
+                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                        selectedDate === getTodayStr()
+                          ? 'bg-emerald-700 text-white'
+                          : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300'
+                      }`}
                     >
                       Hôm nay
                     </button>
-                    <span className="text-slate-300">•</span>
                     <button
                       type="button"
                       onClick={() => {
@@ -517,10 +555,24 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                         const day = d.getDate().toString().padStart(2, '0');
                         setSelectedDate(`${y}-${m}-${day}`);
                       }}
-                      className="text-[10px] font-extrabold text-slate-500 hover:underline cursor-pointer"
+                      className="text-[10px] font-extrabold px-2 py-0.5 rounded-md bg-slate-200/80 text-slate-700 hover:bg-slate-300 transition-all cursor-pointer"
                     >
                       Hôm qua
                     </button>
+                    {closestDateForDept && closestDateForDept !== getTodayStr() && (
+                      <button
+                        type="button"
+                        onClick={() => setSelectedDate(closestDateForDept)}
+                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md transition-all cursor-pointer ${
+                          selectedDate === closestDateForDept
+                            ? 'bg-emerald-700 text-white'
+                            : 'bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200'
+                        }`}
+                        title="Xem ngày gần nhất có ca làm việc của bộ phận này"
+                      >
+                        Ca gần nhất ({closestDateForDept.slice(5)})
+                      </button>
+                    )}
                   </div>
                 </div>
 
@@ -543,8 +595,21 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                 <div>
                   <label className="block text-[11px] font-bold text-slate-600 mb-1">Ca làm việc</label>
                   {matchingShifts.length === 0 ? (
-                    <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-xl text-[11px] font-bold text-amber-900">
-                      Chưa có ca trong ngày này
+                    <div className="p-2.5 bg-amber-50 border border-amber-200 rounded-xl text-xs space-y-1.5">
+                      <div className="text-[11px] font-bold text-amber-900 flex items-center gap-1.5">
+                        <AlertTriangle className="w-3.5 h-3.5 text-amber-600 shrink-0" />
+                        <span>Chưa có ca trong ngày {selectedDate}</span>
+                      </div>
+                      {closestDateForDept && closestDateForDept !== selectedDate && (
+                        <button
+                          type="button"
+                          onClick={() => setSelectedDate(closestDateForDept)}
+                          className="w-full py-1.5 px-2 bg-amber-100 hover:bg-amber-200 text-amber-950 rounded-lg text-[10px] font-bold transition-all text-left flex items-center justify-between cursor-pointer"
+                        >
+                          <span>👉 Bấm xem ca gần nhất:</span>
+                          <span className="underline font-mono font-black">{closestDateForDept}</span>
+                        </button>
+                      )}
                     </div>
                   ) : (
                     <select

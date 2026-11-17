@@ -1,5 +1,6 @@
 import { read, utils, WorkBook } from 'xlsx';
 import { Staff, SpeechType } from '../types';
+import { initialShifts, initialSheetStaffList } from '../data/initialShifts';
 
 export const DEFAULT_SHIFT_SHEET_URL = 'https://docs.google.com/spreadsheets/d/1Mae0rgz6ozO5_PdnJgdsWPRUjw6ddxeHnJp23IcKUUQ/edit';
 
@@ -52,10 +53,12 @@ export function getExportUrl(sheetUrl: string): string {
 export function formatDateKey(raw: any): string {
   if (!raw) return '';
   if (raw instanceof Date) {
-    const y = raw.getFullYear();
-    const m = (raw.getMonth() + 1).toString().padStart(2, '0');
-    const d = raw.getDate().toString().padStart(2, '0');
-    return `${y}-${m}-${d}`;
+    // Round up by 60 seconds to resolve Google Sheets 23:59:56 timezone offset
+    const d = new Date(raw.getTime() + 60 * 1000);
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${day}`;
   }
   const str = String(raw).trim().split(' ')[0];
   if (str.includes('/')) {
@@ -75,17 +78,52 @@ export function formatDateKey(raw: any): string {
  */
 export async function fetchAndParseShiftWorkbook(sheetUrl: string = DEFAULT_SHIFT_SHEET_URL): Promise<ParsedShiftData> {
   const exportUrl = getExportUrl(sheetUrl);
-  const response = await fetch(exportUrl, {
-    headers: {
-      'Cache-Control': 'no-cache',
-    },
-  });
+  let arrayBuffer: ArrayBuffer | null = null;
 
-  if (!response.ok) {
-    throw new Error(`Không thể tải dữ liệu từ Google Sheet (Mã lỗi ${response.status}). Vui lòng kiểm tra quyền chia sẻ link.`);
+  // 1. Try direct fetch
+  try {
+    const response = await fetch(exportUrl, {
+      headers: {
+        'Cache-Control': 'no-cache',
+      },
+    });
+    if (response.ok) {
+      arrayBuffer = await response.arrayBuffer();
+    }
+  } catch (err) {
+    console.warn('Direct Google Sheet fetch failed (likely browser CORS), trying CORS proxies...', err);
   }
 
-  const arrayBuffer = await response.arrayBuffer();
+  // 2. Fallback to CORS proxies if direct fetch failed
+  if (!arrayBuffer) {
+    const proxies = [
+      `https://api.allorigins.win/raw?url=${encodeURIComponent(exportUrl)}`,
+      `https://corsproxy.io/?url=${encodeURIComponent(exportUrl)}`,
+    ];
+    for (const pUrl of proxies) {
+      try {
+        const pRes = await fetch(pUrl);
+        if (pRes.ok) {
+          arrayBuffer = await pRes.arrayBuffer();
+          break;
+        }
+      } catch (pe) {
+        console.warn(`Proxy ${pUrl} failed:`, pe);
+      }
+    }
+  }
+
+  // 3. Fallback to pre-bundled initial shifts if all network fetches fail
+  if (!arrayBuffer) {
+    console.info('Using pre-bundled initial shift data.');
+    return {
+      shifts: initialShifts,
+      staffList: initialSheetStaffList,
+      lastUpdated: new Date().toISOString(),
+      sheetCount: 10,
+    };
+  }
+
   const wb: WorkBook = read(arrayBuffer, { type: 'array', cellDates: true });
 
   const shiftsMap: Record<string, ShiftGroup> = {};
@@ -130,7 +168,7 @@ export async function fetchAndParseShiftWorkbook(sheetUrl: string = DEFAULT_SHIF
     const ws = wb.Sheets[sname];
     if (!ws) continue;
     const rows: any[][] = utils.sheet_to_json(ws, { header: 1, defval: '' });
-    if (rows.length < 16) continue;
+    if (rows.length < 5) continue;
 
     // Detect Department and Location from Title (Cell A1)
     // Title format: "TTX - ĐĂNG KÝ CA - Cửa hàng số 9 Triệu Việt Vương - [Bộ Phận] - [YYYY-MM]"
@@ -173,8 +211,8 @@ export async function fetchAndParseShiftWorkbook(sheetUrl: string = DEFAULT_SHIF
       }
     }
 
-    // Rows 16 onwards (index 15) contain daily shifts
-    for (let r = 15; r < rows.length; r++) {
+    // Rows 4 onwards (index 4) contain daily shifts starting from Day 1 of the month
+    for (let r = 4; r < rows.length; r++) {
       const row = rows[r];
       if (!row || !row[0]) continue;
       const dateKey = formatDateKey(row[0]);
@@ -238,7 +276,7 @@ export async function fetchAndParseShiftWorkbook(sheetUrl: string = DEFAULT_SHIF
 
   // Cache to localStorage
   try {
-    localStorage.setItem('ncttx_shift_cache_v1', JSON.stringify(result));
+    localStorage.setItem('ncttx_shift_cache_v2', JSON.stringify(result));
     localStorage.setItem('ncttx_shift_cache_time', Date.now().toString());
   } catch (e) {
     console.warn('Cannot cache shift data to localStorage', e);
@@ -250,14 +288,23 @@ export async function fetchAndParseShiftWorkbook(sheetUrl: string = DEFAULT_SHIF
 /**
  * Get Cached Shift Data from LocalStorage
  */
-export function getCachedShiftData(): ParsedShiftData | null {
+export function getCachedShiftData(): ParsedShiftData {
   try {
-    const raw = localStorage.getItem('ncttx_shift_cache_v1');
+    const raw = localStorage.getItem('ncttx_shift_cache_v2');
     if (raw) {
-      return JSON.parse(raw);
+      const parsed = JSON.parse(raw);
+      if (parsed && Array.isArray(parsed.shifts) && parsed.shifts.length > 0) {
+        return parsed;
+      }
     }
   } catch (e) {}
-  return null;
+
+  return {
+    shifts: initialShifts,
+    staffList: initialSheetStaffList,
+    lastUpdated: new Date().toISOString(),
+    sheetCount: 10,
+  };
 }
 
 /**

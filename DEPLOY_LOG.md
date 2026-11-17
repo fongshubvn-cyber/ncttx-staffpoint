@@ -1,5 +1,11 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
+## 🚀 [v1.028] - 17/11/2026 19:40
+* **Mô tả:** \
+* **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
+
+---
+
 ## 🚀 [v1.027] - 17/11/2026 19:24
 * **Mô tả:**
   * **Bỏ hoàn toàn phần Góp ý Admin:** Loại bỏ tính năng, nút bấm, tab và modal Hòm thư góp ý Admin khỏi giao diện Phản Hồi (`Option1IncidentsView`), giữ giao diện tinh gọn, tập trung hoàn toàn vào 3 trụ cột cốt lõi: Nội Quy Lao Động (Quỹ 100đ), Ghi Nhận Công Việc (+5.0đ), Vi Phạm Chuyên Môn (-5.0đ) & Kháng Nghị 48h.

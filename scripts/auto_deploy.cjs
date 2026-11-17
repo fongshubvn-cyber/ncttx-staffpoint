@@ -102,6 +102,14 @@ if (fs.existsSync(logPath)) {
   }
 }
 
+// 10.5. Sync Google Sheet shifts data
+console.log('\n🔄 [0/4] Syncing latest Google Sheet shift data...');
+try {
+  execSync('node scripts/generate_initial_shifts.cjs', { cwd: rootDir, stdio: 'inherit' });
+} catch (e) {
+  console.warn('Warning: Google Sheet sync encountered an issue, proceeding with existing shifts...', e);
+}
+
 // 11. Run Type Check & Build
 console.log('\n🔍 [1/4] Running TypeScript compiler check...');
 execSync('npx.cmd tsc --noEmit', { cwd: rootDir, stdio: 'inherit' });
