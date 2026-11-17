@@ -356,69 +356,137 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
       {/* INCIDENT FEED LIST */}
       <div className="space-y-3">
         {/* Banner Giới Thiệu Chuyên Biệt Khi Đang Ở Tab Nội Quy Màu Vàng */}
-          {filterType === 'noi_quy' && (
-            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15 border border-amber-300/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-amber-400 text-amber-950 flex items-center justify-center font-black shrink-0 shadow-xs">
-                  <BookOpen className="w-5 h-5 text-amber-950" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-amber-950 flex items-center gap-2">
-                    <span>Sổ Ghi Nhận Nội Quy Lao Động</span>
-                    <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-mono font-bold">100đ Quỹ Chấp Hành</span>
-                  </h3>
-                  <p className="text-xs text-amber-900 font-medium mt-0.5">
-                    Tập hợp các biên bản ghi nhận việc chấp hành nội quy, giờ giấc, trật tự, tác phong và văn hóa ứng xử tại điểm bán.
-                  </p>
-                </div>
+        {filterType === 'noi_quy' && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15 border border-amber-300/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-amber-400 text-amber-950 flex items-center justify-center font-black shrink-0 shadow-xs">
+                <BookOpen className="w-5 h-5 text-amber-950" />
               </div>
-              
-              <button
-                type="button"
-                onClick={() => onOpenIncidentModal(undefined, 'noi_quy')}
-                className="px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-black text-xs shadow-md shadow-amber-400/20 active:scale-95 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-amber-950" />
-                <span>+ Lập Phiếu Nội Quy</span>
-              </button>
-            </div>
-          )}
-
-          {/* Banner Giới Thiệu Chuyên Biệt Khi Đang Ở Tab Vi Phạm Công Việc */}
-          {filterType === 'vi_pham' && (
-            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-rose-500/15 via-red-500/10 to-rose-500/15 border border-rose-300/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
-              <div className="flex items-center gap-3">
-                <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
-                  <ShieldAlert className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <h3 className="text-sm font-black text-rose-950 flex items-center gap-2">
-                    <span>Biên Bản Vi Phạm Tiêu Chuẩn Công Việc</span>
-                    <span className="px-2 py-0.5 rounded-full bg-rose-200 text-rose-950 text-[10px] font-mono font-bold">Thang 5.0đ Chuyên Môn</span>
-                  </h3>
-                  <p className="text-xs text-rose-900 font-medium mt-0.5">
-                    Ghi nhận các sự cố nghiệp vụ, vi phạm quy trình chuyên môn hoặc nhắc nhở ranh giới không thỏa hiệp.
-                  </p>
-                </div>
+              <div>
+                <h3 className="text-sm font-black text-amber-950 flex items-center gap-2">
+                  <span>Sổ Ghi Nhận Nội Quy Lao Động</span>
+                  <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-mono font-bold">100đ Quỹ Chấp Hành</span>
+                </h3>
+                <p className="text-xs text-amber-900 font-medium mt-0.5">
+                  Tập hợp các biên bản ghi nhận việc chấp hành nội quy, giờ giấc, trật tự, tác phong và văn hóa ứng xử tại điểm bán.
+                </p>
               </div>
-              
-              <button
-                type="button"
-                onClick={() => onOpenIncidentModal(undefined, 'vi_pham')}
-                className="px-4 py-2 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs shadow-md shadow-rose-600/20 active:scale-95 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
-              >
-                <Plus className="w-4 h-4 text-white" />
-                <span>+ Lập Phiếu Vi Phạm</span>
-              </button>
             </div>
-          )}
+            
+            <button
+              type="button"
+              onClick={() => onOpenIncidentModal(undefined, 'noi_quy')}
+              className="px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-black text-xs shadow-md shadow-amber-400/20 active:scale-95 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-amber-950" />
+              <span>Lập Phiếu Nội Quy</span>
+            </button>
+          </div>
+        )}
 
-          {filteredIncidents.length === 0 ? (
-            <div className="text-center py-12 bg-white rounded-3xl border border-slate-200/80">
-              <CheckCircle2 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
-              <p className="text-sm font-semibold text-slate-600">Không tìm thấy phiếu phản hồi nào</p>
+        {/* Banner Giới Thiệu Chuyên Biệt Khi Đang Ở Tab Ghi Nhận Khen Thưởng Màu Xanh */}
+        {filterType === 'ghi_nhan' && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-emerald-500/15 via-teal-500/10 to-emerald-500/15 border border-emerald-300/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-emerald-600 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
+                <Award className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-emerald-950 flex items-center gap-2">
+                  <span>Sổ Tuyên Dương & Ghi Nhận Khen Thưởng</span>
+                  <span className="px-2 py-0.5 rounded-full bg-emerald-200 text-emerald-950 text-[10px] font-mono font-bold">+ Thang 5.0đ Khen Thưởng</span>
+                </h3>
+                <p className="text-xs text-emerald-900 font-medium mt-0.5">
+                  Biểu dương những nỗ lực vượt trội, tinh thần trách nhiệm, sáng kiến và cống hiến xuất sắc của nhân sự trong ca làm việc.
+                </p>
+              </div>
             </div>
-          ) : (
+            
+            <button
+              type="button"
+              onClick={() => onOpenIncidentModal(undefined, 'ghi_nhan')}
+              className="px-4 py-2 rounded-2xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-700 hover:to-teal-700 text-white font-bold text-xs shadow-md shadow-emerald-600/20 active:scale-95 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-white" />
+              <span>Lập Phiếu Ghi Nhận</span>
+            </button>
+          </div>
+        )}
+
+        {/* Banner Giới Thiệu Chuyên Biệt Khi Đang Ở Tab Vi Phạm Công Việc Màu Đỏ */}
+        {filterType === 'vi_pham' && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-rose-500/15 via-red-500/10 to-rose-500/15 border border-rose-300/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-rose-600 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
+                <ShieldAlert className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-rose-950 flex items-center gap-2">
+                  <span>Biên Bản Vi Phạm Tiêu Chuẩn Công Việc</span>
+                  <span className="px-2 py-0.5 rounded-full bg-rose-200 text-rose-950 text-[10px] font-mono font-bold">- Thang 5.0đ Chuyên Môn</span>
+                </h3>
+                <p className="text-xs text-rose-900 font-medium mt-0.5">
+                  Ghi nhận các sự cố nghiệp vụ, vi phạm quy trình chuyên môn hoặc nhắc nhở ranh giới không thỏa hiệp.
+                </p>
+              </div>
+            </div>
+            
+            <button
+              type="button"
+              onClick={() => onOpenIncidentModal(undefined, 'vi_pham')}
+              className="px-4 py-2 rounded-2xl bg-gradient-to-r from-rose-600 to-red-600 hover:from-rose-700 hover:to-red-700 text-white font-bold text-xs shadow-md shadow-rose-600/20 active:scale-95 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
+            >
+              <Plus className="w-4 h-4 text-white" />
+              <span>Lập Phiếu Vi Phạm</span>
+            </button>
+          </div>
+        )}
+
+        {/* Banner Giới Thiệu Chuyên Biệt Khi Đang Ở Tab Kháng Nghị 48h */}
+        {filterType === 'khang_nghi' && (
+          <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-blue-500/15 via-indigo-500/10 to-blue-500/15 border border-blue-300/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-2xl bg-blue-600 text-white flex items-center justify-center font-black shrink-0 shadow-xs">
+                <Scale className="w-5 h-5 text-white" />
+              </div>
+              <div>
+                <h3 className="text-sm font-black text-blue-950 flex items-center gap-2">
+                  <span>Sổ Kháng Nghị & Khiếu Nại 48h</span>
+                  <span className="px-2 py-0.5 rounded-full bg-blue-200 text-blue-950 text-[10px] font-mono font-bold">Quyền Lợi Nhân Sự</span>
+                </h3>
+                <p className="text-xs text-blue-900 font-medium mt-0.5">
+                  Kênh tiếp nhận giải trình, khiếu nại minh bạch gửi trực tiếp tới Trưởng phòng Nhân sự trong vòng 48h kể từ khi nhận phiếu.
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {filteredIncidents.length === 0 ? (
+          <div className="text-center py-12 bg-white rounded-3xl border border-slate-200/80 space-y-2">
+            <CheckCircle2 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
+            <p className="text-sm font-bold text-slate-700">
+              {filterType === 'noi_quy' 
+                ? 'Không tìm thấy phiếu vi phạm nội quy nào' 
+                : filterType === 'ghi_nhan'
+                ? 'Không tìm thấy phiếu ghi nhận khen thưởng nào'
+                : filterType === 'vi_pham'
+                ? 'Không tìm thấy phiếu vi phạm công việc nào'
+                : filterType === 'khang_nghi'
+                ? 'Hiện không có phiếu nào đang chờ giải quyết kháng nghị'
+                : 'Không tìm thấy phiếu phản hồi nào'}
+            </p>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              {filterType === 'noi_quy'
+                ? 'Các biên bản chấp hành nội quy lao động (Quỹ 100đ) sẽ được lưu trữ và hiển thị tại đây.'
+                : filterType === 'ghi_nhan'
+                ? 'Các phiếu tuyên dương, khen thưởng nỗ lực xuất sắc (+5.0đ) sẽ được hiển thị tại đây.'
+                : filterType === 'vi_pham'
+                ? 'Các biên bản ghi nhận vi phạm tiêu chuẩn công việc (-5.0đ) sẽ được hiển thị tại đây.'
+                : 'Thử thay đổi bộ lọc thời gian hoặc từ khóa tìm kiếm.'}
+            </p>
+          </div>
+        ) : (
             filteredIncidents.map((incident) => {
               if (!incident) return null;
               const isRecognition = isRecognitionIncident(incident);
