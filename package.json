@@ -1,7 +1,7 @@
 {
   "name": "ncttx-staffpoint",
   "private": true,
-  "version": "1.017",
+  "version": "1.018",
   "type": "module",
   "scripts": {
     "dev": "vite",

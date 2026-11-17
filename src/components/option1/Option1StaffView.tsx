@@ -293,18 +293,18 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
         {onOpenIncidentModal && (
           <div className="pt-2 border-t border-slate-100 flex items-center justify-between gap-2" onClick={(e) => e.stopPropagation()}>
             <button
-              onClick={() => onOpenIncidentModal(staff.id, 'vi_pham')}
-              className="flex-1 py-1.5 px-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-bold transition-all border border-rose-200/60 flex items-center justify-center gap-1 cursor-pointer"
-            >
-              <BookOpen className="w-3.5 h-3.5 text-rose-600" />
-              <span>Đánh giá vi phạm</span>
-            </button>
-            <button
               onClick={() => onOpenIncidentModal(staff.id, 'ghi_nhan')}
               className="flex-1 py-1.5 px-2 rounded-xl bg-emerald-50 text-emerald-700 hover:bg-emerald-100 text-[11px] font-bold transition-all border border-emerald-200/60 flex items-center justify-center gap-1 cursor-pointer"
             >
               <ClipboardCheck className="w-3.5 h-3.5 text-emerald-600" />
-              <span>Ghi nhận</span>
+              <span>Ghi nhận đóng góp</span>
+            </button>
+            <button
+              onClick={() => onOpenIncidentModal(staff.id, 'vi_pham')}
+              className="flex-1 py-1.5 px-2 rounded-xl bg-rose-50 text-rose-700 hover:bg-rose-100 text-[11px] font-bold transition-all border border-rose-200/60 flex items-center justify-center gap-1 cursor-pointer"
+            >
+              <BookOpen className="w-3.5 h-3.5 text-rose-600" />
+              <span>Nội quy - chấp hành</span>
             </button>
           </div>
         )}
