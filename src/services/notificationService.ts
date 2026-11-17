@@ -65,18 +65,37 @@ export function isBrowserNotificationGranted(): boolean {
 }
 
 /**
- * Send a Browser Native Notification
+ * Send a Browser / Mobile Native Notification (Supports ServiceWorker for Android & iOS PWA)
  */
 export function triggerBrowserNotification(title: string, body: string, data?: any) {
   if (!('Notification' in window)) return;
   if (Notification.permission === 'granted') {
     try {
-      new Notification(title, {
-        body,
-        icon: '/logo.png',
-        badge: '/logo.png',
-        data,
-      });
+      if ('serviceWorker' in navigator) {
+        navigator.serviceWorker.ready.then((reg) => {
+          reg.showNotification(title, {
+            body,
+            icon: '/logo.png',
+            badge: '/logo.png',
+            vibrate: [200, 100, 200],
+            data,
+          } as any);
+        }).catch(() => {
+          new Notification(title, {
+            body,
+            icon: '/logo.png',
+            badge: '/logo.png',
+            data,
+          });
+        });
+      } else {
+        new Notification(title, {
+          body,
+          icon: '/logo.png',
+          badge: '/logo.png',
+          data,
+        });
+      }
     } catch (e) {
       console.warn('Native notification failed:', e);
     }

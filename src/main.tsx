@@ -10,4 +10,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <App />
     </ErrorBoundary>
   </React.StrictMode>,
-)
+);
+
+// Register Service Worker for Mobile Native Notifications & PWA
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('/sw.js').catch((err) => {
+      console.log('SW registration notice:', err);
+    });
+  });
+}
