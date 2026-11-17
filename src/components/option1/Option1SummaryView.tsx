@@ -391,9 +391,9 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
               </button>
               <button
                 onClick={() => onOpenIncidentModal(staff.id, 'vi_pham')}
-                className="px-3.5 py-2 rounded-2xl bg-rose-50 hover:bg-rose-100 text-rose-800 text-xs font-bold transition-all border border-rose-200/80 shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
+                className="px-3.5 py-2 rounded-2xl bg-amber-50 hover:bg-amber-100 text-amber-950 text-xs font-bold transition-all border border-amber-300 shadow-xs flex items-center gap-1.5 active:scale-95 cursor-pointer"
               >
-                <BookOpen className="w-4 h-4 text-rose-600" />
+                <BookOpen className="w-4 h-4 text-amber-700" />
                 <span>Nội quy</span>
               </button>
             </div>

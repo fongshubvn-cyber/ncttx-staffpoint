@@ -165,6 +165,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
 
   const mySubmittedIncidents = activeIncidents.filter(i => i.reporterId === currentUser?.id);
   const myReceivedIncidents = activeIncidents.filter(i => i.targetId === currentUser?.id);
+  const policyIncidentsCount = activeIncidents.filter(i => Boolean(i.policyRuleId) || i.type === 'vi_pham').length;
 
   const baseListToFilter = filterType === 'trash' ? deletedIncidents : activeIncidents;
 
@@ -187,8 +188,10 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
       if (item.status !== 'Đang xem xét' && item.status !== 'Chờ duyệt' && item.status !== 'Chờ HR duyệt') return false;
     } else if (filterType === 'ghi_nhan') {
       if (item.type !== 'ghi_nhan') return false;
-    } else if (filterType === 'vi_pham') {
-      if (item.type !== 'vi_pham') return false;
+    } else if (filterType === 'noi_quy' || filterType === 'vi_pham') {
+      // Tab Nội Quy màu vàng: Lọc các phiếu vi phạm nội quy lao động hoặc có policyRuleId
+      const isPolicyItem = Boolean(item.policyRuleId) || item.type === 'vi_pham';
+      if (!isPolicyItem) return false;
     } else if (filterType === 'khang_nghi') {
       if (item.status !== 'Đang kháng nghị' && !item.appealReason) return false;
     }
@@ -383,15 +386,22 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
             </button>
           )}
           
+          {/* TAB NỘI QUY MÀU VÀNG NỔI BẬT */}
           <button
-            onClick={() => setFilterType('vi_pham')}
-            className={`flex-shrink-0 px-3.5 py-2 rounded-xl text-xs font-semibold transition-all border whitespace-nowrap ${
-              filterType === 'vi_pham'
-                ? 'bg-rose-600 text-white border-rose-600 shadow-sm'
-                : 'bg-white text-slate-600 border-slate-200 hover:bg-slate-50'
+            onClick={() => setFilterType('noi_quy')}
+            className={`flex-shrink-0 px-4 py-2 rounded-xl text-xs font-black transition-all border flex items-center gap-1.5 whitespace-nowrap cursor-pointer ${
+              filterType === 'noi_quy' || filterType === 'vi_pham'
+                ? 'bg-amber-400 text-amber-950 border-amber-500 shadow-md ring-2 ring-amber-300 font-black'
+                : 'bg-amber-100/80 text-amber-950 border-amber-300 hover:bg-amber-200 hover:border-amber-400'
             }`}
           >
-            Biên Bản Vi Phạm ({activeIncidents.filter(i => i.type === 'vi_pham').length})
+            <BookOpen className="w-4 h-4 text-amber-900" />
+            <span>📖 Nội Quy</span>
+            <span className={`text-[10px] px-1.5 py-0.2 rounded-full font-black ${
+              filterType === 'noi_quy' || filterType === 'vi_pham' ? 'bg-amber-950 text-white' : 'bg-amber-200 text-amber-950'
+            }`}>
+              {policyIncidentsCount}
+            </span>
           </button>
 
           <button
@@ -598,6 +608,35 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
 
         /* VIEW SECTION 2: INCIDENT FEED LIST */
         <div className="space-y-3">
+          {/* Banner Giới Thiệu Chuyên Biệt Khi Đang Ở Tab Nội Quy Màu Vàng */}
+          {(filterType === 'noi_quy' || filterType === 'vi_pham') && (
+            <div className="p-4 sm:p-5 rounded-3xl bg-gradient-to-r from-amber-500/15 via-yellow-500/10 to-amber-500/15 border border-amber-300/80 shadow-2xs flex flex-col sm:flex-row sm:items-center justify-between gap-3 animate-in fade-in duration-200">
+              <div className="flex items-center gap-3">
+                <div className="w-10 h-10 rounded-2xl bg-amber-400 text-amber-950 flex items-center justify-center font-black shrink-0 shadow-xs">
+                  <BookOpen className="w-5 h-5 text-amber-950" />
+                </div>
+                <div>
+                  <h3 className="text-sm font-black text-amber-950 flex items-center gap-2">
+                    <span>Sổ Ghi Nhận Nội Quy Lao Động</span>
+                    <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-mono font-bold">100đ Quỹ Chấp Hành</span>
+                  </h3>
+                  <p className="text-xs text-amber-900 font-medium mt-0.5">
+                    Tập hợp các biên bản ghi nhận việc chấp hành nội quy, giờ giấc, trật tự, tác phong và văn hóa ứng xử tại điểm bán.
+                  </p>
+                </div>
+              </div>
+              
+              <button
+                type="button"
+                onClick={() => onOpenIncidentModal(undefined, 'vi_pham')}
+                className="px-4 py-2 rounded-2xl bg-gradient-to-r from-amber-400 to-yellow-400 hover:from-amber-500 hover:to-yellow-500 text-amber-950 font-black text-xs shadow-md shadow-amber-400/20 active:scale-95 transition-all flex items-center gap-1.5 shrink-0 self-start sm:self-auto cursor-pointer"
+              >
+                <Plus className="w-4 h-4 text-amber-950" />
+                <span>+ Lập Phiếu Nội Quy</span>
+              </button>
+            </div>
+          )}
+
           {filteredIncidents.length === 0 ? (
             <div className="text-center py-12 bg-white rounded-3xl border border-slate-200/80">
               <CheckCircle2 className="w-10 h-10 text-slate-300 mx-auto mb-2" />
@@ -606,6 +645,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
           ) : (
             filteredIncidents.map((incident) => {
               const isRecognition = incident.type === 'ghi_nhan';
+              const isPolicyIncident = Boolean(incident.policyRuleId) || incident.type === 'vi_pham';
               const staff = staffList.find(s => s.id === incident.targetId);
               const isTargetUser = currentUser?.id === incident.targetId;
               const canAppeal = !isRecognition &&
@@ -618,22 +658,30 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                 <div
                   key={incident.id}
                   className={`bg-white rounded-3xl p-5 shadow-sm border transition-all space-y-3 ${
-                    isRecognition ? 'border-emerald-200/80 hover:border-emerald-300' : 'border-rose-200/80 hover:border-rose-300'
+                    isRecognition 
+                      ? 'border-emerald-200/80 hover:border-emerald-300' 
+                      : isPolicyIncident 
+                      ? 'border-amber-300/80 hover:border-amber-400 bg-amber-50/15'
+                      : 'border-rose-200/80 hover:border-rose-300'
                   }`}
                 >
                   <div className="flex items-start justify-between gap-3">
                     <div className="flex items-start gap-3">
-                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center text-white flex-shrink-0 font-bold ${
-                        isRecognition ? 'bg-emerald-600' : 'bg-rose-600'
+                      <div className={`w-10 h-10 rounded-2xl flex items-center justify-center flex-shrink-0 font-bold ${
+                        isRecognition ? 'bg-emerald-600 text-white' : isPolicyIncident ? 'bg-amber-400 text-amber-950 shadow-xs' : 'bg-rose-600 text-white'
                       }`}>
-                        {isRecognition ? <Award className="w-5 h-5" /> : <ShieldAlert className="w-5 h-5" />}
+                        {isRecognition ? <Award className="w-5 h-5" /> : isPolicyIncident ? <BookOpen className="w-5 h-5 text-amber-950" /> : <ShieldAlert className="w-5 h-5" />}
                       </div>
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
                           <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
-                            isRecognition ? 'bg-emerald-100 text-emerald-800' : 'bg-rose-100 text-rose-800'
+                            isRecognition 
+                              ? 'bg-emerald-100 text-emerald-800' 
+                              : isPolicyIncident 
+                              ? 'bg-amber-100 text-amber-950 border border-amber-300 font-extrabold'
+                              : 'bg-rose-100 text-rose-800'
                           }`}>
-                            {isRecognition ? 'Ghi Nhận' : 'Lập Biên Bản'}
+                            {isRecognition ? 'Ghi Nhận' : isPolicyIncident ? (incident.policyRuleId ? `📖 Nội Quy (${incident.policyRuleId})` : '📖 Nội Quy') : 'Lập Biên Bản'}
                           </span>
                           <span className="text-xs font-semibold text-slate-900">
                             Đối tượng: <strong>{staff ? `${staff.name} (${staff.id})` : incident.targetId}</strong>

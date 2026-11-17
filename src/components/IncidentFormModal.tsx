@@ -504,8 +504,8 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 <h2 className="text-base font-extrabold font-heading text-[#1B4332] flex items-center gap-2">
                   {formCategory === 'policy' ? (
                     <>
-                      <BookOpen className="w-5 h-5 text-rose-600" />
-                      <span>Phiếu Phản Ánh Chấp Hành & Hoàn Thành Công Việc (Quỹ 100đ)</span>
+                      <BookOpen className="w-5 h-5 text-amber-700" />
+                      <span>Phiếu Ghi Nhận Nội Quy Lao Động (Quỹ 100đ)</span>
                     </>
                   ) : (
                     <>
@@ -528,13 +528,13 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
           {/* 1. Loại Phiếu Banner / Toggle */}
           <div>
             {formCategory === 'policy' ? (
-              <div className="p-3 bg-rose-50 border border-rose-200 rounded-2xl flex items-center justify-between text-xs text-rose-950 font-bold shadow-2xs">
+              <div className="p-3 bg-amber-50 border border-amber-300 rounded-2xl flex items-center justify-between text-xs text-amber-950 font-bold shadow-2xs">
                 <span className="flex items-center gap-2">
-                  <BookOpen className="w-4.5 h-4.5 text-rose-600 shrink-0" />
-                  <span>Loại Phiếu: <strong>Mức độ chấp hành & hoàn thành công việc</strong> (Trừ quỹ 100đ)</span>
+                  <BookOpen className="w-4.5 h-4.5 text-amber-700 shrink-0" />
+                  <span>Loại Phiếu: <strong>Ghi nhận chấp hành nội quy lao động</strong> (Trừ quỹ 100đ)</span>
                 </span>
-                <span className="px-2.5 py-0.5 rounded-full bg-rose-600 text-white text-[10px] font-black font-mono">
-                  100đ Chấp hành
+                <span className="px-2.5 py-0.5 rounded-full bg-amber-500 text-amber-950 text-[10px] font-black font-mono shadow-2xs">
+                  100đ Quỹ Nội Quy
                 </span>
               </div>
             ) : (
@@ -703,13 +703,13 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
           {/* 4 & 5. SELECT CRITERIA (BIÊN BẢN NỘI QUY (100đ) VS ĐÁNH GIÁ CÔNG VIỆC (5.0đ)) */}
           {formCategory === 'policy' ? (
             /* DÀNH CHO NỘI QUY: HIỂN THỊ CÁC NỘI QUY (HỖ TRỢ LỌC TỪ KHÓA) */
-            <div className="space-y-3 p-3.5 bg-rose-50/70 border border-rose-200 rounded-2xl">
+            <div className="space-y-3 p-3.5 bg-amber-50/70 border border-amber-300 rounded-2xl">
               <div className="flex items-center justify-between">
-                <label className="block text-rose-950 font-extrabold font-heading text-xs flex items-center gap-1.5">
-                  <ShieldAlert className="w-4 h-4 text-rose-600" />
-                  <span>4. Chọn Điều Khoản Quy Định Vi Phạm (Thang 100đ)</span>
+                <label className="block text-amber-950 font-extrabold font-heading text-xs flex items-center gap-1.5">
+                  <BookOpen className="w-4 h-4 text-amber-700" />
+                  <span>4. Chọn Điều Khoản Nội Quy Lao Động (Thang 100đ)</span>
                 </label>
-                <span className="text-[10px] text-rose-700 font-bold bg-white px-2 py-0.5 rounded-full border border-rose-200">
+                <span className="text-[10px] text-amber-900 font-bold bg-white px-2 py-0.5 rounded-full border border-amber-200">
                   {filteredPolicyRules.length} Quy định {selectedKeyword !== 'all' ? 'phù hợp' : ''}
                 </span>
               </div>

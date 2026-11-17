@@ -281,7 +281,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 title="Bấm để xoá Cache & làm mới phiên bản mới nhất ngay lập tức (không cần gỡ app)"
               >
                 <RefreshCw className={`w-2.5 h-2.5 text-emerald-700 ${isHardRefreshing ? 'animate-spin' : ''}`} />
-                <span>v1.021</span>
+                <span>v1.022</span>
               </button>
             </div>
           </div>
@@ -527,7 +527,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <div className="text-left">
                   <div className="text-xs font-black flex items-center gap-1.5 text-emerald-900">
                     <span>Làm Mới Cache & Nhận Bản Mới</span>
-                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.021</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.022</span>
                   </div>
                   <div className="text-[10px] text-emerald-700 font-medium">Bấm 1 chạm xoá cache & cập nhật tính năng mới</div>
                 </div>
@@ -1091,17 +1091,17 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                   setShowFeedbackChoiceModal(false);
                   onOpenIncidentModal(undefined, 'vi_pham');
                 }}
-                className="group relative p-4 rounded-2xl bg-gradient-to-br from-amber-50/80 via-rose-50/40 to-orange-100/30 hover:from-amber-100/90 hover:to-rose-100/80 border border-rose-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
+                className="group relative p-4 rounded-2xl bg-gradient-to-br from-amber-50 via-yellow-50/70 to-amber-100/50 hover:from-amber-100/90 hover:to-yellow-100/90 border border-amber-300 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
               >
-                <div className="p-3 bg-gradient-to-br from-rose-600 to-amber-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
-                  <BookOpen className="w-6 h-6 text-white" />
+                <div className="p-3 bg-gradient-to-br from-amber-400 to-yellow-500 text-amber-950 rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
+                  <BookOpen className="w-6 h-6 text-amber-950" />
                 </div>
                 <div className="space-y-1 flex-1">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm font-extrabold text-rose-950 group-hover:text-rose-900">
-                      📋 Đánh giá nội quy - chấp hành
+                    <span className="text-sm font-extrabold text-amber-950 group-hover:text-amber-900">
+                      📖 Đánh giá nội quy - chấp hành
                     </span>
-                    <span className="px-2 py-0.5 rounded-full bg-rose-200/80 text-rose-900 text-[10px] font-black font-mono">
+                    <span className="px-2 py-0.5 rounded-full bg-amber-200 text-amber-950 text-[10px] font-black font-mono">
                       100đ Chấp hành
                     </span>
                   </div>
