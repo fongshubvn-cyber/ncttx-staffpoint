@@ -52,6 +52,7 @@ import {
   getIncidentTargetPillar
 } from './utils/calculator';
 import { getPersistedAuthUser, savePersistedAuthUser } from './utils/authCookie';
+import { fetchAndParseShiftWorkbook, convertSheetStaffToStaff } from './services/shiftService';
 
 export function App() {
   const [activeTab, setActiveTab] = useState<string>('summary'); // Default: Trang Tổng hợp
@@ -97,7 +98,13 @@ export function App() {
   // State with LocalStorage Persistence
   const [staffList, setStaffList] = useState<Staff[]>(() => {
     const saved = localStorage.getItem('ncttx_staff_list');
-    const rawList: Staff[] = saved ? JSON.parse(saved) : initialStaffList;
+    const rawList: Staff[] = saved ? JSON.parse(saved) : [...initialStaffList];
+    // Tự động bổ sung các nhân sự mới từ danh sách seedData / Google Sheet nếu chưa có trong LocalStorage
+    initialStaffList.forEach(seedStaff => {
+      if (!rawList.some(s => s.id === seedStaff.id)) {
+        rawList.push(seedStaff);
+      }
+    });
     const savedParamsRaw = localStorage.getItem('ncttx_params');
     const initialParams = savedParamsRaw ? { ...defaultParameters, ...JSON.parse(savedParamsRaw) } : defaultParameters;
     return rawList.map(st => {
@@ -901,6 +908,49 @@ export function App() {
     });
   };
 
+  // Handler: Sync staff roster directly from Google Sheet (Sheet "👥 Nhân sự điểm bán")
+  const handleSyncStaffFromSheet = async () => {
+    try {
+      const data = await fetchAndParseShiftWorkbook();
+      let addedCount = 0;
+      let updatedCount = 0;
+
+      setStaffList(prev => {
+        const list = [...prev];
+        data.staffList.forEach(sheetRec => {
+          const existingIdx = list.findIndex(s => s.id === sheetRec.id);
+          if (existingIdx >= 0) {
+            const existing = list[existingIdx];
+            if (sheetRec.isWorking && existing.status === 'Đã khoá') {
+              list[existingIdx] = { ...existing, status: sheetRec.status };
+              updatedCount++;
+            }
+          } else {
+            const newStaff = convertSheetStaffToStaff(sheetRec);
+            const baselines = getStaffBaselineScores(newStaff, params);
+            list.push({
+              ...newStaff,
+              generalScore: baselines.generalScore,
+              techScore: baselines.techScore,
+              mgmtScore: baselines.mgmtScore,
+              totalScore: baselines.totalScore,
+              salaryTier: baselines.salaryTier,
+            });
+            addedCount++;
+          }
+        });
+
+        localStorage.setItem('ncttx_staff_list', JSON.stringify(list));
+        notifySync('staff_list', list);
+        return list;
+      });
+
+      alert(`✅ Đồng bộ Google Sheet thành công!\n• Bổ sung mới: ${addedCount} nhân sự\n• Cập nhật trạng thái: ${updatedCount} nhân sự\n• Điểm bán: Cửa hàng số 9 Triệu Việt Vương`);
+    } catch (err: any) {
+      alert(`⚠️ Không thể đồng bộ từ Google Sheet:\n${err.message || err}`);
+    }
+  };
+
   // Handler: Add new question
   const handleAddQuestion = (newQuestion: Question) => {
     setQuestions(prev => {
@@ -1060,6 +1110,7 @@ export function App() {
         onResolveAppeal={handleResolveAppeal}
         onRefreshCloud={handleRefreshCloudData}
         isRefreshingCloud={isRefreshingCloud}
+        onSyncStaffFromSheet={handleSyncStaffFromSheet}
       />
 
       <IncidentFormModal

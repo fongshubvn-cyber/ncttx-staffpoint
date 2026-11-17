@@ -15,7 +15,8 @@ import {
   ListFilter,
   Key,
   ClipboardCheck,
-  BookOpen
+  BookOpen,
+  RefreshCw
 } from 'lucide-react';
 
 interface Option1StaffViewProps {
@@ -30,6 +31,7 @@ interface Option1StaffViewProps {
   currentUser: AuthUser | null;
   onOpenIncidentModal?: (targetId?: string, type?: 'ghi_nhan' | 'vi_pham') => void;
   onOpenAdminPasswordModal?: (targetId?: string) => void;
+  onSyncStaffFromSheet?: () => Promise<void>;
 }
 
 export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
@@ -44,8 +46,10 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
   currentUser,
   onOpenIncidentModal,
   onOpenAdminPasswordModal,
+  onSyncStaffFromSheet,
 }) => {
   const [showAddModal, setShowAddModal] = useState(false);
+  const [isSyncingSheet, setIsSyncingSheet] = useState(false);
   const [selectedDepartment, setSelectedDepartment] = useState<string>('all');
   const [selectedLine, setSelectedLine] = useState<string>('all');
   const [searchTerm, setSearchTerm] = useState<string>('');
@@ -355,28 +359,50 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
             </button>
           </div>
 
-          {isSystemAdmin(currentUser) && (
-            <div className="flex items-center gap-2 w-full sm:w-auto">
-              {onOpenAdminPasswordModal && (
-                <button
-                  onClick={() => onOpenAdminPasswordModal()}
-                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-sm transition-all whitespace-nowrap active:scale-95 cursor-pointer"
-                  title="Quản lý & Đổi mật khẩu thành viên"
-                >
-                  <Key className="w-3.5 h-3.5" />
-                  <span>Đổi Mật Khẩu</span>
-                </button>
-              )}
+          <div className="flex items-center gap-2 w-full sm:w-auto">
+            {onSyncStaffFromSheet && (
               <button
-                onClick={() => setShowAddModal(true)}
-                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-sm transition-all whitespace-nowrap active:scale-95 cursor-pointer"
-                title="Thêm nhân sự mới vào hệ thống"
+                type="button"
+                onClick={async () => {
+                  setIsSyncingSheet(true);
+                  try {
+                    await onSyncStaffFromSheet();
+                  } finally {
+                    setIsSyncingSheet(false);
+                  }
+                }}
+                disabled={isSyncingSheet}
+                className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-gradient-to-r from-teal-600 to-emerald-600 hover:from-teal-700 hover:to-emerald-700 text-white font-extrabold text-xs shadow-sm transition-all whitespace-nowrap active:scale-95 disabled:opacity-50 cursor-pointer"
+                title="Đồng bộ danh sách nhân sự từ Google Sheet (Sheet 'Nhân sự điểm bán')"
               >
-                <Plus className="w-3.5 h-3.5" />
-                <span>+ Thêm Nhân Sự</span>
+                <RefreshCw className={`w-3.5 h-3.5 ${isSyncingSheet ? 'animate-spin' : ''}`} />
+                <span>{isSyncingSheet ? 'Đang đồng bộ...' : 'Đồng bộ Sheet'}</span>
               </button>
-            </div>
-          )}
+            )}
+
+            {isSystemAdmin(currentUser) && (
+              <>
+                {onOpenAdminPasswordModal && (
+                  <button
+                    onClick={() => onOpenAdminPasswordModal()}
+                    className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-extrabold text-xs shadow-sm transition-all whitespace-nowrap active:scale-95 cursor-pointer"
+                    title="Quản lý & Đổi mật khẩu thành viên"
+                  >
+                    <Key className="w-3.5 h-3.5" />
+                    <span>Đổi Mật Khẩu</span>
+                  </button>
+                )}
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-3 py-2 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white font-extrabold text-xs shadow-sm transition-all whitespace-nowrap active:scale-95 cursor-pointer"
+                  title="Thêm nhân sự mới vào hệ thống"
+                >
+                  <Plus className="w-3.5 h-3.5" />
+                  <span>+ Thêm Nhân Sự</span>
+                </button>
+              </>
+            )}
+          </div>
         </div>
       </div>
 

@@ -22,6 +22,7 @@ import { PolicyView } from '../PolicyView';
 import { AiChatModal } from '../AiChatModal';
 import { AdminPasswordModal } from '../AdminPasswordModal';
 import { AppInstallGuideModal } from '../AppInstallGuideModal';
+import { ShiftEvaluationModal } from '../ShiftEvaluationModal';
 
 import { 
   LayoutDashboard, 
@@ -88,6 +89,7 @@ interface Option1LayoutProps {
   onUpdateStatus: (id: string, status: IncidentStatus) => void;
   onAppealIncident: (incidentId: string, reason: string) => void;
   onResolveAppeal: (incidentId: string, approved: boolean) => void;
+  onSyncStaffFromSheet?: () => Promise<void>;
   uiOption?: 'default' | 'option1';
   onSelectUiOption?: (option: 'default' | 'option1') => void;
 }
@@ -125,6 +127,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   onUpdateStatus,
   onAppealIncident,
   onResolveAppeal,
+  onSyncStaffFromSheet,
   uiOption = 'option1',
   onSelectUiOption,
 }) => {
@@ -133,6 +136,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
   const [showAdminPasswordModal, setShowAdminPasswordModal] = useState(false);
   const [showFeedbackChoiceModal, setShowFeedbackChoiceModal] = useState(false);
   const [showInstallGuideModal, setShowInstallGuideModal] = useState(false);
+  const [showShiftEvalModal, setShowShiftEvalModal] = useState(false);
   const [adminPasswordTargetId, setAdminPasswordTargetId] = useState<string | undefined>(undefined);
   const [cloudSyncInfo, setCloudSyncInfo] = useState<{ status: CloudSyncState; errorDetails: string | null }>({
     status: 'connecting',
@@ -233,7 +237,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               )}
 
               <span className="text-[10px] font-mono font-bold text-slate-400 border-l border-slate-200 pl-1.5 shrink-0 select-none">
-                v1.019
+                v1.020
               </span>
             </div>
           </div>
@@ -665,6 +669,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               setAdminPasswordTargetId(targetId);
               setShowAdminPasswordModal(true);
             }}
+            onSyncStaffFromSheet={onSyncStaffFromSheet}
           />
         )}
 
@@ -1002,6 +1007,32 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                   </p>
                 </div>
               </button>
+
+              {/* Lựa chọn 3: Đánh giá tập thể ca làm việc (Lịch Google Sheet) */}
+              <button
+                onClick={() => {
+                  setShowFeedbackChoiceModal(false);
+                  setShowShiftEvalModal(true);
+                }}
+                className="group relative p-4 rounded-2xl bg-gradient-to-br from-blue-50/80 via-indigo-50/40 to-teal-100/30 hover:from-blue-100/90 hover:to-indigo-100/80 border border-blue-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-4"
+              >
+                <div className="p-3 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
+                  <Users className="w-6 h-6 text-white" />
+                </div>
+                <div className="space-y-1 flex-1">
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-extrabold text-blue-950 group-hover:text-blue-900">
+                      👥 Đánh giá tập thể ca làm việc
+                    </span>
+                    <span className="px-2 py-0.5 rounded-full bg-blue-200/80 text-blue-900 text-[10px] font-black font-mono">
+                      Live 1 phút
+                    </span>
+                  </div>
+                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
+                    Đồng bộ lịch ca Google Sheet (quét 1 phút/lần). Đánh giá hoặc khen thưởng tác động đồng loạt tất cả nhân sự trong ca.
+                  </p>
+                </div>
+              </button>
             </div>
 
             <div className="pt-2 text-center border-t border-slate-100">
@@ -1015,6 +1046,18 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
           </div>
         </div>
       )}
+
+      {/* Shift Evaluation Modal (Google Sheet Shifts Live 1-minute Polling) */}
+      <ShiftEvaluationModal
+        show={showShiftEvalModal}
+        onClose={() => setShowShiftEvalModal(false)}
+        staffList={staffList}
+        questions={questions}
+        lines={lines}
+        onAddIncident={onAddIncident}
+        currentUser={currentUser}
+        params={params}
+      />
 
       {/* Live Interactive In-App AI Chat Assistant Modal */}
       <AiChatModal
