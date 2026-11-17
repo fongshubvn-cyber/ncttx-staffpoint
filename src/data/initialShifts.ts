@@ -1,5 +1,5 @@
 // Pre-bundled shift data synchronized from Google Sheets
-// Generated at: 2026-11-17T13:41:34.096Z
+// Generated at: 2026-11-17T16:24:01.266Z
 
 import { ShiftGroup, SheetStaffRecord } from '../services/shiftService';
 
@@ -8000,6 +8000,74 @@ export const initialShifts: ShiftGroup[] = [
         "name": "Hoàng Văn An",
         "inTime": "Sat Dec 30 1899 07:30:00 GMT+0642 (Indochina Time)",
         "outTime": "Sat Dec 30 1899 15:30:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-19",
+    "dayOfWeek": "Thứ Năm",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
+    "shiftName": "14:00-22:00",
+    "members": [
+      {
+        "id": "TTX013",
+        "name": "Hoàng Văn An",
+        "inTime": "Sat Dec 30 1899 14:00:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-20",
+    "dayOfWeek": "Thứ Sáu",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
+    "shiftName": "14:00-22:00",
+    "members": [
+      {
+        "id": "TTX013",
+        "name": "Hoàng Văn An",
+        "inTime": "Sat Dec 30 1899 14:00:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-21",
+    "dayOfWeek": "Thứ Bảy",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
+    "shiftName": "07:00-15:00",
+    "members": [
+      {
+        "id": "TTX013",
+        "name": "Hoàng Văn An",
+        "inTime": "Sat Dec 30 1899 07:30:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 15:30:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-22",
+    "dayOfWeek": "Chủ nhật",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
+    "shiftName": "14:00-22:00",
+    "members": [
+      {
+        "id": "TTX013",
+        "name": "Hoàng Văn An",
+        "inTime": "Sat Dec 30 1899 14:00:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
         "ot": "",
         "isSelected": true
       }

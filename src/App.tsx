@@ -106,19 +106,39 @@ export function App() {
     return saved ? JSON.parse(saved) : {};
   });
 
+  // Blacklist các mã nhân sự đã bị xóa để tránh tự động phục hồi khi đồng bộ Google Sheet hay nạp seed
+  const [deletedStaffIds, setDeletedStaffIds] = useState<string[]>(() => {
+    try {
+      const saved = localStorage.getItem('ncttx_deleted_staff_ids');
+      return saved ? JSON.parse(saved) : [];
+    } catch (e) {
+      return [];
+    }
+  });
+
   // State with LocalStorage Persistence
   const [staffList, setStaffList] = useState<Staff[]>(() => {
+    let deletedIds: string[] = [];
+    try {
+      const savedDeleted = localStorage.getItem('ncttx_deleted_staff_ids');
+      if (savedDeleted) deletedIds = JSON.parse(savedDeleted);
+    } catch (e) {}
+
     const saved = localStorage.getItem('ncttx_staff_list');
     const rawList: Staff[] = saved ? JSON.parse(saved) : [...initialStaffList];
-    // Tự động bổ sung các nhân sự mới từ danh sách seedData / Google Sheet nếu chưa có trong LocalStorage
+    
+    // Lọc bỏ các nhân sự đã từng bị xóa
+    const filteredList = rawList.filter(s => !deletedIds.includes(s.id));
+
+    // Tự động bổ sung các nhân sự mới từ danh sách seedData nếu chưa có trong LocalStorage VÀ chưa từng bị xóa
     initialStaffList.forEach(seedStaff => {
-      if (!rawList.some(s => s.id === seedStaff.id)) {
-        rawList.push(seedStaff);
+      if (!filteredList.some(s => s.id === seedStaff.id) && !deletedIds.includes(seedStaff.id)) {
+        filteredList.push(seedStaff);
       }
     });
     const savedParamsRaw = localStorage.getItem('ncttx_params');
     const initialParams = savedParamsRaw ? { ...defaultParameters, ...JSON.parse(savedParamsRaw) } : defaultParameters;
-    return rawList.map(st => {
+    return filteredList.map(st => {
       const baselines = getStaffBaselineScores(st, initialParams);
       return {
         ...st,
@@ -206,10 +226,35 @@ export function App() {
   useEffect(() => {
     if (!isFirebaseConfigured()) return;
 
+    const unsubDeletedStaff = subscribeToCollection('deleted_staff_ids', (cloudData) => {
+      if (Array.isArray(cloudData)) {
+        setDeletedStaffIds(prev => {
+          const merged = Array.from(new Set([...prev, ...cloudData]));
+          localStorage.setItem('ncttx_deleted_staff_ids', JSON.stringify(merged));
+          return merged;
+        });
+        setStaffList(prev => {
+          const filtered = prev.filter(s => !cloudData.includes(s.id));
+          if (filtered.length !== prev.length) {
+            localStorage.setItem('ncttx_staff_list', JSON.stringify(filtered));
+            return filtered;
+          }
+          return prev;
+        });
+      }
+    }, []);
+
     const unsubStaff = subscribeToCollection('staff_list', (cloudData) => {
       isCloudLoadedRef.current['staff_list'] = true;
       if (Array.isArray(cloudData) && cloudData.length > 0) {
-        const sanitized = cloudData.map((st: Staff) => {
+        let currentDeletedIds: string[] = [];
+        try {
+          const savedDeleted = localStorage.getItem('ncttx_deleted_staff_ids');
+          if (savedDeleted) currentDeletedIds = JSON.parse(savedDeleted);
+        } catch (e) {}
+
+        const activeCloud = cloudData.filter((st: Staff) => !currentDeletedIds.includes(st.id));
+        const sanitized = activeCloud.map((st: Staff) => {
           const baselines = getStaffBaselineScores(st, params);
           return {
             ...st,
@@ -304,6 +349,7 @@ export function App() {
 
     return () => {
       unsubStaff();
+      unsubDeletedStaff();
       unsubIncidents();
       unsubQuestions();
       unsubParams();
@@ -406,6 +452,9 @@ export function App() {
           setIncidents(payload);
         } else if (type === 'STAFF_UPDATED' && Array.isArray(payload)) {
           setStaffList(payload);
+        } else if (type === 'DELETED_STAFF_UPDATED' && Array.isArray(payload)) {
+          setDeletedStaffIds(payload);
+          setStaffList(prev => prev.filter(s => !payload.includes(s.id)));
         } else if (type === 'QUESTIONS_UPDATED' && Array.isArray(payload)) {
           setQuestions(payload);
         } else if (type === 'LINES_UPDATED' && Array.isArray(payload)) {
@@ -425,6 +474,12 @@ export function App() {
         } else if (e.key === 'ncttx_staff_list') {
           const parsed = JSON.parse(e.newValue);
           if (Array.isArray(parsed)) setStaffList(parsed);
+        } else if (e.key === 'ncttx_deleted_staff_ids') {
+          const parsed = JSON.parse(e.newValue);
+          if (Array.isArray(parsed)) {
+            setDeletedStaffIds(parsed);
+            setStaffList(prev => prev.filter(s => !parsed.includes(s.id)));
+          }
         } else if (e.key === 'ncttx_questions') {
           const parsed = JSON.parse(e.newValue);
           if (Array.isArray(parsed)) setQuestions(parsed);
@@ -457,6 +512,7 @@ export function App() {
       const typeMap: Record<string, string> = {
         incidents: 'INCIDENTS_UPDATED',
         staff_list: 'STAFF_UPDATED',
+        deleted_staff_ids: 'DELETED_STAFF_UPDATED',
         questions: 'QUESTIONS_UPDATED',
         lines: 'LINES_UPDATED',
         params: 'PARAMS_UPDATED',
@@ -550,16 +606,25 @@ export function App() {
   const handleRefreshCloudData = async () => {
     setIsRefreshingCloud(true);
     try {
-      const [staffData, incidentData, questionData, paramData, passwordData] = await Promise.all([
+      const [staffData, incidentData, questionData, paramData, passwordData, deletedData] = await Promise.all([
         fetchDocFromCloud('staff_list'),
         fetchDocFromCloud('incidents'),
         fetchDocFromCloud('questions'),
         fetchDocFromCloud('params'),
         fetchDocFromCloud('user_passwords'),
+        fetchDocFromCloud('deleted_staff_ids'),
       ]);
 
+      let activeDeletedIds: string[] = deletedStaffIds;
+      if (Array.isArray(deletedData)) {
+        activeDeletedIds = Array.from(new Set([...deletedStaffIds, ...deletedData]));
+        setDeletedStaffIds(activeDeletedIds);
+        localStorage.setItem('ncttx_deleted_staff_ids', JSON.stringify(activeDeletedIds));
+      }
+
       if (Array.isArray(staffData) && staffData.length > 0) {
-        const sanitized = staffData.map((st: Staff) => {
+        const activeStaff = staffData.filter((st: Staff) => !activeDeletedIds.includes(st.id));
+        const sanitized = activeStaff.map((st: Staff) => {
           const baselines = getStaffBaselineScores(st, params);
           return {
             ...st,
@@ -957,6 +1022,16 @@ export function App() {
 
   // Handler: Add new staff member
   const handleAddStaff = (newStaff: Staff) => {
+    // Nếu nhân sự này từng nằm trong danh sách đã xóa, gỡ khỏi blacklist để kích hoạt lại
+    setDeletedStaffIds(prev => {
+      if (prev.includes(newStaff.id)) {
+        const updated = prev.filter(id => id !== newStaff.id);
+        notifySync('deleted_staff_ids', updated);
+        return updated;
+      }
+      return prev;
+    });
+
     setStaffList(prev => {
       const updated = [newStaff, ...prev];
       notifySync('staff_list', updated);
@@ -994,10 +1069,18 @@ export function App() {
       alert("⚠️ Không thể xóa tài khoản Quản Trị Viên gốc (ADMIN)!");
       return;
     }
+
+    // 1. Ghi nhận vào danh sách blacklist nhân sự đã xóa (không tự động phục hồi khi đồng bộ Google Sheet hay nạp seed)
+    setDeletedStaffIds(prev => {
+      const updated = Array.from(new Set([...prev, staffId]));
+      notifySync('deleted_staff_ids', updated);
+      return updated;
+    });
+
+    // 2. Loại bỏ khỏi danh sách nhân sự hiện hành
     setStaffList(prev => {
       const updated = prev.filter(s => s.id !== staffId);
-      localStorage.setItem('ncttx_staff_list', JSON.stringify(updated));
-      saveToCloud('staff_list', updated);
+      notifySync('staff_list', updated);
       return updated;
     });
   };
@@ -1009,10 +1092,24 @@ export function App() {
       const data = await fetchAndParseShiftWorkbook(sheetUrl);
       let addedCount = 0;
       let updatedCount = 0;
+      let skippedDeletedCount = 0;
+
+      // Đọc danh sách ID nhân sự đã bị xóa để không nạp lại
+      let currentDeletedIds: string[] = [];
+      try {
+        const savedDeleted = localStorage.getItem('ncttx_deleted_staff_ids');
+        if (savedDeleted) currentDeletedIds = JSON.parse(savedDeleted);
+      } catch (e) {}
 
       setStaffList(prev => {
         const list = [...prev];
         data.staffList.forEach(sheetRec => {
+          // Bỏ qua nếu nhân sự đã bị Quản lý / Admin xóa khỏi hệ thống
+          if (currentDeletedIds.includes(sheetRec.id)) {
+            skippedDeletedCount++;
+            return;
+          }
+
           const existingIdx = list.findIndex(s => s.id === sheetRec.id);
           if (existingIdx >= 0) {
             const existing = list[existingIdx];
@@ -1055,7 +1152,12 @@ export function App() {
       }
 
       if (!isSilent) {
-        alert(`✅ Đồng bộ Google Sheet thành công!\n• Bổ sung mới: ${addedCount} nhân sự\n• Cập nhật trạng thái: ${updatedCount} nhân sự\n• Điểm bán: Cửa hàng số 9 Triệu Việt Vương`);
+        let msg = `✅ Đồng bộ Google Sheet thành công!\n• Bổ sung mới: ${addedCount} nhân sự\n• Cập nhật trạng thái: ${updatedCount} nhân sự`;
+        if (skippedDeletedCount > 0) {
+          msg += `\n• Bỏ qua (đã xóa trên hệ thống): ${skippedDeletedCount} nhân sự`;
+        }
+        msg += `\n• Điểm bán: Cửa hàng số 9 Triệu Việt Vương`;
+        alert(msg);
       }
     } catch (err: any) {
       if (!isSilent) {

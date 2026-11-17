@@ -697,7 +697,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                   {onDeleteStaff && (
                     <button
                       onClick={() => {
-                        if (window.confirm(`⚠️ Bạn có chắc muốn xóa nhân sự ${selectedStaff.name} (${selectedStaff.id})?`)) {
+                        if (window.confirm(`⚠️ Bạn có chắc muốn xóa nhân sự ${selectedStaff.name} (${selectedStaff.id}) khỏi hệ thống?\n\nNhân sự này sẽ bị xóa và hệ thống sẽ đưa vào danh sách loại trừ (không tự động phục hồi lại từ Google Sheet).`)) {
                           onDeleteStaff(selectedStaff.id);
                           setSelectedStaff(null);
                         }

@@ -534,7 +534,7 @@ export const StaffView: React.FC<StaffViewProps> = ({
                     <button
                       type="button"
                       onClick={() => {
-                        if (window.confirm(`🚨 CẢNH BÁO NGUY HIỂM: Bạn có chắc chắn muốn XÓA NHÂN SỰ "${selectedStaff.name}" (${selectedStaff.id}) hoàn toàn khỏi hệ thống không? Hành động này không thể hoàn tác!`)) {
+                        if (window.confirm(`🚨 CẢNH BÁO: Bạn có chắc chắn muốn XÓA NHÂN SỰ "${selectedStaff.name}" (${selectedStaff.id}) hoàn toàn khỏi hệ thống không?\n\nNhân sự này sẽ bị xóa và hệ thống sẽ đưa vào danh sách loại trừ (không tự động phục hồi lại từ Google Sheet).`)) {
                           onDeleteStaff(selectedStaff.id);
                           setSelectedStaff(null);
                         }
