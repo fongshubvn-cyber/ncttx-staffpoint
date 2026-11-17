@@ -1,7 +1,15 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
 ## 🚀 [v1.028] - 17/11/2026 19:40
-* **Mô tả:** \
+* **Mô tả:**
+  * **Đồng bộ toàn diện 572 ca làm việc từ Google Sheet:**
+    * Sửa thuật toán đọc dòng: Bắt đầu từ dòng 4 (Ngày 1 của tháng) thay vì dòng 16 (trước đó bỏ sót từ Ngày 1 đến Ngày 11).
+    * Sửa lỗi lệch múi giờ 4 giây (`23:59:56 GMT+0700`) của Google Sheet bằng thuật toán làm tròn (+60s), giúp ánh xạ chuẩn xác từng ngày trong tháng.
+    * Tích hợp sẵn bộ dữ liệu ca làm việc `initialShifts.ts` (572 ca và 19 nhân sự) vào bundle ứng dụng, nâng cấp key cache lên `ncttx_shift_cache_v2` để xoá sạch cache cũ bị lỗi trên máy người dùng.
+    * Bổ sung cơ chế fallback CORS Proxies khi trình duyệt gọi trực tiếp Google Sheets.
+  * **Cơ chế Smart Date Auto-Focus trong Modal Đánh Giá Ca:**
+    * Tự động nhận diện và nhảy đến ngày gần nhất có ca làm việc của bộ phận tương ứng (ví dụ: Pha chế tự động chọn ngày 16/11, Thương mại & Dịch vụ ngày 17/11).
+    * Bổ sung nút bấm chuyển nhanh *"👉 Bấm xem ca gần nhất"* và chip lọc *"Hôm nay"*, *"Hôm qua"*, *"Ca gần nhất"* giúp người dùng không bao giờ bị rơi vào màn hình trống.
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
 
 ---
