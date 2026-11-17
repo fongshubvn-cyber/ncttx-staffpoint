@@ -152,21 +152,48 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
     return () => clearInterval(timer);
   }, [scanInterval, sheetUrl]);
 
-  // Department Options available in shifts
+  // Department Options available in shifts (Pha chế, Thương mại & Dịch vụ, Phục vụ, Bếp Bánh)
   const departmentOptions = useMemo(() => {
-    const set = new Set<string>();
+    const standardDepts = [
+      { id: 'Pha chế', label: '☕ Pha chế' },
+      { id: 'Thương mại & Dịch vụ', label: '🛍️ Thương mại & Dịch vụ' },
+      { id: 'Phục vụ', label: '💁 Phục vụ' },
+      { id: 'Bếp Bánh', label: '🥖 Bếp Bánh' }
+    ];
+
+    const existing = new Set(standardDepts.map(d => d.id.toLowerCase()));
+    const extras: { id: string; label: string }[] = [];
+
     shifts.forEach(s => {
-      if (s.department) set.add(s.department);
+      if (s.department && !existing.has(s.department.toLowerCase())) {
+        extras.push({ id: s.department, label: `🏢 ${s.department}` });
+        existing.add(s.department.toLowerCase());
+      }
     });
-    return Array.from(set);
+
+    return [...standardDepts, ...extras];
   }, [shifts]);
 
   // Filter Shifts for Selected Date & Department
   const matchingShifts = useMemo(() => {
     return shifts.filter(s => {
       const dateMatch = s.date === selectedDate;
-      const deptMatch = selectedDept === 'all' || s.department === selectedDept;
-      return dateMatch && deptMatch;
+      if (!dateMatch) return false;
+      if (selectedDept === 'all') return true;
+
+      // Direct match
+      if (s.department === selectedDept) return true;
+
+      // Flexible matching for Phục vụ and Thương mại & Dịch vụ
+      if (selectedDept === 'Phục vụ') {
+        if (s.department === 'Phục vụ') return true;
+        if (s.department.includes('Thương mại') || s.department.includes('Dịch vụ')) return true;
+      }
+      if (selectedDept === 'Thương mại' || selectedDept === 'Thương mại & Dịch vụ') {
+        if (s.department.includes('Thương mại') || s.department.includes('Dịch vụ')) return true;
+      }
+
+      return false;
     });
   }, [shifts, selectedDate, selectedDept]);
 
@@ -507,7 +534,7 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                   >
                     <option value="all">🏢 Tất cả bộ phận</option>
                     {departmentOptions.map(dept => (
-                      <option key={dept} value={dept}>{dept}</option>
+                      <option key={dept.id} value={dept.id}>{dept.label}</option>
                     ))}
                   </select>
                 </div>

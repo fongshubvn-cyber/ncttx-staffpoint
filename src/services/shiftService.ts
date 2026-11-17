@@ -115,7 +115,7 @@ export async function fetchAndParseShiftWorkbook(sheetUrl: string = DEFAULT_SHIF
         department: dept,
         status: status.includes('Thử việc') ? 'Thử việc' : 'Chính thức',
         isWorking,
-        role: dept.includes('Pha chế') ? 'Nhân viên Pha chế' : dept.includes('Bếp') ? 'Nhân viên Bếp Bánh' : 'Nhân viên Thương mại & Dịch vụ',
+        role: dept.includes('Pha chế') ? 'Nhân viên Pha chế' : dept.includes('Bếp') ? 'Nhân viên Bếp Bánh' : dept.includes('Phục vụ') ? 'Nhân viên Phục vụ' : 'Nhân viên Thương mại & Dịch vụ',
         location: 'Cửa hàng số 9 Triệu Việt Vương',
       });
     }
@@ -133,17 +133,31 @@ export async function fetchAndParseShiftWorkbook(sheetUrl: string = DEFAULT_SHIF
     if (rows.length < 16) continue;
 
     // Detect Department and Location from Title (Cell A1)
+    // Title format: "TTX - ĐĂNG KÝ CA - Cửa hàng số 9 Triệu Việt Vương - [Bộ Phận] - [YYYY-MM]"
     const titleCell = String(rows[0]?.[0] || '');
     let location = 'Cửa hàng số 9 Triệu Việt Vương';
     let dept = sname;
     if (titleCell.includes(' - ')) {
-      const parts = titleCell.split(' - ');
-      if (parts[1]) location = parts[1].trim();
-      if (parts[2]) dept = parts[2].trim();
-    } else {
-      if (sname.includes('Pha chế')) dept = 'Pha chế';
-      else if (sname.includes('Bếp Bánh')) dept = 'Bếp Bánh';
-      else if (sname.includes('Thương mại') || sname.includes('Trang tính')) dept = 'Thương mại & Dịch vụ';
+      const parts = titleCell.split(' - ').map(p => p.trim());
+      if (parts.length >= 4) {
+        location = parts[2] || location;
+        dept = parts[3] || sname;
+      } else if (parts.length === 3) {
+        location = parts[1] || location;
+        dept = parts[2] || sname;
+      }
+    }
+
+    // Normalize department names (Pha chế, Thương mại & Dịch vụ, Phục vụ, Bếp Bánh)
+    const deptUpper = (dept + ' ' + sname + ' ' + titleCell).toUpperCase();
+    if (deptUpper.includes('PHA CHẾ') || deptUpper.includes('BARISTA')) {
+      dept = 'Pha chế';
+    } else if (deptUpper.includes('BẾP BÁNH') || deptUpper.includes('BẾP') || deptUpper.includes('BAKERY')) {
+      dept = 'Bếp Bánh';
+    } else if (deptUpper.includes('PHỤC VỤ') || deptUpper.includes('SERVICE')) {
+      dept = 'Phục vụ';
+    } else if (deptUpper.includes('THƯƠNG MẠI') || deptUpper.includes('OFFLINE') || deptUpper.includes('DỊCH VỤ') || sname.toLowerCase().includes('trang tính')) {
+      dept = 'Thương mại & Dịch vụ';
     }
 
     // Row 3 (index 2) contains Staff IDs, Row 4 (index 3) contains Staff Names

@@ -1,5 +1,11 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
+## 🚀 [v1.027] - 17/11/2026 19:24
+* **Mô tả:** \
+* **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
+
+---
+
 ## 🚀 [v1.026] - 17/11/2026 19:00
 * **Mô tả:** Tích hợp hiển thị số điểm bị trừ trực tiếp trên thông báo vi phạm nội quy:
   * Tiêu đề thông báo nêu rõ: *"📖 Bạn bị trừ -Xđ quỹ nội quy"* (cho nhân sự nhận) hoặc *"📖 Vi phạm nội quy (-Xđ): [Tên nhân sự]"* (cho Quản lý / Admin).
