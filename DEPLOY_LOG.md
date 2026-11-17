@@ -1,7 +1,11 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
 ## 🚀 [v1.024] - 17/11/2026 18:38
-* **Mô tả:** \
+* **Mô tả:** Phân tách hoàn toàn 3 thể loại phản hồi độc lập:
+  * 🌟 **Ghi Nhận (Khen Thưởng):** Tác động điểm Đánh Giá Công Việc (+ Thang 5.0đ, màu Xanh Lục).
+  * ⚠️ **Vi Phạm Công Việc:** Tác động điểm Đánh Giá Công Việc (- Thang 5.0đ, màu Đỏ).
+  * 📖 **Nội Quy Lao Động:** Tác động Quỹ Điểm Kỷ Luật (- Quỹ 100đ, màu Vàng Hổ Phách).
+  * Phân tách 3 Tab lọc riêng biệt trong tab **Phản Hồi**, 3 nút thao tác nhanh `[+ Ghi nhận]`, `[+ Vi phạm]`, `[+ Nội quy]` ngoài **Tổng Quan**, và 5 thẻ thống kê trực quan.
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
 
 ---
