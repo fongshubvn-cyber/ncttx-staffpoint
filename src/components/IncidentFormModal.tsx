@@ -106,11 +106,11 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     ? params.policyRules 
     : initialPolicyRules;
 
-  // Form State: Default to 'vi_pham' (Đánh giá vi phạm) and 'policy'
-  const isInitialGhiNhan = initialType === 'ghi_nhan';
-  const [formCategory, setFormCategory] = useState<'policy' | 'work'>(isInitialGhiNhan ? 'work' : 'policy');
-  const [workEvalMode, setWorkEvalMode] = useState<'plus' | 'minus'>(isInitialGhiNhan ? 'plus' : 'minus');
-  const [type, setType] = useState<IncidentType>(initialType || 'vi_pham');
+  // Form State: Default to 'minus' (Nhắc nhở)
+  const isInitialWork = initialType === 'ghi_nhan';
+  const [formCategory, setFormCategory] = useState<'policy' | 'work'>(isInitialWork ? 'work' : 'policy');
+  const [workEvalMode, setWorkEvalMode] = useState<'plus' | 'minus'>('minus');
+  const [type, setType] = useState<IncidentType>('vi_pham');
   const [reporterId, setReporterId] = useState<string>(currentUser?.id || staffList[0]?.id || '');
   const [targetId, setTargetId] = useState<string>(initialTargetId || staffList[1]?.id || staffList[0]?.id || '');
   const [criteriaScope, setCriteriaScope] = useState<string>('Chung'); // 'Chung', 'Department', 'Management', or 'Boundary'
@@ -122,14 +122,14 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     if (show) {
       if (currentUser?.id) setReporterId(currentUser.id);
       if (initialTargetId) setTargetId(initialTargetId);
-      const isGhiNhan = initialType === 'ghi_nhan';
-      setFormCategory(isGhiNhan ? 'work' : 'policy');
-      setWorkEvalMode(isGhiNhan ? 'plus' : 'minus');
-      setType(isGhiNhan ? 'ghi_nhan' : 'vi_pham');
+      const isPolicy = initialType === 'vi_pham';
+      setFormCategory(isPolicy ? 'policy' : 'work');
+      setWorkEvalMode('minus'); // Luôn mặc định là "Nhắc nhở" khi mở
+      setType('vi_pham'); // Luôn mặc định là vi phạm / nhắc nhở
       setSelectedKeyword('all');
       setSearchCriteriaTerm('');
       
-      if (!isGhiNhan) {
+      if (isPolicy) {
         const firstRule = policyRulesList.find(r => r.active !== false) || policyRulesList[0];
         if (firstRule) {
           setPolicyRuleId(firstRule.id);
@@ -509,8 +509,8 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                     </>
                   ) : (
                     <>
-                      <ClipboardCheck className="w-5 h-5 text-emerald-600" />
-                      <span>Phiếu Ghi Nhận & Đánh Giá (Thang 5.0đ)</span>
+                      <ClipboardCheck className={`w-5 h-5 ${workEvalMode === 'minus' ? 'text-amber-600' : 'text-emerald-600'}`} />
+                      <span>{workEvalMode === 'minus' ? 'Phiếu Đánh Giá & Nhắc Nhở Công Việc (Thang 5.0đ)' : 'Phiếu Ghi Nhận & Khen Thưởng (Thang 5.0đ)'}</span>
                     </>
                   )}
                 </h2>
