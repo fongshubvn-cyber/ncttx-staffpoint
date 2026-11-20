@@ -504,17 +504,17 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
               return (
                 <div key={group.department} className="space-y-3">
                   {/* Department Section Header Banner */}
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-slate-900 via-slate-800 to-[#1B4332] text-white p-4.5 rounded-3xl shadow-md border border-slate-700">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-gradient-to-r from-slate-900 via-slate-800 to-[#1B4332] text-white p-3.5 sm:p-4 rounded-xl shadow-sm border border-slate-700/80">
                     <div className="flex items-center gap-3">
-                      <div className="w-11 h-11 rounded-2xl bg-emerald-500/20 backdrop-blur-md flex items-center justify-center text-emerald-300 font-bold border border-emerald-400/30 shrink-0">
-                        <Building2 className="w-6 h-6" />
+                      <div className="w-10 h-10 rounded-lg bg-emerald-500/20 backdrop-blur-md flex items-center justify-center text-emerald-300 font-bold border border-emerald-400/30 shrink-0">
+                        <Building2 className="w-5 h-5" />
                       </div>
                       <div>
                         <div className="flex items-center gap-2 flex-wrap">
                           <h3 className="font-black text-sm sm:text-base tracking-tight text-white">
                             🏢 PHÒNG BAN: {group.department.toUpperCase()}
                           </h3>
-                          <span className="bg-emerald-500 text-slate-950 text-[10px] sm:text-xs font-black px-2 sm:px-2.5 py-0.5 rounded-full shadow-sm shrink-0">
+                          <span className="bg-emerald-500 text-slate-950 text-[10px] sm:text-xs font-black px-2 sm:px-2.5 py-0.5 rounded-md shadow-xs shrink-0">
                             {deptStaffCount} Nhân sự
                           </span>
                         </div>
@@ -524,7 +524,7 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                       </div>
                     </div>
 
-                    <div className="flex items-center justify-between sm:justify-end gap-2 text-xs bg-white/10 backdrop-blur-md px-3.5 py-2 rounded-2xl border border-white/10 shrink-0">
+                    <div className="flex items-center justify-between sm:justify-end gap-2 text-xs bg-white/10 backdrop-blur-md px-3 py-1.5 rounded-lg border border-white/10 shrink-0">
                       <span className="text-emerald-200 font-bold">Điểm Trung Bình Phòng:</span>
                       <strong className="text-emerald-400 font-mono font-black text-sm">
                         {avgDeptScore}
