@@ -1,7 +1,10 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
 ## 🚀 [v1.038] - 20/11/2026 15:10
-* **Mô tả:** \
+* **Mô tả:**
+  * **Thiết kế lại khung tiêu đề phân nhóm phòng ban (`Option1StaffView`):**
+    * Loại bỏ kiểu bo tròn viên thuốc lớn (`rounded-3xl`), chuyển sang khung chữ nhật vuông vắn, sắc nét và hiện đại (`rounded-xl` / `rounded-lg`).
+    * Đồng bộ các chi tiết con: Icon phòng ban vuông vắn (`rounded-lg`), nhãn số lượng nhân sự gọn gàng (`rounded-md`), và ô điểm trung bình phòng phẳng đẹp (`rounded-lg`).
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
 
 ---
