@@ -687,7 +687,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                               }
                             }}
                             className="px-3 py-1 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-sm transition-all flex items-center gap-1 active:scale-95"
-                            title="Xóa vĩnh viễn khỏi cơ sở dữ liệu"
+                            title="Xóa vĩnh viễn khỏi trường dữ liệu"
                           >
                             <Trash2 className="w-3.5 h-3.5" />
                             <span>Xóa vĩnh viễn</span>

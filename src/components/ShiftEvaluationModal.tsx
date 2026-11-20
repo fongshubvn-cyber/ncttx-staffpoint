@@ -992,7 +992,7 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                 {isSubmitting ? (
                   <>
                     <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                    <span>Đang lưu vào Database...</span>
+                    <span>Đang lưu vào Trường dữ liệu...</span>
                   </>
                 ) : (
                   <>

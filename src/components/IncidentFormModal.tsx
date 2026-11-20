@@ -1156,7 +1156,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                   {isSubmitting ? (
                     <>
                       <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                      <span>Đang lưu vào Database...</span>
+                      <span>Đang lưu vào Trường dữ liệu...</span>
                     </>
                   ) : (
                     <span>{type === 'vi_pham' ? '📢 Lập Biên Bản Vi Phạm' : '🌟 Lập Phiếu Ghi Nhận'}</span>

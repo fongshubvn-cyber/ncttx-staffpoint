@@ -178,7 +178,7 @@ export function buildIncidentNotification(
 }
 
 /**
- * Tạo thông báo xác nhận cho NGƯỜI LẬP PHIẾU khi phiếu đã được ghi nhận thành công vào Database
+ * Tạo thông báo xác nhận cho NGƯỜI LẬP PHIẾU khi phiếu đã được ghi nhận thành công vào Trường dữ liệu
  */
 export function buildReporterConfirmationNotification(
   incident: IncidentRecord
@@ -195,15 +195,15 @@ export function buildReporterConfirmationNotification(
   if (isPolicy) {
     const penalty = incident.policyPenaltyPoints || 10;
     title = `✅ Đã lưu biên bản nội quy (-${penalty}đ)`;
-    body = `${codeBadge}Phiếu đã được ghi nhận thành công vào database cho [${incident.targetName}]: "${incident.title}" (-${penalty}đ quỹ chấp hành).`;
+    body = `${codeBadge}Phiếu đã được ghi nhận thành công vào trường dữ liệu cho [${incident.targetName}]: "${incident.title}" (-${penalty}đ quỹ chấp hành).`;
   } else if (isWorkVio) {
     const impact = incident.impactPoints || 0;
     title = `✅ Đã lưu phiếu vi phạm (${impact}đ)`;
-    body = `${codeBadge}Phiếu đã được ghi nhận thành công vào database cho [${incident.targetName}]: "${incident.title}" (${impact}đ thang 5.0).`;
+    body = `${codeBadge}Phiếu đã được ghi nhận thành công vào trường dữ liệu cho [${incident.targetName}]: "${incident.title}" (${impact}đ thang 5.0).`;
   } else {
     const impact = incident.impactPoints || 0;
     title = `✅ Đã lưu phiếu khen thưởng (+${impact}đ)`;
-    body = `${codeBadge}Phiếu đã được ghi nhận thành công vào database cho [${incident.targetName}]: "${incident.title}" (+${impact}đ thang 5.0).`;
+    body = `${codeBadge}Phiếu đã được ghi nhận thành công vào trường dữ liệu cho [${incident.targetName}]: "${incident.title}" (+${impact}đ thang 5.0).`;
   }
 
   return {
@@ -216,7 +216,7 @@ export function buildReporterConfirmationNotification(
     impactPoints: isPolicy ? -(incident.policyPenaltyPoints || 10) : incident.impactPoints,
     createdAt: new Date().toISOString(),
     isRead: false,
-    senderName: 'Hệ thống Database',
+    senderName: 'Trường dữ liệu',
     reporterId: incident.reporterId,
   };
 }

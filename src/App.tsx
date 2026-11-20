@@ -823,7 +823,7 @@ export function App() {
         const retryResult = await syncIncidentsToCloudAtomic([newIncident, ...currentList]);
         const confirmedInCloud = retryResult.some(i => i && i.id === newIncident.id);
         if (!confirmedInCloud) {
-          throw new Error('Database không phản hồi hoặc mất kết nối mạng.');
+          throw new Error('Trường dữ liệu không phản hồi hoặc mất kết nối mạng.');
         }
       }
 
@@ -864,8 +864,8 @@ export function App() {
 
       return true;
     } catch (err: any) {
-      console.error('Lỗi khi ghi nhận phiếu vào database:', err);
-      alert(`⚠️ Không thể lưu phiếu vào Database:\n${err?.message || 'Lỗi kết nối mạng hoặc phân quyền Cloud'}.\n\nPhiếu CHƯA được ghi nhận và chưa gửi thông báo.`);
+      console.error('Lỗi khi ghi nhận phiếu vào trường dữ liệu:', err);
+      alert(`⚠️ Không thể lưu phiếu vào Trường dữ liệu:\n${err?.message || 'Lỗi kết nối mạng hoặc phân quyền Cloud'}.\n\nPhiếu CHƯA được ghi nhận và chưa gửi thông báo.`);
       return false;
     }
   };
