@@ -283,18 +283,14 @@ export function App() {
           });
           // Preserve local items created during runtime if not in cloudData yet
           let hasMissingInCloud = false;
-          const now = Date.now();
           prevIncidents.forEach((item: IncidentRecord) => {
-            if (item && item.id && !map.has(item.id) && !item.isPurged) {
+            if (item && item.id && !map.has(item.id) && !item.isPurged && !item.isDeleted) {
               if (['INC-2026-001', 'INC-2026-002', 'INC-2026-003', 'INC-2026-004'].includes(item.id)) {
                 return;
               }
-              const createdTs = item.createdAt ? new Date(item.createdAt).getTime() : 0;
-              // Only keep genuinely new local items created in the last 15 mins (offline work)
-              if (now - createdTs < 15 * 60 * 1000) {
-                map.set(item.id, item);
-                hasMissingInCloud = true;
-              }
+              // Bảo toàn mọi phiếu hợp lệ đã lập tại local và đẩy đồng bộ lên Cloud
+              map.set(item.id, item);
+              hasMissingInCloud = true;
             }
           });
           const merged = Array.from(map.values()).sort((a, b) => {

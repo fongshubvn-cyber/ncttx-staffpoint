@@ -1,5 +1,5 @@
 // Pre-bundled shift data synchronized from Google Sheets
-// Generated at: 2026-11-20T05:08:16.236Z
+// Generated at: 2026-11-20T06:57:15.207Z
 
 import { ShiftGroup, SheetStaffRecord } from '../services/shiftService';
 
@@ -7275,8 +7275,8 @@ export const initialShifts: ShiftGroup[] = [
       {
         "id": "TV15",
         "name": "Mai Quân",
-        "inTime": "",
-        "outTime": "",
+        "inTime": "Sat Dec 30 1899 07:30:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 15:30:00 GMT+0642 (Indochina Time)",
         "ot": "",
         "isSelected": true
       }

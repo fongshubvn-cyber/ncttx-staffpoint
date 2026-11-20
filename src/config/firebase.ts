@@ -282,7 +282,17 @@ export const syncIncidentsToCloudAtomic = async (incidentsToSync: any[]): Promis
     updateCloudState('connected', null);
     return finalMerged;
   } catch (error: any) {
-    console.error('Lỗi syncIncidentsToCloudAtomic:', error);
+    console.warn('Lỗi transaction syncIncidentsToCloudAtomic, thử fallback ghi trực tiếp setDoc:', error);
+    try {
+      const docRef = doc(db, 'ncttx_data', 'incidents');
+      await setDoc(docRef, {
+        payload: incidentsToSync,
+        updatedAt: new Date().toISOString()
+      }, { merge: true });
+      updateCloudState('connected', null);
+    } catch (setDocErr) {
+      console.error('Lỗi setDoc fallback:', setDocErr);
+    }
     return incidentsToSync;
   }
 };
