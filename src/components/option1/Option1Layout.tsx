@@ -281,7 +281,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 title="Bấm để xoá Cache & làm mới phiên bản mới nhất ngay lập tức (không cần gỡ app)"
               >
                 <RefreshCw className={`w-2.5 h-2.5 text-emerald-700 ${isHardRefreshing ? 'animate-spin' : ''}`} />
-                <span>v1.030</span>
+                <span>v1.031</span>
               </button>
             </div>
           </div>
@@ -335,17 +335,6 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
               )}
             </button>
 
-            {/* Nút Hướng Dẫn Cài App Lên Màn Hình Cho Mọi Thành Viên */}
-            <button
-              type="button"
-              onClick={() => setShowInstallGuideModal(true)}
-              className="flex items-center gap-1 sm:gap-1.5 px-2 sm:px-3 py-1.5 rounded-xl bg-gradient-to-r from-emerald-50 to-teal-50 hover:from-emerald-100 hover:to-teal-100 text-emerald-800 border border-emerald-200/90 text-xs font-bold transition-all shadow-2xs active:scale-95 cursor-pointer whitespace-nowrap"
-              title="Xem hướng dẫn cài đặt app Staffpoint lên màn hình chính điện thoại (iPhone & Android)"
-            >
-              <Smartphone className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
-              <span className="font-extrabold hidden xs:inline sm:inline">Cài App</span>
-            </button>
-
             <button
               onClick={() => setShowFeedbackChoiceModal(true)}
               className="hidden sm:flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-gradient-to-r from-emerald-700 to-teal-700 hover:from-emerald-800 hover:to-teal-800 text-white text-xs font-extrabold shadow-sm active:scale-95 transition-all duration-200 whitespace-nowrap cursor-pointer"
@@ -357,6 +346,17 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 
             {currentUser ? (
               <div className="flex items-center gap-1 bg-slate-100/90 backdrop-blur-md p-1 rounded-2xl border border-slate-200/80 shadow-inner">
+                {/* Nút Hướng Dẫn Cài App - Nằm ngay cạnh tài khoản & đăng xuất */}
+                <button
+                  type="button"
+                  onClick={() => setShowInstallGuideModal(true)}
+                  className="px-2 sm:px-2.5 py-1 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 hover:text-emerald-950 border border-slate-200 shadow-2xs transition-all duration-200 active:scale-95 flex items-center gap-1 cursor-pointer text-xs font-extrabold shrink-0"
+                  title="Xem hướng dẫn cài đặt app Staffpoint lên màn hình chính điện thoại (iPhone & Android)"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <span className="hidden sm:inline-block text-[11px]">Cài App</span>
+                </button>
+
                 {/* User Profile Button */}
                 <button
                   type="button"
@@ -395,13 +395,24 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 </button>
               </div>
             ) : (
-              <button
-                onClick={onOpenLoginModal}
-                className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md active:scale-95 transition-all whitespace-nowrap cursor-pointer"
-              >
-                <LogIn className="w-3.5 h-3.5" />
-                <span>Đăng Nhập</span>
-              </button>
+              <div className="flex items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setShowInstallGuideModal(true)}
+                  className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-white hover:bg-emerald-50 text-emerald-800 border border-slate-200 shadow-2xs transition-all active:scale-95 cursor-pointer text-xs font-extrabold whitespace-nowrap"
+                  title="Xem hướng dẫn cài đặt app Staffpoint lên màn hình chính điện thoại (iPhone & Android)"
+                >
+                  <Smartphone className="w-3.5 h-3.5 text-emerald-700 shrink-0" />
+                  <span className="text-[11px]">Cài App</span>
+                </button>
+                <button
+                  onClick={onOpenLoginModal}
+                  className="flex items-center gap-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold shadow-md active:scale-95 transition-all whitespace-nowrap cursor-pointer"
+                >
+                  <LogIn className="w-3.5 h-3.5" />
+                  <span>Đăng Nhập</span>
+                </button>
+              </div>
             )}
 
             <button
@@ -451,6 +462,18 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                     type="button"
                     onClick={() => {
                       setIsMobileMenuOpen(false);
+                      setShowInstallGuideModal(true);
+                    }}
+                    className="p-2 rounded-xl bg-emerald-50 text-emerald-800 hover:bg-emerald-100 border border-emerald-200/80 shadow-2xs active:scale-95 transition-all text-xs cursor-pointer flex items-center gap-1 font-bold"
+                    title="Cài đặt App lên màn hình"
+                  >
+                    <Smartphone className="w-4 h-4 text-emerald-700" />
+                    <span className="text-[11px]">Cài App</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
                       onOpenLoginModal();
                     }}
                     className="p-2 rounded-xl bg-white text-slate-700 hover:text-emerald-700 hover:bg-emerald-50 border border-slate-200 shadow-2xs active:scale-95 transition-all text-xs cursor-pointer"
@@ -477,42 +500,31 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                   <div className="text-xs font-black text-slate-800">Chưa Đăng Nhập</div>
                   <div className="text-[10px] text-slate-500 font-medium">Đăng nhập để xem điểm và gửi phản hồi</div>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setIsMobileMenuOpen(false);
-                    onOpenLoginModal();
-                  }}
-                  className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-xs active:scale-95 cursor-pointer"
-                >
-                  Đăng Nhập
-                </button>
+                <div className="flex items-center gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      setShowInstallGuideModal(true);
+                    }}
+                    className="px-2.5 py-1.5 rounded-xl bg-emerald-50 text-emerald-800 border border-emerald-200 text-xs font-bold active:scale-95 cursor-pointer flex items-center gap-1"
+                  >
+                    <Smartphone className="w-3.5 h-3.5 text-emerald-700" />
+                    <span className="text-[11px]">Cài App</span>
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setIsMobileMenuOpen(false);
+                      onOpenLoginModal();
+                    }}
+                    className="px-3 py-1.5 rounded-xl bg-slate-900 text-white text-xs font-bold shadow-xs active:scale-95 cursor-pointer"
+                  >
+                    Đăng Nhập
+                  </button>
+                </div>
               </div>
             )}
-
-            {/* KHỐI NỔI BẬT: CÀI ĐẶT APP LÊN MÀN HÌNH CHÍNH */}
-            <button
-              type="button"
-              onClick={() => {
-                setIsMobileMenuOpen(false);
-                setShowInstallGuideModal(true);
-              }}
-              className="w-full flex items-center justify-between p-3 rounded-2xl bg-gradient-to-r from-emerald-800 via-teal-800 to-emerald-900 text-white shadow-md shadow-emerald-900/20 active:scale-[0.98] transition-all cursor-pointer text-left group border border-emerald-700/50"
-            >
-              <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-white/20 backdrop-blur-md flex items-center justify-center shrink-0 shadow-inner">
-                  <Smartphone className="w-5 h-5 text-emerald-300 group-hover:scale-110 transition-transform" />
-                </div>
-                <div>
-                  <div className="text-xs font-black flex items-center gap-1.5">
-                    <span>Cài Đặt App Lên Màn Hình</span>
-                    <span className="px-1.5 py-0.2 rounded-full bg-emerald-400 text-emerald-950 text-[9px] font-black uppercase">1 Chạm</span>
-                  </div>
-                  <div className="text-[10px] text-emerald-100 font-medium">Hướng dẫn cho iPhone & Android</div>
-                </div>
-              </div>
-              <ChevronRight className="w-4 h-4 text-emerald-200 group-hover:translate-x-0.5 transition-transform shrink-0" />
-            </button>
 
             {/* Nút Làm Mới Cache & Cập Nhật Phiên Bản (Không cần cài lại app) */}
             <button
@@ -527,7 +539,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <div className="text-left">
                   <div className="text-xs font-black flex items-center gap-1.5 text-emerald-900">
                     <span>Làm Mới Cache & Nhận Bản Mới</span>
-                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.030</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.031</span>
                   </div>
                   <div className="text-[10px] text-emerald-700 font-medium">Bấm 1 chạm xoá cache & cập nhật tính năng mới</div>
                 </div>

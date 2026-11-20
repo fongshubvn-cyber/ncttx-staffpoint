@@ -528,7 +528,7 @@ export const Option1ShiftConfigView: React.FC<Option1ShiftConfigViewProps> = ({
             <div>
               <div className="text-xs font-black text-slate-900 flex items-center gap-2">
                 <span>Bộ Nhớ Đệm & Cập Nhật Phiên Bản</span>
-                <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-[10px] font-mono font-black">v1.030</span>
+                <span className="px-2 py-0.5 rounded-md bg-emerald-100 text-emerald-900 text-[10px] font-mono font-black">v1.031</span>
               </div>
               <div className="text-[11px] text-slate-500 font-medium mt-0.5">
                 Xoá sạch bộ nhớ đệm (CacheStorage) và nạp lại phiên bản mới nhất ngay lập tức mà không cần cài lại app.

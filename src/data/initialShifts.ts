@@ -1,5 +1,5 @@
 // Pre-bundled shift data synchronized from Google Sheets
-// Generated at: 2026-11-17T16:24:01.266Z
+// Generated at: 2026-11-20T05:08:16.236Z
 
 import { ShiftGroup, SheetStaffRecord } from '../services/shiftService';
 
@@ -7194,7 +7194,7 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Tư",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Thương mại & Dịch vụ",
-    "shiftName": "15:00-23:00",
+    "shiftName": "07:30-15:30",
     "members": [
       {
         "id": "TTX031",
@@ -7211,13 +7211,13 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Tư",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Thương mại & Dịch vụ",
-    "shiftName": "07:30-15:30",
+    "shiftName": "14:00-22:00",
     "members": [
       {
         "id": "TV15",
         "name": "Mai Quân",
-        "inTime": "",
-        "outTime": "",
+        "inTime": "Sat Dec 30 1899 14:00:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
         "ot": "",
         "isSelected": true
       }
@@ -7233,9 +7233,9 @@ export const initialShifts: ShiftGroup[] = [
       {
         "id": "TV13",
         "name": "Phạm Thị Thuỳ Giang",
-        "inTime": "",
-        "outTime": "",
-        "ot": "",
+        "inTime": "Sat Dec 30 1899 07:30:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "6.5",
         "isSelected": true
       }
     ]
@@ -7250,9 +7250,9 @@ export const initialShifts: ShiftGroup[] = [
       {
         "id": "TV15",
         "name": "Mai Quân",
-        "inTime": "",
-        "outTime": "",
-        "ot": "",
+        "inTime": "Sat Dec 30 1899 08:00:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "6",
         "isSelected": true
       }
     ]
@@ -7262,11 +7262,19 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Sáu",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Thương mại & Dịch vụ",
-    "shiftName": "15:00-23:00",
+    "shiftName": "07:30-15:30",
     "members": [
       {
         "id": "TTX031",
         "name": "Châu Thị Kiều",
+        "inTime": "Sat Dec 30 1899 07:30:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "6.5",
+        "isSelected": true
+      },
+      {
+        "id": "TV15",
+        "name": "Mai Quân",
         "inTime": "",
         "outTime": "",
         "ot": "",
@@ -7284,23 +7292,6 @@ export const initialShifts: ShiftGroup[] = [
       {
         "id": "TV13",
         "name": "Phạm Thị Thuỳ Giang",
-        "inTime": "",
-        "outTime": "",
-        "ot": "",
-        "isSelected": true
-      }
-    ]
-  },
-  {
-    "date": "2026-11-20",
-    "dayOfWeek": "Thứ Sáu",
-    "location": "Cửa hàng số 9 Triệu Việt Vương",
-    "department": "Thương mại & Dịch vụ",
-    "shiftName": "07:30-15:30",
-    "members": [
-      {
-        "id": "TV15",
-        "name": "Mai Quân",
         "inTime": "",
         "outTime": "",
         "ot": "",
@@ -7415,7 +7406,7 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Hai",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Thương mại & Dịch vụ",
-    "shiftName": "15:00-23:00",
+    "shiftName": "07:30-15:30",
     "members": [
       {
         "id": "TTX031",
@@ -7424,16 +7415,7 @@ export const initialShifts: ShiftGroup[] = [
         "outTime": "",
         "ot": "",
         "isSelected": true
-      }
-    ]
-  },
-  {
-    "date": "2026-11-23",
-    "dayOfWeek": "Thứ Hai",
-    "location": "Cửa hàng số 9 Triệu Việt Vương",
-    "department": "Thương mại & Dịch vụ",
-    "shiftName": "07:30-15:30",
-    "members": [
+      },
       {
         "id": "TV13",
         "name": "Phạm Thị Thuỳ Giang",
@@ -7449,7 +7431,7 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Ba",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Thương mại & Dịch vụ",
-    "shiftName": "15:00-23:00",
+    "shiftName": "07:30-15:30",
     "members": [
       {
         "id": "TTX031",
@@ -7458,16 +7440,7 @@ export const initialShifts: ShiftGroup[] = [
         "outTime": "",
         "ot": "",
         "isSelected": true
-      }
-    ]
-  },
-  {
-    "date": "2026-11-24",
-    "dayOfWeek": "Thứ Ba",
-    "location": "Cửa hàng số 9 Triệu Việt Vương",
-    "department": "Thương mại & Dịch vụ",
-    "shiftName": "07:30-15:30",
-    "members": [
+      },
       {
         "id": "TV13",
         "name": "Phạm Thị Thuỳ Giang",
@@ -7500,7 +7473,7 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Tư",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Thương mại & Dịch vụ",
-    "shiftName": "15:00-23:00",
+    "shiftName": "07:30-15:30",
     "members": [
       {
         "id": "TTX031",
@@ -7509,16 +7482,7 @@ export const initialShifts: ShiftGroup[] = [
         "outTime": "",
         "ot": "",
         "isSelected": true
-      }
-    ]
-  },
-  {
-    "date": "2026-11-25",
-    "dayOfWeek": "Thứ Tư",
-    "location": "Cửa hàng số 9 Triệu Việt Vương",
-    "department": "Thương mại & Dịch vụ",
-    "shiftName": "07:30-15:30",
-    "members": [
+      },
       {
         "id": "TV15",
         "name": "Mai Quân",
@@ -7568,11 +7532,19 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Sáu",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Thương mại & Dịch vụ",
-    "shiftName": "15:00-23:00",
+    "shiftName": "07:30-15:30",
     "members": [
       {
         "id": "TTX031",
         "name": "Châu Thị Kiều",
+        "inTime": "",
+        "outTime": "",
+        "ot": "",
+        "isSelected": true
+      },
+      {
+        "id": "TV15",
+        "name": "Mai Quân",
         "inTime": "",
         "outTime": "",
         "ot": "",
@@ -7598,32 +7570,23 @@ export const initialShifts: ShiftGroup[] = [
     ]
   },
   {
-    "date": "2026-11-27",
-    "dayOfWeek": "Thứ Sáu",
+    "date": "2026-11-28",
+    "dayOfWeek": "Thứ Bảy",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Thương mại & Dịch vụ",
     "shiftName": "07:30-15:30",
     "members": [
       {
-        "id": "TV15",
-        "name": "Mai Quân",
+        "id": "TTX031",
+        "name": "Châu Thị Kiều",
         "inTime": "",
         "outTime": "",
         "ot": "",
         "isSelected": true
-      }
-    ]
-  },
-  {
-    "date": "2026-11-28",
-    "dayOfWeek": "Thứ Bảy",
-    "location": "Cửa hàng số 9 Triệu Việt Vương",
-    "department": "Thương mại & Dịch vụ",
-    "shiftName": "15:00-23:00",
-    "members": [
+      },
       {
-        "id": "TTX031",
-        "name": "Châu Thị Kiều",
+        "id": "TV15",
+        "name": "Mai Quân",
         "inTime": "",
         "outTime": "",
         "ot": "",
@@ -7649,28 +7612,11 @@ export const initialShifts: ShiftGroup[] = [
     ]
   },
   {
-    "date": "2026-11-28",
-    "dayOfWeek": "Thứ Bảy",
-    "location": "Cửa hàng số 9 Triệu Việt Vương",
-    "department": "Thương mại & Dịch vụ",
-    "shiftName": "07:30-15:30",
-    "members": [
-      {
-        "id": "TV15",
-        "name": "Mai Quân",
-        "inTime": "",
-        "outTime": "",
-        "ot": "",
-        "isSelected": true
-      }
-    ]
-  },
-  {
     "date": "2026-11-29",
     "dayOfWeek": "Chủ nhật",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Thương mại & Dịch vụ",
-    "shiftName": "15:00-23:00",
+    "shiftName": "07:30-15:30",
     "members": [
       {
         "id": "TTX031",
@@ -7679,16 +7625,7 @@ export const initialShifts: ShiftGroup[] = [
         "outTime": "",
         "ot": "",
         "isSelected": true
-      }
-    ]
-  },
-  {
-    "date": "2026-11-29",
-    "dayOfWeek": "Chủ nhật",
-    "location": "Cửa hàng số 9 Triệu Việt Vương",
-    "department": "Thương mại & Dịch vụ",
-    "shiftName": "07:30-15:30",
-    "members": [
+      },
       {
         "id": "TV13",
         "name": "Phạm Thị Thuỳ Giang",
@@ -7755,6 +7692,23 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Chủ nhật",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Bếp Bánh",
+    "shiftName": "07:30-15:30",
+    "members": [
+      {
+        "id": "TTX012",
+        "name": "Huỳnh Ngọc Sơn",
+        "inTime": "",
+        "outTime": "",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-01",
+    "dayOfWeek": "Chủ nhật",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
     "shiftName": "14:00-22:00",
     "members": [
       {
@@ -7772,6 +7726,23 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Hai",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Bếp Bánh",
+    "shiftName": "14:00-22:00",
+    "members": [
+      {
+        "id": "TTX012",
+        "name": "Huỳnh Ngọc Sơn",
+        "inTime": "",
+        "outTime": "",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-02",
+    "dayOfWeek": "Thứ Hai",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
     "shiftName": "07:00-15:00",
     "members": [
       {
@@ -7779,6 +7750,23 @@ export const initialShifts: ShiftGroup[] = [
         "name": "Hoàng Văn An",
         "inTime": "Sat Dec 30 1899 07:30:00 GMT+0642 (Indochina Time)",
         "outTime": "Sat Dec 30 1899 15:30:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-03",
+    "dayOfWeek": "Thứ Ba",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
+    "shiftName": "07:30-15:30",
+    "members": [
+      {
+        "id": "TTX012",
+        "name": "Huỳnh Ngọc Sơn",
+        "inTime": "",
+        "outTime": "",
         "ot": "",
         "isSelected": true
       }
@@ -7806,6 +7794,23 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Năm",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Bếp Bánh",
+    "shiftName": "07:30-15:30",
+    "members": [
+      {
+        "id": "TTX012",
+        "name": "Huỳnh Ngọc Sơn",
+        "inTime": "",
+        "outTime": "",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-05",
+    "dayOfWeek": "Thứ Năm",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
     "shiftName": "14:00-22:00",
     "members": [
       {
@@ -7813,6 +7818,23 @@ export const initialShifts: ShiftGroup[] = [
         "name": "Hoàng Văn An",
         "inTime": "Sat Dec 30 1899 14:00:00 GMT+0642 (Indochina Time)",
         "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-06",
+    "dayOfWeek": "Thứ Sáu",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
+    "shiftName": "07:30-15:30",
+    "members": [
+      {
+        "id": "TTX012",
+        "name": "Huỳnh Ngọc Sơn",
+        "inTime": "",
+        "outTime": "",
         "ot": "",
         "isSelected": true
       }
@@ -7840,6 +7862,23 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Bảy",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Bếp Bánh",
+    "shiftName": "14:00-22:00",
+    "members": [
+      {
+        "id": "TTX012",
+        "name": "Huỳnh Ngọc Sơn",
+        "inTime": "",
+        "outTime": "",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-07",
+    "dayOfWeek": "Thứ Bảy",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
     "shiftName": "07:00-15:00",
     "members": [
       {
@@ -7847,6 +7886,23 @@ export const initialShifts: ShiftGroup[] = [
         "name": "Hoàng Văn An",
         "inTime": "Sat Dec 30 1899 07:30:00 GMT+0642 (Indochina Time)",
         "outTime": "Sat Dec 30 1899 15:30:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-08",
+    "dayOfWeek": "Chủ nhật",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
+    "shiftName": "07:30-15:30",
+    "members": [
+      {
+        "id": "TTX012",
+        "name": "Huỳnh Ngọc Sơn",
+        "inTime": "",
+        "outTime": "",
         "ot": "",
         "isSelected": true
       }
@@ -7874,6 +7930,23 @@ export const initialShifts: ShiftGroup[] = [
     "dayOfWeek": "Thứ Hai",
     "location": "Cửa hàng số 9 Triệu Việt Vương",
     "department": "Bếp Bánh",
+    "shiftName": "14:00-22:00",
+    "members": [
+      {
+        "id": "TTX012",
+        "name": "Huỳnh Ngọc Sơn",
+        "inTime": "",
+        "outTime": "",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-09",
+    "dayOfWeek": "Thứ Hai",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
     "shiftName": "07:00-15:00",
     "members": [
       {
@@ -7881,6 +7954,23 @@ export const initialShifts: ShiftGroup[] = [
         "name": "Hoàng Văn An",
         "inTime": "Sat Dec 30 1899 07:30:00 GMT+0642 (Indochina Time)",
         "outTime": "Sat Dec 30 1899 15:30:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-10",
+    "dayOfWeek": "Thứ Ba",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Bếp Bánh",
+    "shiftName": "07:30-15:30",
+    "members": [
+      {
+        "id": "TTX012",
+        "name": "Huỳnh Ngọc Sơn",
+        "inTime": "",
+        "outTime": "",
         "ot": "",
         "isSelected": true
       }
@@ -8845,6 +8935,98 @@ export const initialShifts: ShiftGroup[] = [
         "name": "Nguyễn Thị Ngần",
         "inTime": "Sat Dec 30 1899 07:30:00 GMT+0642 (Indochina Time)",
         "outTime": "Sat Dec 30 1899 15:30:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-17",
+    "dayOfWeek": "Thứ Ba",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Pha chế",
+    "shiftName": "14:00-22:00",
+    "members": [
+      {
+        "id": "TTX011",
+        "name": "Nguyễn Thị Ngọc Anh",
+        "inTime": "Sat Dec 30 1899 14:00:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      },
+      {
+        "id": "TV14",
+        "name": "Nguyễn Thị Ngần",
+        "inTime": "Sat Dec 30 1899 14:00:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-18",
+    "dayOfWeek": "Thứ Tư",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Pha chế",
+    "shiftName": "14:00-22:00",
+    "members": [
+      {
+        "id": "TTX011",
+        "name": "Nguyễn Thị Ngọc Anh",
+        "inTime": "Sat Dec 30 1899 14:00:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      },
+      {
+        "id": "TV14",
+        "name": "Nguyễn Thị Ngần",
+        "inTime": "Sat Dec 30 1899 14:00:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-19",
+    "dayOfWeek": "Thứ Năm",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Pha chế",
+    "shiftName": "14:00-22:00",
+    "members": [
+      {
+        "id": "TTX011",
+        "name": "Nguyễn Thị Ngọc Anh",
+        "inTime": "Sat Dec 30 1899 14:00:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 22:00:00 GMT+0642 (Indochina Time)",
+        "ot": "",
+        "isSelected": true
+      },
+      {
+        "id": "TTX014",
+        "name": "Nông Thị Diệu Thanh",
+        "inTime": "",
+        "outTime": "",
+        "ot": "",
+        "isSelected": true
+      }
+    ]
+  },
+  {
+    "date": "2026-11-20",
+    "dayOfWeek": "Thứ Sáu",
+    "location": "Cửa hàng số 9 Triệu Việt Vương",
+    "department": "Pha chế",
+    "shiftName": "06:30-14:30",
+    "members": [
+      {
+        "id": "TTX011",
+        "name": "Nguyễn Thị Ngọc Anh",
+        "inTime": "Sat Dec 30 1899 06:30:00 GMT+0642 (Indochina Time)",
+        "outTime": "Sat Dec 30 1899 14:30:00 GMT+0642 (Indochina Time)",
         "ot": "",
         "isSelected": true
       }

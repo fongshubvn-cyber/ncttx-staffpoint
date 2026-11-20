@@ -1,5 +1,11 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
+## 🚀 [v1.031] - 20/11/2026 12:08
+* **Mô tả:** \
+* **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
+
+---
+
 ## 🚀 [v1.030] - 17/11/2026 23:23
 * **Mô tả:** \
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.

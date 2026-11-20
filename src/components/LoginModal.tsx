@@ -14,8 +14,11 @@ import {
   Eye, 
   EyeOff, 
   Building, 
-  Briefcase 
+  Briefcase,
+  Smartphone,
+  ChevronRight 
 } from 'lucide-react';
+import { AppInstallGuideModal } from './AppInstallGuideModal';
 
 interface LoginModalProps {
   isOpen: boolean;
@@ -53,6 +56,7 @@ export const LoginModal: React.FC<LoginModalProps> = ({
   const [confirmPassword, setConfirmPassword] = useState<string>('');
   const [showNewPassword, setShowNewPassword] = useState<boolean>(false);
   const [changeSuccessMsg, setChangeSuccessMsg] = useState<string>('');
+  const [showInstallGuide, setShowInstallGuide] = useState<boolean>(false);
 
   if (!isOpen) return null;
 
@@ -407,7 +411,44 @@ export const LoginModal: React.FC<LoginModalProps> = ({
           </form>
         )}
 
+        {/* Khối Cài Đặt App Lên Màn Hình Điện Thoại (Hiện ngay trên màn hình đăng nhập) */}
+        <div className="mt-5 pt-4 border-t border-slate-100">
+          <button
+            type="button"
+            onClick={() => setShowInstallGuide(true)}
+            className="w-full p-3 rounded-2xl bg-gradient-to-r from-emerald-50 via-teal-50/70 to-emerald-50 hover:from-emerald-100/90 hover:to-teal-100/90 border border-emerald-200/90 text-left transition-all duration-200 active:scale-[0.98] group flex items-center justify-between cursor-pointer shadow-2xs"
+            title="Xem hướng dẫn cài đặt app Staffpoint lên màn hình chính điện thoại (iPhone & Android)"
+          >
+            <div className="flex items-center gap-2.5">
+              <div className="w-9 h-9 rounded-xl bg-[#1B4332] text-white flex items-center justify-center shrink-0 shadow-xs group-hover:scale-105 transition-transform">
+                <Smartphone className="w-4 h-4 text-emerald-300" />
+              </div>
+              <div>
+                <div className="text-xs font-black text-slate-800 flex items-center gap-1.5">
+                  <span>Cài Đặt App Lên Màn Hình</span>
+                  <span className="px-1.5 py-0.2 rounded-full bg-emerald-200 text-emerald-950 text-[9px] font-black uppercase">
+                    1 Chạm
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-500 font-medium">
+                  Mở app toàn màn hình cho iPhone & Android
+                </div>
+              </div>
+            </div>
+            <div className="flex items-center gap-1 text-emerald-800 font-extrabold text-xs shrink-0 group-hover:translate-x-0.5 transition-transform pl-2">
+              <span className="hidden xs:inline">Xem Hướng Dẫn</span>
+              <ChevronRight className="w-4 h-4" />
+            </div>
+          </button>
+        </div>
+
       </div>
+
+      {/* App Install Guide Modal */}
+      <AppInstallGuideModal
+        isOpen={showInstallGuide}
+        onClose={() => setShowInstallGuide(false)}
+      />
     </div>
   );
 };
