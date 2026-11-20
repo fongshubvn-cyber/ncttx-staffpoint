@@ -1,7 +1,13 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
 ## 🚀 [v1.037] - 20/11/2026 15:07
-* **Mô tả:** \
+* **Mô tả:**
+  * **Chuẩn hóa thuật ngữ giao diện:** Đổi toàn bộ các hiển thị liên quan đến `Database` / `Cơ sở dữ liệu` thành **"Trường dữ liệu"** theo yêu cầu:
+    * Trạng thái đang lưu trên nút tạo phiếu: *"⏳ Đang lưu vào Trường dữ liệu..."*
+    * Nội dung thông báo xác nhận: *"Phiếu đã được ghi nhận thành công vào trường dữ liệu cho..."*
+    * Tên người gửi thông báo hệ thống: *"Trường dữ liệu"*
+    * Thông báo cảnh báo sự cố kết nối: *"⚠️ Không thể lưu phiếu vào Trường dữ liệu..."*
+    * Nút xóa thùng rác: *"Xóa vĩnh viễn khỏi trường dữ liệu"*
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
 
 ---
