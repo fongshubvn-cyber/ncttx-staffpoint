@@ -1,5 +1,5 @@
 // Staffpoint Service Worker for Mobile Notifications & PWA
-const CACHE_NAME = 'staffpoint-v1.035';
+const CACHE_NAME = 'staffpoint-v1.036';
 
 self.addEventListener('install', (event) => {
   self.skipWaiting();
