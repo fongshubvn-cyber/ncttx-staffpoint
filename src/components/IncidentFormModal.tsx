@@ -311,8 +311,27 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!reporterId || !targetId || !description.trim()) {
-      alert('Vui lòng điền đầy đủ nội dung chi tiết sự việc!');
+    if (!reporterId || !targetId) {
+      alert('Vui lòng chọn người đánh giá và nhân sự được đánh giá!');
+      return;
+    }
+
+    const isPolicy = formCategory === 'policy';
+    const isMinusWork = formCategory === 'work' && workEvalMode === 'minus';
+
+    // Bắt buộc bước 5: Phải chọn tiêu chí (với Đánh giá công việc) hoặc điều khoản (với Nội quy)
+    if (!isPolicy && !questionId) {
+      alert('⚠️ Bước 5 là bắt buộc: Vui lòng chọn tiêu chí đánh giá từ danh sách!');
+      return;
+    }
+    if (isPolicy && !policyRuleId) {
+      alert('⚠️ Bước 5 là bắt buộc: Vui lòng chọn điều khoản nội quy vi phạm!');
+      return;
+    }
+
+    // Bắt buộc bước 6: Phải nhập nội dung chi tiết
+    if (!description.trim()) {
+      alert('⚠️ Bước 6 là bắt buộc: Vui lòng nhập nội dung chi tiết diễn biến sự việc hoặc lỗi vi phạm!');
       return;
     }
 
@@ -320,9 +339,6 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     const target = staffList.find(s => s.id === targetId);
     const selectedQ = questions.find(q => q.id === questionId);
     const selectedPolicyRule = policyRulesList.find(r => r.id === policyRuleId);
-
-    const isPolicy = formCategory === 'policy';
-    const isMinusWork = formCategory === 'work' && workEvalMode === 'minus';
 
     const isBoundaryRecord = !isPolicy && (criteriaScope === 'Boundary' || (selectedQ && selectedQ.groupCode.startsWith('RG')));
 
@@ -401,7 +417,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     const q = questions.find(item => item.id === qId);
     if (q) {
       setTitle(q.text.length > 55 ? `${q.text.substring(0, 55)}...` : q.text);
-      setDescription(q.text);
+      // Giữ trống ô nội dung chi tiết bước 6 theo yêu cầu, không tự điền
     }
   };
 
@@ -936,7 +952,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
               <div className="space-y-1.5">
                 <div className="flex items-center justify-between">
                   <label className="block text-slate-700 font-extrabold font-heading">
-                    5. Chọn Tiêu Chí {currentEvalType === 'ghi_nhan' ? 'Ghi Nhận (Khen Thưởng)' : 'Nhắc Nhở (Vi Phạm)'}
+                    5. Chọn Tiêu Chí {currentEvalType === 'ghi_nhan' ? 'Ghi Nhận (Khen Thưởng)' : 'Nhắc Nhở (Vi Phạm)'} <span className="text-rose-500">*</span>
                   </label>
                   <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
                     currentEvalType === 'ghi_nhan'
@@ -970,11 +986,14 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
 
                 {/* Dropdown Select */}
                 <select
+                  required
                   value={questionId}
                   onChange={(e) => handleSelectQuestion(e.target.value)}
-                  className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] font-medium focus:outline-none focus:border-[#2D6A4F]"
+                  className={`w-full p-2.5 bg-slate-50 border rounded-xl font-medium focus:outline-none focus:border-[#2D6A4F] ${
+                    !questionId ? 'border-amber-300 text-slate-600' : 'border-slate-200 text-[#2D3748]'
+                  }`}
                 >
-                  <option value="">-- Chọn tiêu chí {currentEvalType === 'ghi_nhan' ? 'Ghi Nhận' : 'Nhắc Nhở'} từ danh sách --</option>
+                  <option value="">-- [Bắt buộc] Chọn tiêu chí {currentEvalType === 'ghi_nhan' ? 'Ghi Nhận' : 'Nhắc Nhở'} từ danh sách --</option>
                   {filteredAvailableQuestions.map((q) => (
                     <option key={q.id} value={q.id}>
                       [{q.id}] [{q.measurementType === 'ghi nhận' ? '🌟 Ghi nhận' : '⚠️ Vi phạm'}] {q.groupCode}: {q.text}
@@ -1044,8 +1063,9 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
               6. Nội Dung Chi Tiết & Lỗi Vi Phạm / Ghi Nhận <span className="text-rose-500">*</span>
             </label>
             <textarea
+              required
               rows={3}
-              placeholder="Ghi rõ diễn biến sự việc thực tế, lỗi vi phạm hoặc thành tích ghi nhận..."
+              placeholder="Bắt buộc nhập: Ghi rõ diễn biến sự việc thực tế, lỗi vi phạm hoặc thành tích ghi nhận..."
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               className="w-full p-2.5 bg-slate-50 border border-slate-200 rounded-xl text-[#2D3748] focus:outline-none focus:border-[#2D6A4F]"

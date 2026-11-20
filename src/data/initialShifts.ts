@@ -1,5 +1,5 @@
 // Pre-bundled shift data synchronized from Google Sheets
-// Generated at: 2026-11-20T06:57:15.207Z
+// Generated at: 2026-11-20T07:07:07.342Z
 
 import { ShiftGroup, SheetStaffRecord } from '../services/shiftService';
 
