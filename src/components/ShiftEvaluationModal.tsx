@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Staff, Question, DepartmentLine, IncidentRecord, ParameterConfig, AuthUser } from '../types';
 import { initialPolicyRules } from '../data/seedData';
-import { INCIDENT_KEYWORDS } from './IncidentFormModal';
+import { INCIDENT_KEYWORDS, matchesKeywordWordBoundary } from './IncidentFormModal';
 import { generateTicketCode } from '../utils/calculator';
 import { 
   fetchAndParseShiftWorkbook, 
@@ -305,8 +305,8 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
         if (evalCategory === 'vi_pham') {
           const matched = policyRulesList.filter(rule => {
             if (rule.active === false) return false;
-            const targetText = `${rule.code} ${rule.title} ${rule.description} ${rule.category}`.toLowerCase();
-            return kw.matchWords.some(w => targetText.includes(w.toLowerCase()));
+            const targetText = `${rule.code} ${rule.title} ${rule.description} ${rule.category}`;
+            return matchesKeywordWordBoundary(targetText, kw.matchWords);
           });
           if (matched.length > 0) {
             const first = matched[0];

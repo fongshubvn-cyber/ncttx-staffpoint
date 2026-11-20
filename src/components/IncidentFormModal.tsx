@@ -25,28 +25,28 @@ export const INCIDENT_KEYWORDS: KeywordCategory[] = [
     name: 'Không gian',
     icon: '🌿',
     description: 'Âm thanh tĩnh lặng, mùi hương Sả Java, giữ trật tự không gian chung',
-    matchWords: ['không gian', 'mùi', 'hương', 'âm thanh', 'tĩnh lặng', 'ồn', 'nhạc', 'khuôn viên', 'bầu không khí'],
+    matchWords: ['không gian', 'mùi', 'hương', 'âm thanh', 'tĩnh lặng', 'ồn', 'nhạc', 'khuôn viên', 'bầu không khí', 'âm lượng'],
   },
   {
     id: 'cay_coi',
     name: 'Cây cối',
     icon: '🌱',
     description: 'Chăm sóc cây xanh, bảo tồn cây cổ thụ, gìn giữ mầm cây Nhà',
-    matchWords: ['cây', 'hoa', 'sân vườn', 'tưới', 'lá', 'cảnh quan', 'héo', 'mầm'],
+    matchWords: ['cây', 'hoa', 'sân vườn', 'tưới', 'lá', 'cảnh quan', 'héo', 'mầm', 'cây xanh'],
   },
   {
     id: 'rac_thai',
     name: 'Rác thải & Vệ sinh',
     icon: '🗑️',
     description: 'Đổ rác đúng 4 dấu hiệu, phân loại rác, dọn dẹp vệ sinh quầy/xưởng/bàn ghế',
-    matchWords: ['rác', 'vệ sinh', 'sạch', 'dọn', 'thùng', 'ly', 'tách', 'khăn', 'lau', 'khử trùng', 'bẩn'],
+    matchWords: ['rác', 'vệ sinh', 'sạch', 'dọn', 'dọn dẹp', 'thùng rác', 'khăn lau', 'lau', 'khử trùng', 'bẩn', 'vết bẩn', 'đổ rác'],
   },
   {
     id: 'hut_thuoc',
     name: 'Hút thuốc & PCCC',
     icon: '🚭',
     description: 'Nghiêm cấm hút thuốc sai nơi, an toàn điện nước, phòng cháy chữa cháy',
-    matchWords: ['thuốc', 'cháy', 'pccc', 'lửa', 'thoát hiểm', 'an toàn', 'chập', 'điện'],
+    matchWords: ['thuốc', 'cháy', 'pccc', 'lửa', 'thoát hiểm', 'an toàn', 'chập', 'hút thuốc'],
   },
   {
     id: 'noi_tuc',
@@ -60,16 +60,30 @@ export const INCIDENT_KEYWORDS: KeywordCategory[] = [
     name: 'Giờ giấc',
     icon: '⏰',
     description: 'Đi làm đúng giờ, chấm công, không bỏ vị trí trong ca, giao nhận ca đầy đủ',
-    matchWords: ['giờ', 'trễ', 'muộn', 'ca', 'chấm công', 'bỏ vị trí', 'về sớm', 'vào ca', 'deadline', 'tiến độ'],
+    matchWords: ['giờ', 'trễ', 'muộn', 'chấm công', 'bỏ vị trí', 'về sớm', 'vào ca', 'deadline', 'tiến độ'],
   },
   {
     id: 'tai_san',
     name: 'Tài sản & Thiết bị',
     icon: '🛠️',
     description: 'Bảo quản máy móc pha chế/xưởng, tránh hao hụt nguyên vật liệu, không dùng điện thoại riêng',
-    matchWords: ['tài sản', 'thiết bị', 'điện thoại', 'máy', 'nguyên liệu', 'hỏng', 'mất', 'thất thoát', 'bảo quản', 'công cụ'],
+    matchWords: ['tài sản', 'thiết bị', 'điện thoại', 'máy móc', 'nguyên liệu', 'hỏng', 'thất thoát', 'bảo quản', 'công cụ'],
   },
 ];
+
+/**
+ * So khớp từ khóa với ranh giới từ Unicode tiếng Việt
+ * Ngăn chặn triệt để lỗi chuỗi con (vd: từ 'rác' vô tình khớp vào chữ 'trách' trong 'người phụ trách' / 'trách nhiệm')
+ */
+export function matchesKeywordWordBoundary(text: string, words: string[]): boolean {
+  if (!text || !words || words.length === 0) return false;
+  return words.some(w => {
+    if (!w) return false;
+    const escaped = w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const regex = new RegExp(`(?<!\\p{L})${escaped}(?!\\p{L})`, 'iu');
+    return regex.test(text);
+  });
+}
 
 interface IncidentFormModalProps {
   show: boolean;
@@ -268,8 +282,8 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     if (selectedKeyword === 'all') return true;
     const kw = INCIDENT_KEYWORDS.find(k => k.id === selectedKeyword);
     if (!kw || kw.matchWords.length === 0) return true;
-    const targetText = `${rule.code} ${rule.title} ${rule.description} ${rule.category}`.toLowerCase();
-    return kw.matchWords.some(w => targetText.includes(w.toLowerCase()));
+    const targetText = `${rule.code} ${rule.title} ${rule.description} ${rule.category}`;
+    return matchesKeywordWordBoundary(targetText, kw.matchWords);
   });
 
   const handleSelectKeyword = (kwId: string) => {
@@ -280,8 +294,8 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
       if (kw) {
         const matched = policyRulesList.filter(rule => {
           if (rule.active === false) return false;
-          const targetText = `${rule.code} ${rule.title} ${rule.description} ${rule.category}`.toLowerCase();
-          return kw.matchWords.some(w => targetText.includes(w.toLowerCase()));
+          const targetText = `${rule.code} ${rule.title} ${rule.description} ${rule.category}`;
+          return matchesKeywordWordBoundary(targetText, kw.matchWords);
         });
         if (matched.length > 0) {
           const first = matched[0];
@@ -297,8 +311,8 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
     if (selectedKeyword !== 'all') {
       const kw = INCIDENT_KEYWORDS.find(k => k.id === selectedKeyword);
       if (kw && kw.matchWords.length > 0) {
-        const qText = `${q.id} ${q.groupCode} ${q.groupName} ${q.text} ${q.scope || ''}`.toLowerCase();
-        const hasMatch = kw.matchWords.some(w => qText.includes(w.toLowerCase()));
+        const qText = `${q.id} ${q.groupCode} ${q.groupName} ${q.text} ${q.scope || ''}`;
+        const hasMatch = matchesKeywordWordBoundary(qText, kw.matchWords);
         if (!hasMatch) return false;
       }
     }
