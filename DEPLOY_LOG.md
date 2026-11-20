@@ -1,7 +1,17 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
 ## 🚀 [v1.036] - 20/11/2026 15:00
-* **Mô tả:** \
+* **Mô tả:**
+  * **Cơ chế xác thực Database trước khi phát thông báo:**
+    * Phiếu chỉ được gửi thông báo khi và chỉ khi transaction atomic trên Cloud Firestore trả về thành công (`saveIncidentAtomic` / `syncIncidentsToCloudAtomic`).
+    * Nếu xảy ra lỗi mạng hoặc từ chối quyền, phiếu sẽ dừng lại và tuyệt đối **không tạo thông báo rác (ghost notifications)**.
+  * **Gửi thông báo hai chiều cho cả 2 bên (Người lập & Người bị lập):**
+    * **Người bị lập:** Nhận thông báo biên bản vi phạm / phiếu khen thưởng kèm mã phiếu chuẩn hóa (`[VP-YYMM-XXX]`, `[TD-YYMM-XXX]`, `[NQ-YYMM-XXX]`).
+    * **Người lập:** Nhận thông báo xác nhận đã lưu thành công vào Database Cloud để an tâm phiếu đã được ghi nhận.
+  * **Tự động dọn dẹp thông báo rác cũ (Auto-pruning Ghost Notifications):**
+    * Khi ứng dụng khởi động và đồng bộ snapshot Firestore, hệ thống tự động quét và loại bỏ các thông báo vi phạm cũ mà mã phiếu không hề tồn tại trong cơ sở dữ liệu Cloud.
+  * **Trạng thái nạp giao diện an toàn:**
+    * Bổ sung loading state *"⏳ Đang lưu vào Database..."* trên các nút lập phiếu đơn lẻ (`IncidentFormModal`) và đánh giá ca (`ShiftEvaluationModal`) nhằm chống bấm kép / gửi trùng lặp.
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
 
 ---
