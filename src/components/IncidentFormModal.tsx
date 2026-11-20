@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Staff, Question, DepartmentLine, IncidentRecord, IncidentType, SeverityLevel, ParameterConfig, AuthUser } from '../types';
-import { isManagementRole, isSystemAdmin } from '../utils/calculator';
+import { isManagementRole, isSystemAdmin, generateTicketCode, getIncidentDisplayCode } from '../utils/calculator';
 import { initialPolicyRules } from '../data/seedData';
-import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert, ClipboardCheck, BookOpen, AlertTriangle, Award } from 'lucide-react';
+import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert, ClipboardCheck, BookOpen, AlertTriangle, Award, Copy } from 'lucide-react';
 
 export interface KeywordCategory {
   id: string;
@@ -84,6 +84,7 @@ interface IncidentFormModalProps {
   params?: ParameterConfig;
   currentUser?: AuthUser | null;
   onViewSubmittedList?: () => void;
+  existingIncidents?: IncidentRecord[];
 }
 
 export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
@@ -99,6 +100,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
   params,
   currentUser,
   onViewSubmittedList,
+  existingIncidents,
 }) => {
   if (!show) return null;
 
@@ -118,6 +120,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
   const [policyRuleId, setPolicyRuleId] = useState<string>(() => (policyRulesList[0]?.id || 'NQ01'));
   const [selectedKeyword, setSelectedKeyword] = useState<string>('all');
   const [submittedSuccess, setSubmittedSuccess] = useState<IncidentRecord | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   React.useEffect(() => {
     if (show) {
@@ -381,8 +384,11 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
       ? (selectedPolicyRule?.severity === 'Rất nghiêm trọng' ? 'Nghiêm trọng' : (selectedPolicyRule?.severity as SeverityLevel) || severity)
       : severity;
 
+    const generated = generateTicketCode(recordType, now, existingIncidents || []);
+
     const newRecord: IncidentRecord = {
-      id: `INC-${Date.now()}-${Math.floor(1000 + Math.random() * 9000)}`,
+      id: generated.id,
+      ticketCode: generated.ticketCode,
       type: recordType,
       reporterId,
       reporterName: reporter ? reporter.name : reporterId,
@@ -445,12 +451,28 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
             {(() => {
               const isSubPolicy = submittedSuccess.type === 'noi_quy' || Boolean(submittedSuccess.policyRuleId);
               const isSubVio = submittedSuccess.type === 'vi_pham';
+              const displayCode = getIncidentDisplayCode(submittedSuccess);
               return (
                 <div className="bg-[#EDEAE3]/60 p-4 rounded-2xl border border-emerald-900/10 text-left space-y-2 text-xs">
                   <div className="flex items-center justify-between border-b border-emerald-900/10 pb-2">
-                    <span className="font-mono font-bold text-[11px] text-slate-600 bg-white px-2.5 py-0.5 rounded-full border border-slate-200">
-                      {submittedSuccess.id}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-[10px] font-black uppercase text-slate-500">Mã Số:</span>
+                      <span className="font-mono font-black text-xs text-[#1B4332] bg-white px-2.5 py-0.5 rounded-lg border border-emerald-300 shadow-2xs tracking-wide">
+                        {displayCode}
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          navigator.clipboard.writeText(displayCode);
+                          setCopiedCode(true);
+                          setTimeout(() => setCopiedCode(false), 2000);
+                        }}
+                        className="p-1 rounded-md hover:bg-white text-slate-500 hover:text-emerald-700 transition-colors cursor-pointer border border-transparent hover:border-slate-200"
+                        title="Sao chép mã phiếu"
+                      >
+                        {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
                     <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black ${
                       isSubPolicy
                         ? 'bg-amber-100 text-amber-950 border border-amber-300'

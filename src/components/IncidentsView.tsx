@@ -24,7 +24,7 @@ import {
   Trash2
 } from 'lucide-react';
 
-import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident, isSystemAdmin } from '../utils/calculator';
+import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident, isSystemAdmin, getIncidentDisplayCode } from '../utils/calculator';
 
 interface IncidentsViewProps {
   incidents: IncidentRecord[];
@@ -384,7 +384,7 @@ export const IncidentsView: React.FC<IncidentsViewProps> = ({
               {/* Header Badges */}
               <div className="flex items-center justify-between">
                 <span className="font-mono text-[10px] font-bold text-slate-600 bg-[#EDEAE3] px-2 py-0.5 rounded-full">
-                  {incident.id}
+                  {getIncidentDisplayCode(incident)}
                 </span>
 
                 <div className="flex items-center space-x-1.5">

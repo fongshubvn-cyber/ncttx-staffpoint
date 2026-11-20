@@ -1371,6 +1371,7 @@ export function App() {
           setActiveTab('incidents');
           setIncidentsFilterType('my_submitted');
         }}
+        existingIncidents={incidents}
       />
 
       <LoginModal

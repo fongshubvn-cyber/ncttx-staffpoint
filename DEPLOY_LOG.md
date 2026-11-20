@@ -1,5 +1,21 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
+## 🚀 [v1.034] - 20/11/2026 14:28
+* **Mô tả:**
+  * **Chuẩn hóa cơ chế mã số phiếu chuyên nghiệp theo từng phân hệ (Ticket Code System):**
+    * 🌟 **TD-YYMM-XXX:** Phiếu Tuyên Dương / Ghi Nhận Khen Thưởng (ví dụ: `TD-2611-001`, `TD-2611-002`).
+    * ⚠️ **VP-YYMM-XXX:** Biên Bản Vi Phạm Tiêu Chuẩn Công Việc (ví dụ: `VP-2611-001`).
+    * 📖 **NQ-YYMM-XXX:** Biên Bản Vi Phạm Nội Quy Lao Động Quỹ 100đ (ví dụ: `NQ-2611-001`).
+    * 👥 **CA-YYMM-XXX:** Biên Bản Đánh Giá Tập Thể Ca Làm Việc (ví dụ: `CA-2611-001`).
+  * **Tương thích ngược 100%:** Toàn bộ phiếu cũ dạng timestamp (`INC-...`, `INC-CA-...`) được tự động chuẩn hóa và hiển thị theo mã quy chuẩn.
+  * **Hiển thị trực quan & Tiện ích sao chép 1 chạm:**
+    * Hiển thị huy hiệu mã phiếu màu sắc đồng bộ trên từng thẻ phản hồi ở Sổ Phản Hồi (`Option1IncidentsView`), Lịch sử nhân sự (`Option1SummaryView`), Trung tâm thông báo (`NotificationCenterModal`), và màn hình báo lập phiếu thành công.
+    * Nút bấm sao chép mã phiếu 1 chạm để người quản lý gửi trao đổi, trích dẫn nhanh.
+    * Cho phép tìm kiếm trực tiếp theo mã phiếu (nhập `VP-2611`, `TD-`, `NQ-...` để lọc ra đúng phiếu).
+* **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
+
+---
+
 ## 🚀 [v1.033] - 20/11/2026 14:07
 * **Mô tả:** \
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.

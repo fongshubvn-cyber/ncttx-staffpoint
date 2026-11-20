@@ -1,5 +1,5 @@
 import { AppNotification, IncidentRecord, AuthUser } from '../types';
-import { isPolicyIncident, isWorkViolation, isRecognitionIncident } from '../utils/calculator';
+import { isPolicyIncident, isWorkViolation, isRecognitionIncident, getIncidentDisplayCode } from '../utils/calculator';
 
 const NOTIFICATIONS_STORAGE_KEY = 'ncttx_notifications_v1';
 
@@ -135,6 +135,8 @@ export function buildIncidentNotification(
 ): AppNotification {
   const isPolicy = isPolicyIncident(incident);
   const isWorkVio = isWorkViolation(incident);
+  const code = getIncidentDisplayCode(incident);
+  const codeBadge = code ? `[${code}] ` : '';
   
   let type: AppNotification['type'] = isPolicy ? 'noi_quy' : (isWorkVio ? 'vi_pham' : 'khen_thuong');
   let title = '';
@@ -145,19 +147,19 @@ export function buildIncidentNotification(
     title = isSelfRecipient 
       ? `📖 Bạn bị trừ -${penalty}đ quỹ nội quy`
       : `📖 Vi phạm nội quy (-${penalty}đ): ${incident.targetName}`;
-    body = `[${incident.reporterName}] đã lập biên bản vi phạm quy định: "${incident.title}". Mức trừ: -${penalty}đ quỹ chấp hành nội quy.`;
+    body = `${codeBadge}[${incident.reporterName}] đã lập biên bản vi phạm quy định: "${incident.title}". Mức trừ: -${penalty}đ quỹ chấp hành nội quy.`;
   } else if (isWorkVio) {
     const impact = incident.impactPoints || 0;
     title = isSelfRecipient
       ? `⚠️ Bạn bị trừ ${impact}đ tiêu chuẩn công việc`
       : `⚠️ Vi phạm công việc (${impact}đ): ${incident.targetName}`;
-    body = `[${incident.reporterName}] đã gửi biên bản vi phạm: "${incident.title}". Mức tác động: ${impact}đ (Thang 5.0).`;
+    body = `${codeBadge}[${incident.reporterName}] đã gửi biên bản vi phạm: "${incident.title}". Mức tác động: ${impact}đ (Thang 5.0).`;
   } else {
     const impact = incident.impactPoints || 0;
     title = isSelfRecipient
       ? `🌟 Bạn được cộng +${impact}đ khen thưởng!`
       : `🌟 Khen thưởng (+${impact}đ): ${incident.targetName}`;
-    body = `[${incident.reporterName}] đã khen thưởng: "${incident.title}". Mức tác động: +${impact}đ (Thang 5.0).`;
+    body = `${codeBadge}[${incident.reporterName}] đã khen thưởng: "${incident.title}". Mức tác động: +${impact}đ (Thang 5.0).`;
   }
 
   return {

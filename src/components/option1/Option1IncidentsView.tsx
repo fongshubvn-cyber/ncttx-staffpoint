@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { IncidentRecord, Staff, Question, AuthUser, IncidentStatus } from '../../types';
-import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident, get3RecentPeriods, isSystemAdmin, isPolicyIncident, isWorkViolation, isRecognitionIncident } from '../../utils/calculator';
+import { isHRHeadRole, getActiveHRHead, isDeptHeadOrAboveRole, canUserViewIncident, get3RecentPeriods, isSystemAdmin, isPolicyIncident, isWorkViolation, isRecognitionIncident, getIncidentDisplayCode } from '../../utils/calculator';
 import { 
   Trophy, 
   Plus, 
@@ -22,7 +22,8 @@ import {
   Scale,
   XCircle,
   Check,
-  BookOpen
+  BookOpen,
+  Copy
 } from 'lucide-react';
 
 interface Option1IncidentsViewProps {
@@ -65,6 +66,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
   const [selectedIncidentForAppeal, setSelectedIncidentForAppeal] = useState<IncidentRecord | null>(null);
   const [appealReason, setAppealReason] = useState<string>('');
   const [viewImageModal, setViewImageModal] = useState<string | null>(null);
+  const [copiedTicketId, setCopiedTicketId] = useState<string | null>(null);
 
   const recentPeriods = get3RecentPeriods();
   const [selectedMonthFilter, setSelectedMonthFilter] = useState<string>('all');
@@ -126,13 +128,17 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
     const targetStaff = staffList.find(s => s.id === item.targetId);
     const staffName = targetStaff ? targetStaff.name : (item.targetId || '');
     const reporterName = item.reporterName || '';
+    const displayCode = getIncidentDisplayCode(item);
     const term = (searchTerm || '').toLowerCase();
     const matchesSearch = !term || 
                           staffName.toLowerCase().includes(term) ||
                           reporterName.toLowerCase().includes(term) ||
                           (item.title && item.title.toLowerCase().includes(term)) ||
                           (item.targetId && item.targetId.toLowerCase().includes(term)) ||
-                          (item.reporterId && item.reporterId.toLowerCase().includes(term));
+                          (item.reporterId && item.reporterId.toLowerCase().includes(term)) ||
+                          (item.id && item.id.toLowerCase().includes(term)) ||
+                          displayCode.toLowerCase().includes(term) ||
+                          (item.ticketCode && item.ticketCode.toLowerCase().includes(term));
 
     if (!matchesSearch) return false;
 
@@ -206,7 +212,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
           <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
           <input
             type="text"
-            placeholder="Tìm theo tiêu đề, tên nhân sự nhận phiếu hoặc người lập..."
+            placeholder="Tìm theo mã số phiếu (vd: VP-2611-001, NQ..., TD..., CA...), tiêu đề, tên nhân sự..."
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
             className="w-full pl-10 pr-4 py-3 bg-white rounded-2xl border border-slate-200 text-xs font-medium focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 transition-all shadow-sm"
@@ -498,6 +504,7 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                                 (incident.status === 'Đã ghi nhận' || incident.status === 'Đã duyệt');
               const isSubmittedByMe = currentUser?.id === incident.reporterId;
               const isReceivedByMe = currentUser?.id === incident.targetId;
+              const displayCode = getIncidentDisplayCode(incident);
 
               return (
                 <div
@@ -527,6 +534,36 @@ export const Option1IncidentsView: React.FC<Option1IncidentsViewProps> = ({
                       </div>
                       <div>
                         <div className="flex flex-wrap items-center gap-2">
+                          {/* Mã Số Phiếu Tag */}
+                          <div className="flex items-center gap-1">
+                            <span className={`text-[11px] font-mono font-black px-2.5 py-0.5 rounded-full border shadow-2xs flex items-center gap-1 ${
+                              isRecognition 
+                                ? 'bg-emerald-50 text-emerald-900 border-emerald-300' 
+                                : isPolicy 
+                                ? 'bg-amber-50 text-amber-950 border-amber-300' 
+                                : 'bg-rose-50 text-rose-900 border-rose-300'
+                            }`} title={`Mã số phiếu: ${displayCode}`}>
+                              <span className="opacity-60 text-[9px] font-sans font-extrabold uppercase">Mã:</span>
+                              <span className="tracking-wide">{displayCode}</span>
+                            </span>
+                            <button
+                              type="button"
+                              onClick={() => {
+                                navigator.clipboard.writeText(displayCode);
+                                setCopiedTicketId(displayCode);
+                                setTimeout(() => setCopiedTicketId(null), 2000);
+                              }}
+                              className="p-1 rounded-md text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                              title={`Sao chép mã ${displayCode}`}
+                            >
+                              {copiedTicketId === displayCode ? (
+                                <Check className="w-3.5 h-3.5 text-emerald-600" />
+                              ) : (
+                                <Copy className="w-3.5 h-3.5" />
+                              )}
+                            </button>
+                          </div>
+
                           <span className={`text-[11px] font-bold px-2.5 py-0.5 rounded-full ${
                             isRecognition 
                               ? 'bg-emerald-100 text-emerald-800' 

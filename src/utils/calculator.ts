@@ -1,4 +1,4 @@
-import { ParameterConfig, Staff, IncidentRecord, PolicyRule, PolicyHealthStatus, BaselinePoint } from '../types';
+import { ParameterConfig, Staff, IncidentRecord, IncidentType, PolicyRule, PolicyHealthStatus, BaselinePoint } from '../types';
 
 /**
  * Phân biệt rõ ràng 3 thể loại phản hồi trong hệ thống:
@@ -1041,6 +1041,136 @@ export function getStaffPolicyScoreForPeriod(
     violations: periodIncidents,
     statusObj,
   };
+}
+
+/**
+ * Lấy mã số hiển thị chuẩn hóa cho phiếu (Tuyên dương TD-, Vi phạm VP-, Nội quy NQ-, Đánh giá ca CA-)
+ * Đảm bảo tương thích ngược 100% với các phiếu cũ đã tạo bằng timestamp.
+ */
+export function getIncidentDisplayCode(incident?: Partial<IncidentRecord> | null): string {
+  if (!incident) return '';
+  if (incident.ticketCode) {
+    return incident.ticketCode;
+  }
+  const id = incident.id || '';
+
+  // Nếu id đã có tiền tố chuẩn (TD-, VP-, NQ-, CA-)
+  if (/^(TD|VP|NQ|CA)-/i.test(id)) {
+    const parts = id.split('-');
+    // Nếu dạng VP-2611-001-xxxx, lấy 3 phần đầu
+    if (parts.length >= 3 && parts[1].length === 4) {
+      return `${parts[0].toUpperCase()}-${parts[1]}-${parts[2]}`;
+    }
+    return id.toUpperCase();
+  }
+
+  // Suy đoán ngày để lấy YYMM (năm 2 số, tháng 2 số)
+  let dateObj: Date;
+  if (incident.createdAt) {
+    dateObj = new Date(incident.createdAt);
+  } else if (incident.date) {
+    const slashMatch = incident.date.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (slashMatch) {
+      dateObj = new Date(parseInt(slashMatch[3], 10), parseInt(slashMatch[2], 10) - 1, parseInt(slashMatch[1], 10));
+    } else {
+      dateObj = new Date(incident.date);
+    }
+  } else {
+    dateObj = new Date();
+  }
+  if (isNaN(dateObj.getTime())) dateObj = new Date();
+
+  const yy = dateObj.getFullYear().toString().slice(-2);
+  const mm = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+
+  // Đánh giá ca cũ (dạng INC-CA-timestamp-...)
+  if (id.startsWith('INC-CA-')) {
+    const parts = id.split('-');
+    const ts = parseInt(parts[2], 10);
+    const shortNum = !isNaN(ts) ? String(ts).slice(-3) : '001';
+    return `CA-${yy}${mm}-${shortNum}`;
+  }
+
+  // Phiếu cá nhân cũ (dạng INC-timestamp-random)
+  if (id.startsWith('INC-')) {
+    const parts = id.split('-');
+    let prefix = 'VP';
+    if (isPolicyIncident(incident as IncidentRecord)) {
+      prefix = 'NQ';
+    } else if (incident.type === 'ghi_nhan') {
+      prefix = 'TD';
+    }
+    const randPart = parts[2] ? parts[2].slice(-3) : (parts[1] ? parts[1].slice(-3) : '001');
+    return `${prefix}-${yy}${mm}-${randPart}`;
+  }
+
+  return id;
+}
+
+/**
+ * Sinh mã số phiếu chuyên nghiệp theo từng phân hệ:
+ * - TD-YYMM-XXX: Tuyên dương / Khen thưởng cá nhân
+ * - VP-YYMM-XXX: Vi phạm tiêu chuẩn công việc cá nhân
+ * - NQ-YYMM-XXX: Vi phạm nội quy lao động (Quỹ 100đ)
+ * - CA-YYMM-XXX: Đánh giá tập thể ca làm việc
+ */
+export function generateTicketCode(
+  type: IncidentType | 'ca',
+  dateInput?: string | Date,
+  existingIncidents: IncidentRecord[] = []
+): { ticketCode: string; id: string } {
+  let dateObj: Date;
+  if (dateInput instanceof Date) {
+    dateObj = dateInput;
+  } else if (typeof dateInput === 'string') {
+    const slashMatch = dateInput.match(/(\d{2})\/(\d{2})\/(\d{4})/);
+    if (slashMatch) {
+      dateObj = new Date(parseInt(slashMatch[3], 10), parseInt(slashMatch[2], 10) - 1, parseInt(slashMatch[1], 10));
+    } else {
+      dateObj = new Date(dateInput);
+    }
+  } else {
+    dateObj = new Date();
+  }
+  if (isNaN(dateObj.getTime())) dateObj = new Date();
+
+  const yy = dateObj.getFullYear().toString().slice(-2);
+  const mm = (dateObj.getMonth() + 1).toString().padStart(2, '0');
+
+  let prefix = 'VP';
+  if (type === 'noi_quy') prefix = 'NQ';
+  else if (type === 'ghi_nhan') prefix = 'TD';
+  else if (type === 'ca') prefix = 'CA';
+
+  const prefixPattern = `${prefix}-${yy}${mm}-`;
+
+  // Tìm các số thứ tự đã dùng trong tháng này cho phân hệ này
+  const usedNumbers = new Set<number>();
+  existingIncidents.forEach(inc => {
+    const code = getIncidentDisplayCode(inc);
+    if (code.startsWith(prefixPattern)) {
+      const numPart = code.substring(prefixPattern.length).split('-')[0];
+      const parsed = parseInt(numPart, 10);
+      if (!isNaN(parsed) && parsed > 0) {
+        usedNumbers.add(parsed);
+      }
+    }
+  });
+
+  // Tìm số thứ tự nhỏ nhất chưa dùng (bắt đầu từ 1)
+  let nextSeq = 1;
+  while (usedNumbers.has(nextSeq)) {
+    nextSeq++;
+  }
+
+  const seqStr = String(nextSeq).padStart(3, '0');
+  const ticketCode = `${prefixPattern}${seqStr}`;
+
+  // Unique id để tránh trùng lặp khi đồng bộ nhiều máy client
+  const uniqueSuffix = Math.floor(1000 + Math.random() * 9000);
+  const id = `${ticketCode}-${uniqueSuffix}`;
+
+  return { ticketCode, id };
 }
 
 

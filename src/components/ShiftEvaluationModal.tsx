@@ -2,6 +2,7 @@ import React, { useState, useEffect, useMemo, useRef } from 'react';
 import { Staff, Question, DepartmentLine, IncidentRecord, ParameterConfig, AuthUser } from '../types';
 import { initialPolicyRules } from '../data/seedData';
 import { INCIDENT_KEYWORDS } from './IncidentFormModal';
+import { generateTicketCode } from '../utils/calculator';
 import { 
   fetchAndParseShiftWorkbook, 
   getCachedShiftData, 
@@ -27,7 +28,8 @@ import {
   Check, 
   VolumeX, 
   Info,
-  ChevronDown
+  ChevronDown,
+  Copy
 } from 'lucide-react';
 
 interface ShiftEvaluationModalProps {
@@ -39,6 +41,7 @@ interface ShiftEvaluationModalProps {
   onAddIncident: (incident: IncidentRecord) => void;
   currentUser?: AuthUser | null;
   params?: ParameterConfig;
+  existingIncidents?: IncidentRecord[];
 }
 
 export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
@@ -50,6 +53,7 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
   onAddIncident,
   currentUser,
   params,
+  existingIncidents,
 }) => {
   if (!show) return null;
 
@@ -103,7 +107,8 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Submission Status
-  const [submittedMembers, setSubmittedMembers] = useState<{ count: number; names: string[]; points: number; type: string } | null>(null);
+  const [submittedMembers, setSubmittedMembers] = useState<{ count: number; names: string[]; points: number; type: string; ticketCode: string } | null>(null);
+  const [copiedCode, setCopiedCode] = useState(false);
 
   const policyRulesList = (params?.policyRules && params.policyRules.length > 0)
     ? params.policyRules
@@ -357,6 +362,7 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
 
     const batchSessionId = `SHIFT-${selectedDate.replace(/-/g, '')}-${currentShift.department.substring(0, 3).toUpperCase()}-${Date.now()}`;
     const allMemberNames = selectedMembers.map(m => m.name);
+    const generatedShift = generateTicketCode('ca', selectedDate, existingIncidents || []);
 
     // Create IncidentRecord for each selected member in this shift
     selectedMembers.forEach((member, index) => {
@@ -370,7 +376,8 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
       };
 
       const record: IncidentRecord = {
-        id: `INC-CA-${Date.now()}-${index + 1}-${member.id}`,
+        id: `${generatedShift.ticketCode}-${index + 1}-${member.id}`,
+        ticketCode: generatedShift.ticketCode,
         type: evalCategory === 'vi_pham' ? 'vi_pham' : 'ghi_nhan',
         reporterId: currentUser?.id || 'MANAGER',
         reporterName: currentUser?.name || 'Quản lý ca làm',
@@ -397,6 +404,7 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
       names: allMemberNames,
       points: impactPoints,
       type: evalCategory === 'vi_pham' ? 'Trừ điểm chấp hành' : (evalCategory === 'khen_thuong' ? 'Cộng điểm chuyên môn' : 'Trừ điểm chuyên môn'),
+      ticketCode: generatedShift.ticketCode,
     });
   };
 
@@ -477,7 +485,28 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
               </p>
             </div>
 
-            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 max-w-lg mx-auto text-left space-y-2">
+            <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200 max-w-lg mx-auto text-left space-y-3">
+              <div className="flex items-center justify-between border-b border-slate-200 pb-2.5">
+                <span className="text-xs font-black text-slate-500 uppercase">Mã Phiếu Đánh Giá Ca:</span>
+                <div className="flex items-center gap-1.5">
+                  <span className="font-mono font-black text-xs text-blue-900 bg-white px-2.5 py-1 rounded-lg border border-blue-300 shadow-2xs tracking-wide">
+                    {submittedMembers.ticketCode}
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      navigator.clipboard.writeText(submittedMembers.ticketCode);
+                      setCopiedCode(true);
+                      setTimeout(() => setCopiedCode(false), 2000);
+                    }}
+                    className="p-1 rounded-md hover:bg-slate-200 text-slate-500 hover:text-blue-700 transition-colors cursor-pointer border border-transparent hover:border-slate-300"
+                    title="Sao chép mã phiếu ca"
+                  >
+                    {copiedCode ? <Check className="w-3.5 h-3.5 text-emerald-600" /> : <Copy className="w-3.5 h-3.5" />}
+                  </button>
+                </div>
+              </div>
+
               <div className="text-xs font-bold text-slate-500 uppercase">Danh sách nhân sự được cập nhật:</div>
               <div className="flex flex-wrap gap-1.5">
                 {submittedMembers.names.map((nm, idx) => (

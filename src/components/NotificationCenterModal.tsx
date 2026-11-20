@@ -17,6 +17,7 @@ import {
   ShieldAlert
 } from 'lucide-react';
 import { requestBrowserNotificationPermission, isBrowserNotificationGranted } from '../services/notificationService';
+import { getIncidentDisplayCode } from '../utils/calculator';
 
 interface NotificationCenterModalProps {
   show: boolean;
@@ -257,8 +258,13 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
                       {notif.body}
                     </p>
 
-                    {notif.impactPoints !== undefined && notif.impactPoints !== 0 && (
-                      <div className="flex items-center gap-1.5 pt-0.5">
+                    <div className="flex items-center gap-1.5 pt-0.5 flex-wrap">
+                      {notif.incidentId && (
+                        <span className="px-2 py-0.5 rounded-md text-[10px] font-black font-mono bg-white text-slate-800 border border-slate-300 shadow-2xs">
+                          {getIncidentDisplayCode({ id: notif.incidentId })}
+                        </span>
+                      )}
+                      {notif.impactPoints !== undefined && notif.impactPoints !== 0 && (
                         <span className={`px-2 py-0.5 rounded-md text-[10px] font-black font-mono ${
                           notif.type === 'noi_quy'
                             ? 'bg-amber-100 text-amber-950 border border-amber-300'
@@ -272,13 +278,13 @@ export const NotificationCenterModal: React.FC<NotificationCenterModalProps> = (
                             ? `+${notif.impactPoints}đ (Thang 5.0)` 
                             : `${notif.impactPoints}đ (Thang 5.0)`}
                         </span>
-                        {notif.senderName && (
-                          <span className="text-[10px] text-slate-400">
-                            bởi {notif.senderName}
-                          </span>
-                        )}
-                      </div>
-                    )}
+                      )}
+                      {notif.senderName && (
+                        <span className="text-[10px] text-slate-400">
+                          bởi {notif.senderName}
+                        </span>
+                      )}
+                    </div>
                   </div>
 
                   {isUnread && (

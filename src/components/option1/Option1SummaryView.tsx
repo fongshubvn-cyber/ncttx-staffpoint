@@ -14,7 +14,8 @@ import {
   isSystemAdmin,
   isPolicyIncident,
   isWorkViolation,
-  isRecognitionIncident
+  isRecognitionIncident,
+  getIncidentDisplayCode
 } from '../../utils/calculator';
 import { PolicyHealthModal } from '../PolicyHealthModal';
 import { 
@@ -616,7 +617,12 @@ export const Option1SummaryView: React.FC<Option1SummaryViewProps> = ({
                           {isRecognition ? <Award className="w-4 h-4" /> : isPolicy ? <BookOpen className="w-4 h-4 text-amber-950" /> : <ShieldAlert className="w-4 h-4" />}
                         </div>
                         <div>
-                          <div className="flex items-center gap-2">
+                          <div className="flex items-center gap-2 flex-wrap">
+                            {/* Mã Số Phiếu Badge */}
+                            <span className="text-[10px] font-mono font-black px-2 py-0.5 rounded-md bg-white border border-slate-300 text-slate-800 shadow-2xs">
+                              {getIncidentDisplayCode(incident)}
+                            </span>
+
                             <span className={`text-xs font-bold px-2 py-0.5 rounded-md ${
                               isRecognition 
                                 ? 'bg-emerald-100 text-emerald-800' 

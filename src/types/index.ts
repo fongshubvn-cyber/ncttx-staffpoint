@@ -71,6 +71,7 @@ export interface Question {
 
 export interface IncidentRecord {
   id: string;
+  ticketCode?: string; // Mã phiếu chuẩn hóa hiển thị: TD-YYMM-XXX, VP-YYMM-XXX, NQ-YYMM-XXX, CA-YYMM-XXX
   type: IncidentType;
   reporterId: string; // Mã NV người tạo
   reporterName: string;
