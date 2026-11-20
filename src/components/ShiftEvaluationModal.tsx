@@ -3,30 +3,30 @@ import { Staff, Question, DepartmentLine, IncidentRecord, ParameterConfig, AuthU
 import { initialPolicyRules } from '../data/seedData';
 import { INCIDENT_KEYWORDS, matchesKeywordWordBoundary } from './IncidentFormModal';
 import { generateTicketCode } from '../utils/calculator';
-import { 
-  fetchAndParseShiftWorkbook, 
-  getCachedShiftData, 
-  ShiftGroup, 
+import {
+  fetchAndParseShiftWorkbook,
+  getCachedShiftData,
+  ShiftGroup,
   ShiftMember,
-  DEFAULT_SHIFT_SHEET_URL 
+  DEFAULT_SHIFT_SHEET_URL
 } from '../services/shiftService';
-import { 
-  Calendar, 
-  Clock, 
-  Users, 
-  RefreshCw, 
-  CheckCircle2, 
-  AlertTriangle, 
-  X, 
-  Sparkles, 
-  Megaphone, 
-  BookOpen, 
-  ShieldCheck, 
-  Image as ImageIcon, 
-  Building2, 
-  Layers, 
-  Check, 
-  VolumeX, 
+import {
+  Calendar,
+  Clock,
+  Users,
+  RefreshCw,
+  CheckCircle2,
+  AlertTriangle,
+  X,
+  Sparkles,
+  Megaphone,
+  BookOpen,
+  ShieldCheck,
+  Image as ImageIcon,
+  Building2,
+  Layers,
+  Check,
+  VolumeX,
   Info,
   ChevronDown,
   Copy
@@ -38,7 +38,7 @@ interface ShiftEvaluationModalProps {
   staffList: Staff[];
   questions: Question[];
   lines: DepartmentLine[];
-  onAddIncident: (incident: IncidentRecord) => void;
+  onAddIncident: (incident: IncidentRecord) => Promise<boolean | void> | void;
   currentUser?: AuthUser | null;
   params?: ParameterConfig;
   existingIncidents?: IncidentRecord[];
@@ -108,6 +108,7 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
 
   // Submission Status
   const [submittedMembers, setSubmittedMembers] = useState<{ count: number; names: string[]; points: number; type: string; ticketCode: string } | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [copiedCode, setCopiedCode] = useState(false);
 
   const policyRulesList = (params?.policyRules && params.policyRules.length > 0)
@@ -341,8 +342,9 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
   };
 
   // Handle Submission
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (isSubmitting) return;
 
     if (!currentShift) {
       alert('Vui lòng chọn ca làm việc để đánh giá!');
@@ -360,58 +362,64 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
       return;
     }
 
-    const batchSessionId = `SHIFT-${selectedDate.replace(/-/g, '')}-${currentShift.department.substring(0, 3).toUpperCase()}-${Date.now()}`;
     const allMemberNames = selectedMembers.map(m => m.name);
     const generatedShift = generateTicketCode('ca', selectedDate, existingIncidents || []);
 
-    // Create IncidentRecord for each selected member in this shift
-    selectedMembers.forEach((member, index) => {
-      // Find full staff info from staffList
-      const fullStaff = staffList.find(s => s.id === member.id) || {
-        id: member.id,
-        name: member.name,
-        role: member.role || 'Nhân viên',
-        department: currentShift.department,
-        line: currentShift.department,
-      };
+    setIsSubmitting(true);
+    try {
+      // Create IncidentRecord for each selected member in this shift
+      for (let index = 0; index < selectedMembers.length; index++) {
+        const member = selectedMembers[index];
+        const fullStaff = staffList.find(s => s.id === member.id) || {
+          id: member.id,
+          name: member.name,
+          role: member.role || 'Nhân viên',
+          department: currentShift.department,
+          line: currentShift.department,
+        };
 
-      const record: IncidentRecord = {
-        id: `${generatedShift.ticketCode}-${index + 1}-${member.id}`,
+        const record: IncidentRecord = {
+          id: `${generatedShift.ticketCode}-${index + 1}-${member.id}`,
+          ticketCode: generatedShift.ticketCode,
+          type: evalCategory === 'vi_pham' ? 'vi_pham' : 'ghi_nhan',
+          reporterId: currentUser?.id || 'MANAGER',
+          reporterName: currentUser?.name || 'Quản lý ca làm',
+          targetId: member.id,
+          targetName: member.name,
+          targetRole: (fullStaff as any).role || member.role || 'Nhân sự ca làm',
+          title: `[CA: ${currentShift.shiftName}] ${title}`,
+          description: `${description || title}\n\n[Đánh giá tập thể ca]: ${currentShift.department} - ${currentShift.shiftName} ngày ${selectedDate} (Điểm bán: ${currentShift.location}).\nCác thành viên cùng ca: ${allMemberNames.join(', ')}.`,
+          severity: evalCategory === 'vi_pham' ? 'Nghiêm trọng' : 'Vừa',
+          date: selectedDate,
+          createdAt: new Date().toISOString(),
+          status: 'Đã ghi nhận',
+          impactPoints: evalCategory === 'vi_pham' ? 0 : impactPoints,
+          policyPenaltyPoints: evalCategory === 'vi_pham' ? Math.abs(impactPoints) : 0,
+          policyRuleId: evalCategory === 'vi_pham' ? policyRuleId : undefined,
+          imageUrl: imagePreview || undefined,
+        };
+
+        await Promise.resolve(onAddIncident(record));
+      }
+
+      setSubmittedMembers({
+        count: selectedMembers.length,
+        names: allMemberNames,
+        points: impactPoints,
+        type: evalCategory === 'vi_pham' ? 'Trừ điểm chấp hành' : (evalCategory === 'khen_thuong' ? 'Cộng điểm chuyên môn' : 'Trừ điểm chuyên môn'),
         ticketCode: generatedShift.ticketCode,
-        type: evalCategory === 'vi_pham' ? 'vi_pham' : 'ghi_nhan',
-        reporterId: currentUser?.id || 'MANAGER',
-        reporterName: currentUser?.name || 'Quản lý ca làm',
-        targetId: member.id,
-        targetName: member.name,
-        targetRole: (fullStaff as any).role || member.role || 'Nhân sự ca làm',
-        title: `[CA: ${currentShift.shiftName}] ${title}`,
-        description: `${description || title}\n\n[Đánh giá tập thể ca]: ${currentShift.department} - ${currentShift.shiftName} ngày ${selectedDate} (Điểm bán: ${currentShift.location}).\nCác thành viên cùng ca: ${allMemberNames.join(', ')}.`,
-        severity: evalCategory === 'vi_pham' ? 'Nghiêm trọng' : 'Vừa',
-        date: selectedDate,
-        createdAt: new Date().toISOString(),
-        status: 'Đã ghi nhận',
-        impactPoints: evalCategory === 'vi_pham' ? 0 : impactPoints,
-        policyPenaltyPoints: evalCategory === 'vi_pham' ? Math.abs(impactPoints) : 0,
-        policyRuleId: evalCategory === 'vi_pham' ? policyRuleId : undefined,
-        imageUrl: imagePreview || undefined,
-      };
-
-      onAddIncident(record);
-    });
-
-    setSubmittedMembers({
-      count: selectedMembers.length,
-      names: allMemberNames,
-      points: impactPoints,
-      type: evalCategory === 'vi_pham' ? 'Trừ điểm chấp hành' : (evalCategory === 'khen_thuong' ? 'Cộng điểm chuyên môn' : 'Trừ điểm chuyên môn'),
-      ticketCode: generatedShift.ticketCode,
-    });
+      });
+    } catch (err) {
+      console.error('Lỗi khi ghi nhận ca:', err);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm animate-fade-in print:hidden overflow-y-auto">
       <div className="bg-white rounded-3xl max-w-3xl w-full max-h-[92vh] flex flex-col shadow-2xl border border-slate-100 transform transition-all animate-scale-up my-auto overflow-hidden">
-        
+
         {/* Header */}
         <div className="p-4 sm:p-6 bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] text-white flex items-start justify-between relative shrink-0">
           <div className="space-y-1">
@@ -539,7 +547,7 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
           </div>
         ) : (
           <form onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
-            
+
             {/* Step 1: Pick Date & Shift */}
             <div className="p-4 rounded-2xl bg-slate-50 border border-slate-200/90 space-y-3.5">
               <div className="flex items-center justify-between">
@@ -566,11 +574,10 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                     <button
                       type="button"
                       onClick={() => setSelectedDate(getTodayStr())}
-                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md transition-all cursor-pointer ${
-                        selectedDate === getTodayStr()
-                          ? 'bg-emerald-700 text-white'
-                          : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300'
-                      }`}
+                      className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md transition-all cursor-pointer ${selectedDate === getTodayStr()
+                        ? 'bg-emerald-700 text-white'
+                        : 'bg-slate-200/80 text-slate-700 hover:bg-slate-300'
+                        }`}
                     >
                       Hôm nay
                     </button>
@@ -592,11 +599,10 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                       <button
                         type="button"
                         onClick={() => setSelectedDate(closestDateForDept)}
-                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md transition-all cursor-pointer ${
-                          selectedDate === closestDateForDept
-                            ? 'bg-emerald-700 text-white'
-                            : 'bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200'
-                        }`}
+                        className={`text-[10px] font-extrabold px-2 py-0.5 rounded-md transition-all cursor-pointer ${selectedDate === closestDateForDept
+                          ? 'bg-emerald-700 text-white'
+                          : 'bg-amber-100 text-amber-900 border border-amber-300 hover:bg-amber-200'
+                          }`}
                         title="Xem ngày gần nhất có ca làm việc của bộ phận này"
                       >
                         Ca gần nhất ({closestDateForDept.slice(5)})
@@ -701,16 +707,15 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                         <div
                           key={member.id}
                           onClick={() => handleToggleMember(member.id)}
-                          className={`flex items-center gap-2.5 p-2 rounded-xl border transition-all cursor-pointer ${
-                            isChecked
-                              ? 'bg-emerald-50/80 border-emerald-300 shadow-2xs'
-                              : 'bg-slate-50/60 border-slate-200 opacity-60 hover:opacity-100'
-                          }`}
+                          className={`flex items-center gap-2.5 p-2 rounded-xl border transition-all cursor-pointer ${isChecked
+                            ? 'bg-emerald-50/80 border-emerald-300 shadow-2xs'
+                            : 'bg-slate-50/60 border-slate-200 opacity-60 hover:opacity-100'
+                            }`}
                         >
                           <input
                             type="checkbox"
                             checked={isChecked}
-                            onChange={() => {}} // Handled by parent div onClick
+                            onChange={() => { }} // Handled by parent div onClick
                             className="w-4 h-4 rounded text-emerald-600 focus:ring-emerald-500 border-slate-300 cursor-pointer"
                           />
                           <div className="w-7 h-7 rounded-lg bg-emerald-700 text-white flex items-center justify-center text-xs font-bold shrink-0">
@@ -755,11 +760,10 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleChangeEvalCategory('nhac_nho')}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
-                    evalCategory === 'nhac_nho'
-                      ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400/30 shadow-sm'
-                      : 'bg-white border-slate-200 hover:bg-slate-50'
-                  }`}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${evalCategory === 'nhac_nho'
+                    ? 'bg-amber-50 border-amber-400 ring-2 ring-amber-400/30 shadow-sm'
+                    : 'bg-white border-slate-200 hover:bg-slate-50'
+                    }`}
                 >
                   <div className={`p-2.5 rounded-xl ${evalCategory === 'nhac_nho' ? 'bg-amber-500 text-white' : 'bg-slate-100 text-slate-600'}`}>
                     <Megaphone className="w-4 h-4" />
@@ -774,11 +778,10 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleChangeEvalCategory('khen_thuong')}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
-                    evalCategory === 'khen_thuong'
-                      ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/30 shadow-sm'
-                      : 'bg-white border-slate-200 hover:bg-slate-50'
-                  }`}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${evalCategory === 'khen_thuong'
+                    ? 'bg-emerald-50 border-emerald-400 ring-2 ring-emerald-400/30 shadow-sm'
+                    : 'bg-white border-slate-200 hover:bg-slate-50'
+                    }`}
                 >
                   <div className={`p-2.5 rounded-xl ${evalCategory === 'khen_thuong' ? 'bg-emerald-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
                     <Sparkles className="w-4 h-4" />
@@ -793,11 +796,10 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                 <button
                   type="button"
                   onClick={() => handleChangeEvalCategory('vi_pham')}
-                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${
-                    evalCategory === 'vi_pham'
-                      ? 'bg-rose-50 border-rose-400 ring-2 ring-rose-400/30 shadow-sm'
-                      : 'bg-white border-slate-200 hover:bg-slate-50'
-                  }`}
+                  className={`p-3 rounded-2xl border text-left transition-all cursor-pointer flex items-center gap-3 ${evalCategory === 'vi_pham'
+                    ? 'bg-rose-50 border-rose-400 ring-2 ring-rose-400/30 shadow-sm'
+                    : 'bg-white border-slate-200 hover:bg-slate-50'
+                    }`}
                 >
                   <div className={`p-2.5 rounded-xl ${evalCategory === 'vi_pham' ? 'bg-rose-600 text-white' : 'bg-slate-100 text-slate-600'}`}>
                     <BookOpen className="w-4 h-4" />
@@ -823,11 +825,10 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                       key={kw.id}
                       type="button"
                       onClick={() => handleSelectKeyword(kw.id)}
-                      className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold transition-all border whitespace-nowrap cursor-pointer ${
-                        isSelected
-                          ? 'bg-[#1B4332] text-white border-[#1B4332] shadow-2xs scale-105'
-                          : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                      }`}
+                      className={`flex-shrink-0 flex items-center gap-1 px-2.5 py-1 rounded-xl text-xs font-extrabold transition-all border whitespace-nowrap cursor-pointer ${isSelected
+                        ? 'bg-[#1B4332] text-white border-[#1B4332] shadow-2xs scale-105'
+                        : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                        }`}
                     >
                       <span>{kw.icon}</span>
                       <span>{kw.name}</span>
@@ -878,11 +879,10 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                           key={pt}
                           type="button"
                           onClick={() => setImpactPoints(pt)}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-black transition-all border cursor-pointer ${
-                            impactPoints === pt
-                              ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
-                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                          }`}
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-black transition-all border cursor-pointer ${impactPoints === pt
+                            ? 'bg-emerald-600 text-white border-emerald-600 shadow-2xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
                         >
                           +{pt}đ
                         </button>
@@ -893,11 +893,10 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
                           key={pt}
                           type="button"
                           onClick={() => setImpactPoints(pt)}
-                          className={`flex-1 py-1.5 rounded-xl text-xs font-black transition-all border cursor-pointer ${
-                            impactPoints === pt
-                              ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
-                              : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
-                          }`}
+                          className={`flex-1 py-1.5 rounded-xl text-xs font-black transition-all border cursor-pointer ${impactPoints === pt
+                            ? 'bg-amber-600 text-white border-amber-600 shadow-2xs'
+                            : 'bg-white text-slate-700 border-slate-200 hover:bg-slate-50'
+                            }`}
                         >
                           {pt}đ
                         </button>
@@ -987,11 +986,20 @@ export const ShiftEvaluationModal: React.FC<ShiftEvaluationModalProps> = ({
               </button>
               <button
                 type="submit"
-                disabled={selectedMembersCount === 0}
+                disabled={selectedMembersCount === 0 || isSubmitting}
                 className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-gradient-to-r from-[#1B4332] to-[#2D6A4F] hover:from-[#143225] hover:to-[#22533e] text-white font-extrabold text-xs shadow-md transition-all active:scale-95 disabled:opacity-50 cursor-pointer"
               >
-                <Check className="w-4 h-4" />
-                <span>Ghi Nhận Cho {selectedMembersCount} Nhân Sự</span>
+                {isSubmitting ? (
+                  <>
+                    <div className="w-3.5 h-3.5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                    <span>Đang lưu vào Database...</span>
+                  </>
+                ) : (
+                  <>
+                    <Check className="w-4 h-4" />
+                    <span>Ghi Nhận Cho {selectedMembersCount} Nhân Sự</span>
+                  </>
+                )}
               </button>
             </div>
           </form>

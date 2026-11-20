@@ -59,6 +59,7 @@ import {
   getSavedNotifications, 
   persistNotifications, 
   buildIncidentNotification, 
+  buildReporterConfirmationNotification,
   triggerBrowserNotification, 
   playNotificationSound 
 } from './services/notificationService';
@@ -105,6 +106,20 @@ export function App() {
     const saved = localStorage.getItem('ncttx_user_passwords');
     return saved ? JSON.parse(saved) : {};
   });
+
+  const notificationsRef = React.useRef<AppNotification[]>(notifications);
+  useEffect(() => {
+    notificationsRef.current = notifications;
+  }, [notifications]);
+
+  const currentUserRef = React.useRef<AuthUser | null>(currentUser);
+  useEffect(() => {
+    currentUserRef.current = currentUser;
+  }, [currentUser]);
+
+  const isInitialIncidentsSnapshotRef = React.useRef<boolean>(true);
+  const knownIncidentIdsRef = React.useRef<Set<string>>(new Set());
+  const dispatchNotifRef = React.useRef<(notif: AppNotification) => void>(() => {});
 
   // Blacklist các mã nhân sự đã bị xóa để tránh tự động phục hồi khi đồng bộ Google Sheet hay nạp seed
   const [deletedStaffIds, setDeletedStaffIds] = useState<string[]>(() => {
@@ -217,6 +232,11 @@ export function App() {
     };
   });
 
+  const paramsRef = React.useRef<ParameterConfig>(params);
+  useEffect(() => {
+    paramsRef.current = params;
+  }, [params]);
+
   const baselinePoints = useMemo(() => getCalculatedBaselinePoints(params), [params]);
 
   // Track which collections have completed initial Cloud load
@@ -275,6 +295,48 @@ export function App() {
     const unsubIncidents = subscribeToCollection('incidents', (cloudData) => {
       isCloudLoadedRef.current['incidents'] = true;
       if (Array.isArray(cloudData)) {
+        // Phục hồi và dọn dẹp trên lần nạp snapshot đầu tiên
+        if (isInitialIncidentsSnapshotRef.current) {
+          isInitialIncidentsSnapshotRef.current = false;
+          knownIncidentIdsRef.current = new Set(cloudData.map((i: IncidentRecord) => i.id));
+
+          // Dọn sạch các thông báo rác (ghost notifications) mà mã phiếu không hề tồn tại trong database Cloud
+          const validCloudIds = new Set(cloudData.filter((i: IncidentRecord) => !i.isPurged && !i.isDeleted).map((i: IncidentRecord) => i.id));
+          setNotifications(prev => {
+            const cleaned = prev.filter(n => !n.incidentId || validCloudIds.has(n.incidentId));
+            if (cleaned.length !== prev.length) {
+              persistNotifications(cleaned);
+              notificationsRef.current = cleaned;
+            }
+            return cleaned;
+          });
+        } else {
+          // Các snapshot tiếp theo: Phát hiện phiếu mới được ghi nhận thành công từ thiết bị khác
+          cloudData.forEach((item: IncidentRecord) => {
+            if (item && item.id && !knownIncidentIdsRef.current.has(item.id)) {
+              knownIncidentIdsRef.current.add(item.id);
+              if (!item.isPurged && !item.isDeleted) {
+                const curUser = currentUserRef.current;
+                // Báo cho người bị lập
+                if (curUser?.id === item.targetId) {
+                  const targetNotif = buildIncidentNotification(item, true);
+                  dispatchNotifRef.current(targetNotif);
+                }
+                // Báo xác nhận cho người lập
+                if (curUser?.id === item.reporterId) {
+                  const reporterNotif = buildReporterConfirmationNotification(item);
+                  dispatchNotifRef.current(reporterNotif);
+                }
+                // Admin nhận thông báo theo dõi
+                if (isSystemAdmin(curUser) && curUser?.id !== item.targetId && curUser?.id !== item.reporterId) {
+                  const adminNotif = buildIncidentNotification(item, false);
+                  dispatchNotifRef.current(adminNotif);
+                }
+              }
+            }
+          });
+        }
+
         setIncidents(prevIncidents => {
           const map = new Map<string, IncidentRecord>();
           // Put cloud items
@@ -693,23 +755,39 @@ export function App() {
 
   // Notification Dispatcher
   const handleDispatchNotification = (notif: AppNotification) => {
+    // 1. Deduplication check against in-memory ref
+    const isDuplicate = notificationsRef.current.some(n =>
+      n.id === notif.id ||
+      (notif.incidentId && n.incidentId === notif.incidentId && n.recipientId === notif.recipientId)
+    );
+    if (isDuplicate) return;
+
+    // 2. Add to state & persist
     setNotifications(prev => {
-      const updated = [notif, ...prev.filter(n => n.id !== notif.id)];
+      if (prev.some(n => n.id === notif.id || (notif.incidentId && n.incidentId === notif.incidentId && n.recipientId === notif.recipientId))) {
+        return prev;
+      }
+      const updated = [notif, ...prev];
       persistNotifications(updated);
+      notificationsRef.current = updated;
       return updated;
     });
 
-    const isTarget = !currentUser || notif.recipientId === currentUser.id || notif.recipientId === 'ALL';
-    const isStoreAdmin = isSystemAdmin(currentUser);
+    const curUser = currentUserRef.current;
+    const isTarget = !curUser || notif.recipientId === curUser.id || notif.recipientId === 'ALL';
+    const isStoreAdmin = isSystemAdmin(curUser);
 
     if (isTarget || isStoreAdmin) {
       setToastNotification(notif);
       playNotificationSound();
-      if (params.enableWebNotifications !== false) {
+      if (paramsRef.current?.enableWebNotifications !== false) {
         triggerBrowserNotification(notif.title, notif.body);
       }
     }
   };
+
+  // Keep dispatchNotifRef updated
+  dispatchNotifRef.current = handleDispatchNotification;
 
   const handleMarkNotificationAsRead = (id: string) => {
     setNotifications(prev => {
@@ -733,20 +811,63 @@ export function App() {
   };
 
   // Handler: Add new incident record (accessible to any account)
-  const handleAddIncident = (newIncident: IncidentRecord) => {
-    setIncidents(prev => {
-      const updated = [newIncident, ...prev];
-      notifySync('incidents', updated);
-      return updated;
-    });
+  // Chỉ gửi thông báo cho Người Lập & Người Bị Lập khi và chỉ khi phiếu đã được ghi nhận thành công vào Database Cloud
+  const handleAddIncident = async (newIncident: IncidentRecord): Promise<boolean> => {
+    try {
+      // 1. Ghi nhận trực tiếp vào Firestore Database bằng Atomic Transaction
+      const isSaved = await saveIncidentAtomic(newIncident);
 
-    if (newIncident.status === 'Đã duyệt' || newIncident.status === 'Đã ghi nhận' || newIncident.type === 'vi_pham') {
-      applyIncidentScoreImpact(newIncident);
+      if (!isSaved) {
+        console.warn('saveIncidentAtomic failed, retrying with syncIncidentsToCloudAtomic...');
+        const currentList = JSON.parse(localStorage.getItem('ncttx_incidents') || '[]');
+        const retryResult = await syncIncidentsToCloudAtomic([newIncident, ...currentList]);
+        const confirmedInCloud = retryResult.some(i => i && i.id === newIncident.id);
+        if (!confirmedInCloud) {
+          throw new Error('Database không phản hồi hoặc mất kết nối mạng.');
+        }
+      }
+
+      // Đánh dấu mã phiếu đã được xử lý để tránh snapshot Cloud dội về gửi lặp thông báo
+      knownIncidentIdsRef.current.add(newIncident.id);
+
+      // 2. KHI VÀ CHỈ KHI DATABASE ĐÃ GHI NHẬN THÀNH CÔNG:
+      // Cập nhật State local & LocalStorage
+      setIncidents(prev => {
+        const updated = [newIncident, ...prev.filter(i => i.id !== newIncident.id)];
+        localStorage.setItem('ncttx_incidents', JSON.stringify(updated));
+        return updated;
+      });
+
+      // Áp dụng điểm số
+      if (newIncident.status === 'Đã duyệt' || newIncident.status === 'Đã ghi nhận' || newIncident.type === 'vi_pham') {
+        applyIncidentScoreImpact(newIncident);
+      }
+
+      // Broadcast qua syncChannel cho các tab cùng trình duyệt
+      if (syncChannelRef.current) {
+        syncChannelRef.current.postMessage({
+          type: 'INCIDENTS_UPDATED',
+          payload: [newIncident],
+        });
+      }
+
+      // 3. PHÁT THÔNG BÁO CHO CẢ 2 BÊN (NGƯỜI BỊ LẬP VÀ NGƯỜI LẬP):
+      // A. Thông báo cho Người Bị Lập (Target Staff)
+      const targetNotif = buildIncidentNotification(newIncident, currentUserRef.current?.id === newIncident.targetId);
+      handleDispatchNotification(targetNotif);
+
+      // B. Thông báo xác nhận cho Người Lập (Reporter Staff)
+      if (newIncident.reporterId) {
+        const reporterNotif = buildReporterConfirmationNotification(newIncident);
+        handleDispatchNotification(reporterNotif);
+      }
+
+      return true;
+    } catch (err: any) {
+      console.error('Lỗi khi ghi nhận phiếu vào database:', err);
+      alert(`⚠️ Không thể lưu phiếu vào Database:\n${err?.message || 'Lỗi kết nối mạng hoặc phân quyền Cloud'}.\n\nPhiếu CHƯA được ghi nhận và chưa gửi thông báo.`);
+      return false;
     }
-
-    // Trigger Notification for Target Staff & Web App
-    const notif = buildIncidentNotification(newIncident, currentUser?.id === newIncident.targetId);
-    handleDispatchNotification(notif);
   };
 
   // Handler: Admin & Co-Admin soft-deletes an incident record (moves to Trash Bin)
