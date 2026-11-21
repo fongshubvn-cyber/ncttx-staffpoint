@@ -281,7 +281,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 title="Bấm để xoá Cache & làm mới phiên bản mới nhất ngay lập tức (không cần gỡ app)"
               >
                 <RefreshCw className={`w-2.5 h-2.5 text-emerald-700 ${isHardRefreshing ? 'animate-spin' : ''}`} />
-                <span>v1.039</span>
+                <span>v1.040</span>
               </button>
             </div>
           </div>
@@ -539,7 +539,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <div className="text-left">
                   <div className="text-xs font-black flex items-center gap-1.5 text-emerald-900">
                     <span>Làm Mới Cache & Nhận Bản Mới</span>
-                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.039</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.040</span>
                   </div>
                   <div className="text-[10px] text-emerald-700 font-medium">Bấm 1 chạm xoá cache & cập nhật tính năng mới</div>
                 </div>
@@ -1050,8 +1050,8 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
 
       {/* Modal Popup Lựa Chọn Loại Phản Hồi ("Đánh giá" vs "Phản ánh nội quy") */}
       {showFeedbackChoiceModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-fade-in print:hidden">
-          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 transform transition-all animate-scale-up">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in print:hidden">
+          <div className="bg-white rounded-3xl max-w-md w-full p-6 shadow-2xl border border-slate-100 space-y-5 transform transition-all animate-scale-up my-auto max-h-[92vh] overflow-y-auto overscroll-contain">
             <div className="flex items-center justify-between pb-3 border-b border-slate-100">
               <div className="flex items-center gap-2.5">
                 <div className="p-2 bg-emerald-100 text-emerald-800 rounded-2xl">

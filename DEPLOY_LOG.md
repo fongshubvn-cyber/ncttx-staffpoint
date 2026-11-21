@@ -1,5 +1,11 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
+## 🚀 [v1.040] - 21/11/2026 13:22
+* **Mô tả:** Fix-loi-khong-cuon-duoc-modal-chinh-sua-va-them-nhan-su
+* **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
+
+---
+
 ## 🚀 [v1.039] - 21/11/2026 13:10
 * **Mô tả:** Tich-hop-co-che-cham-theo-ca-truc-tiep-vao-Ghi-nhan-va-Vi-pham
 * **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.

@@ -557,8 +557,8 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
 
       {/* STAFF DETAIL MODAL */}
       {selectedStaff && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/60 backdrop-blur-sm animate-in fade-in">
-          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 overflow-y-auto max-h-[90vh]">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full p-6 shadow-2xl border border-slate-200 space-y-4 overflow-y-auto max-h-[92vh] my-auto overscroll-contain">
             <div className="flex items-start justify-between border-b border-slate-100 pb-3">
               <div className="flex items-center gap-3">
                 <div className="w-12 h-12 rounded-2xl bg-emerald-600 text-white font-black text-xl flex items-center justify-center shadow-md">
@@ -716,16 +716,23 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
 
       {/* ADD STAFF MODAL */}
       {showAddModal && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900">Thêm Nhân Sự Mới</h3>
-              <button onClick={() => setShowAddModal(false)} className="text-slate-400 hover:text-slate-600">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] my-auto flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">Thêm Nhân Sự Mới</h3>
+                <p className="text-[11px] text-slate-500 font-medium">Tạo hồ sơ và thiết lập ngạch làm việc</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAddModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleCreateStaff} className="space-y-3 text-xs">
+            <form onSubmit={handleCreateStaff} className="p-4 sm:p-6 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain">
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Mã Nhân Sự (VD: TTX031)</label>
                 <input
@@ -799,17 +806,17 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                 </select>
               </div>
 
-              <div className="pt-2 flex gap-2">
+              <div className="pt-3 flex gap-2 sticky bottom-0 bg-white/95 backdrop-blur-xs py-2 border-t border-slate-100 -mx-1 px-1">
                 <button
                   type="button"
                   onClick={() => setShowAddModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50"
+                  className="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 shadow-md shadow-emerald-600/20"
+                  className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold font-heading text-xs shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
                 >
                   Tạo Nhân Sự ✨
                 </button>
@@ -821,16 +828,23 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
 
       {/* EDIT STAFF MODAL */}
       {showEditModal && editingStaff && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-900/40 backdrop-blur-sm">
-          <div className="bg-white rounded-3xl p-6 max-w-md w-full shadow-2xl border border-slate-200 space-y-4">
-            <div className="flex items-center justify-between border-b border-slate-100 pb-3">
-              <h3 className="text-lg font-bold text-slate-900">Chỉnh Sửa Nhân Sự: {editingStaff.name}</h3>
-              <button onClick={() => setShowEditModal(false)} className="text-slate-400 hover:text-slate-600">
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-5 bg-slate-900/60 backdrop-blur-sm overflow-y-auto animate-fade-in">
+          <div className="bg-white rounded-3xl max-w-lg w-full max-h-[92vh] my-auto flex flex-col shadow-2xl border border-slate-200 overflow-hidden">
+            <div className="p-4 sm:p-5 border-b border-slate-100 flex items-center justify-between shrink-0 bg-white">
+              <div>
+                <h3 className="text-base sm:text-lg font-bold text-slate-900">Chỉnh Sửa Nhân Sự: {editingStaff.name}</h3>
+                <p className="text-[11px] text-slate-500 font-medium">Toàn quyền Admin: cập nhật chức danh, ngạch và quyền hạn</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowEditModal(false)}
+                className="w-8 h-8 rounded-full bg-slate-100 hover:bg-slate-200 text-slate-500 hover:text-slate-800 flex items-center justify-center transition-colors cursor-pointer"
+              >
                 <X className="w-5 h-5" />
               </button>
             </div>
 
-            <form onSubmit={handleSaveEditStaff} className="space-y-3 text-xs">
+            <form onSubmit={handleSaveEditStaff} className="p-4 sm:p-6 overflow-y-auto space-y-3.5 text-xs flex-1 overscroll-contain">
               <div>
                 <label className="block text-slate-700 font-semibold mb-1">Họ và Tên</label>
                 <input
@@ -1047,17 +1061,17 @@ export const Option1StaffView: React.FC<Option1StaffViewProps> = ({
                 </label>
               </div>
 
-              <div className="pt-2 flex gap-2">
+              <div className="pt-3 flex gap-2 sticky bottom-0 bg-white/95 backdrop-blur-xs py-2 border-t border-slate-100 -mx-1 px-1">
                 <button
                   type="button"
                   onClick={() => setShowEditModal(false)}
-                  className="flex-1 py-2.5 rounded-xl border border-slate-200 text-slate-600 font-semibold hover:bg-slate-50"
+                  className="flex-1 py-3 rounded-2xl border border-slate-200 text-slate-600 font-bold hover:bg-slate-50 transition-all cursor-pointer"
                 >
                   Hủy
                 </button>
                 <button
                   type="submit"
-                  className="flex-1 py-2.5 rounded-xl bg-emerald-600 text-white font-semibold hover:bg-emerald-700 shadow-md shadow-emerald-600/20"
+                  className="flex-1 py-3 rounded-2xl bg-emerald-600 hover:bg-emerald-700 text-white font-bold font-heading text-xs shadow-md shadow-emerald-600/20 transition-all cursor-pointer"
                 >
                   Lưu Thay Đổi ✨
                 </button>
