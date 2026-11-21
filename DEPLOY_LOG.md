@@ -1,5 +1,11 @@
 # 📋 Nhật Ký Triển Khai (Deploy Log) - NCTTX Staffpoint
 
+## 🚀 [v1.039] - 21/11/2026 13:10
+* **Mô tả:** Tich-hop-co-che-cham-theo-ca-truc-tiep-vao-Ghi-nhan-va-Vi-pham
+* **Hạ tầng triển khai:** Tự động đồng bộ trên Vercel (Production) và GitHub Pages.
+
+---
+
 ## 🚀 [v1.038] - 20/11/2026 15:10
 * **Mô tả:**
   * **Thiết kế lại khung tiêu đề phân nhóm phòng ban (`Option1StaffView`):**

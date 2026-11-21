@@ -281,7 +281,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 title="Bấm để xoá Cache & làm mới phiên bản mới nhất ngay lập tức (không cần gỡ app)"
               >
                 <RefreshCw className={`w-2.5 h-2.5 text-emerald-700 ${isHardRefreshing ? 'animate-spin' : ''}`} />
-                <span>v1.038</span>
+                <span>v1.039</span>
               </button>
             </div>
           </div>
@@ -539,7 +539,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                 <div className="text-left">
                   <div className="text-xs font-black flex items-center gap-1.5 text-emerald-900">
                     <span>Làm Mới Cache & Nhận Bản Mới</span>
-                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.038</span>
+                    <span className="px-1.5 py-0.2 rounded-md bg-emerald-200 text-emerald-900 text-[9px] font-mono font-black">v1.039</span>
                   </div>
                   <div className="text-[10px] text-emerald-700 font-medium">Bấm 1 chạm xoá cache & cập nhật tính năng mới</div>
                 </div>
@@ -1071,7 +1071,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
             </div>
 
             <div className="grid grid-cols-1 gap-3 pt-1">
-              {/* Lựa chọn 1: Ghi nhận đóng góp và khen thưởng */}
+              {/* Lựa chọn 1: Ghi nhận đóng góp và khen thưởng (Cá nhân hoặc Cả ca) */}
               <button
                 onClick={() => {
                   setShowFeedbackChoiceModal(false);
@@ -1092,12 +1092,12 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Ghi nhận việc tốt, khen thưởng tuyên dương hoặc đánh giá tích cực hiệu quả công việc.
+                    Ghi nhận việc tốt, khen thưởng tuyên dương cho <strong>cá nhân</strong> hoặc <strong>cả ca làm việc</strong>.
                   </p>
                 </div>
               </button>
 
-              {/* Lựa chọn 2: Vi phạm tiêu chuẩn công việc */}
+              {/* Lựa chọn 2: Vi phạm tiêu chuẩn công việc (Cá nhân hoặc Cả ca) */}
               <button
                 onClick={() => {
                   setShowFeedbackChoiceModal(false);
@@ -1118,7 +1118,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Lập biên bản vi phạm quy trình chuyên môn, sự cố công việc hoặc nhắc nhở ranh giới không thỏa hiệp.
+                    Lập biên bản vi phạm chuyên môn, sự cố hoặc nhắc nhở nề nếp cho <strong>cá nhân</strong> hoặc <strong>cả ca làm việc</strong>.
                   </p>
                 </div>
               </button>
@@ -1144,33 +1144,7 @@ export const Option1Layout: React.FC<Option1LayoutProps> = ({
                     </span>
                   </div>
                   <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Lập biên bản phản ánh vi phạm nội quy, giờ giấc, trật tự, tác phong hoặc ứng xử (Quỹ 100đ).
-                  </p>
-                </div>
-              </button>
-
-              {/* Lựa chọn 4: Đánh giá tập thể ca làm việc (Lịch Google Sheet) */}
-              <button
-                onClick={() => {
-                  setShowFeedbackChoiceModal(false);
-                  setShowShiftEvalModal(true);
-                }}
-                className="group relative p-3.5 rounded-2xl bg-gradient-to-br from-blue-50/80 via-indigo-50/40 to-teal-100/30 hover:from-blue-100/90 hover:to-indigo-100/80 border border-blue-200 text-left transition-all duration-200 hover:shadow-md cursor-pointer flex items-start gap-3.5"
-              >
-                <div className="p-2.5 bg-gradient-to-br from-blue-600 to-indigo-600 text-white rounded-2xl shadow-sm shrink-0 group-hover:scale-110 transition-all duration-200">
-                  <Users className="w-5 h-5 text-white" />
-                </div>
-                <div className="space-y-1 flex-1">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-extrabold text-blue-950 group-hover:text-blue-900">
-                      👥 Đánh giá tập thể ca làm việc
-                    </span>
-                    <span className="px-2 py-0.5 rounded-full bg-blue-200/80 text-blue-900 text-[10px] font-black font-mono">
-                      Live 1 phút
-                    </span>
-                  </div>
-                  <p className="text-xs text-slate-600 leading-relaxed font-medium">
-                    Đồng bộ lịch ca Google Sheet (quét 1 phút/lần). Đánh giá hoặc khen thưởng tác động đồng loạt tất cả nhân sự trong ca.
+                    Lập biên bản phản ánh vi phạm nội quy, giờ giấc, trật tự, tác phong (Quỹ 100đ).
                   </p>
                 </div>
               </button>

@@ -1,8 +1,14 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import { Staff, Question, DepartmentLine, IncidentRecord, IncidentType, SeverityLevel, ParameterConfig, AuthUser } from '../types';
 import { isManagementRole, isSystemAdmin, generateTicketCode, getIncidentDisplayCode } from '../utils/calculator';
 import { initialPolicyRules } from '../data/seedData';
-import { Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X, ShieldAlert, ClipboardCheck, BookOpen, AlertTriangle, Award, Copy } from 'lucide-react';
+import {
+  Trophy, Megaphone, Gift, Info, CheckCircle2, ShieldCheck, UserCheck, Search, Check, X,
+  ShieldAlert, ClipboardCheck, BookOpen, AlertTriangle, Award, Copy,
+  User, Users, Calendar, Clock, MapPin, RefreshCw, Building2
+} from 'lucide-react';
+import { initialShifts } from '../data/initialShifts';
+import { ShiftGroup, fetchAndParseShiftWorkbook, DEFAULT_SHIFT_SHEET_URL } from '../services/shiftService';
 
 export interface KeywordCategory {
   id: string;
@@ -137,10 +143,148 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
   const [copiedCode, setCopiedCode] = useState(false);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  React.useEffect(() => {
+  const getTodayStr = () => {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = (d.getMonth() + 1).toString().padStart(2, '0');
+    const day = d.getDate().toString().padStart(2, '0');
+    return `${y}-${m}-${day}`;
+  };
+
+  // Target Selection Mode: 'individual' (1 nhân sự) hoặc 'shift' (cả ca làm việc)
+  const [targetMode, setTargetMode] = useState<'individual' | 'shift'>('individual');
+  const [shifts, setShifts] = useState<ShiftGroup[]>(initialShifts);
+  const [selectedDate, setSelectedDate] = useState<string>(getTodayStr);
+  const [selectedDept, setSelectedDept] = useState<string>('all');
+  const [selectedShiftKey, setSelectedShiftKey] = useState<string>('');
+  const [selectedMemberIds, setSelectedMemberIds] = useState<Record<string, boolean>>({});
+  const [submittedBatchInfo, setSubmittedBatchInfo] = useState<{ count: number; names: string[]; ticketCode: string } | null>(null);
+
+  // Silently refresh shifts from Google Sheet if URL provided
+  useEffect(() => {
+    if (show && params?.shiftSheetUrl) {
+      fetchAndParseShiftWorkbook(params.shiftSheetUrl)
+        .then(data => {
+          if (data && data.shifts && data.shifts.length > 0) {
+            setShifts(data.shifts);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [show, params?.shiftSheetUrl]);
+
+  // Shift department options
+  const departmentOptions = useMemo(() => {
+    const standardDepts = [
+      { id: 'Pha chế', label: '☕ Pha chế' },
+      { id: 'Thương mại & Dịch vụ', label: '🛍️ Phục vụ & TM' },
+      { id: 'Bếp Bánh', label: '🥖 Bếp Bánh' }
+    ];
+    const existing = new Set(standardDepts.map(d => d.id.toLowerCase()));
+    const extras: { id: string; label: string }[] = [];
+    shifts.forEach(s => {
+      if (s.department && !existing.has(s.department.toLowerCase())) {
+        extras.push({ id: s.department, label: `🏢 ${s.department}` });
+        existing.add(s.department.toLowerCase());
+      }
+    });
+    return [...standardDepts, ...extras];
+  }, [shifts]);
+
+  const availableDatesForDept = useMemo(() => {
+    const datesSet = new Set<string>();
+    shifts.forEach(s => {
+      let matches = false;
+      if (selectedDept === 'all') matches = true;
+      else if (s.department === selectedDept) matches = true;
+      else if ((selectedDept === 'Phục vụ' || selectedDept === 'Thương mại & Dịch vụ') && (s.department.includes('Thương mại') || s.department.includes('Dịch vụ') || s.department === 'Phục vụ')) matches = true;
+
+      if (matches && s.members && s.members.length > 0) {
+        datesSet.add(s.date);
+      }
+    });
+    return Array.from(datesSet).sort();
+  }, [shifts, selectedDept]);
+
+  const closestDateForDept = useMemo(() => {
+    if (availableDatesForDept.length === 0) return null;
+    if (availableDatesForDept.includes(selectedDate)) return selectedDate;
+    const past = availableDatesForDept.filter(d => d <= selectedDate);
+    if (past.length > 0) return past[past.length - 1];
+    return availableDatesForDept[availableDatesForDept.length - 1];
+  }, [availableDatesForDept, selectedDate]);
+
+  const matchingShifts = useMemo(() => {
+    return shifts.filter(s => {
+      if (s.date !== selectedDate) return false;
+      if (selectedDept === 'all') return true;
+      if (s.department === selectedDept) return true;
+      if (selectedDept === 'Phục vụ' || selectedDept === 'Thương mại & Dịch vụ') {
+        if (s.department === 'Phục vụ' || s.department.includes('Thương mại') || s.department.includes('Dịch vụ')) return true;
+      }
+      return false;
+    });
+  }, [shifts, selectedDate, selectedDept]);
+
+  const currentShift = useMemo(() => {
+    if (!selectedShiftKey) return matchingShifts[0] || null;
+    return matchingShifts.find(s => `${s.department}_${s.shiftName}` === selectedShiftKey) || matchingShifts[0] || null;
+  }, [matchingShifts, selectedShiftKey]);
+
+  useEffect(() => {
+    if (currentShift) {
+      const initMap: Record<string, boolean> = {};
+      currentShift.members.forEach(m => {
+        initMap[m.id] = true;
+      });
+      setSelectedMemberIds(initMap);
+      setSelectedShiftKey(`${currentShift.department}_${currentShift.shiftName}`);
+    } else {
+      setSelectedMemberIds({});
+    }
+  }, [currentShift]);
+
+  const handleToggleMember = (id: string) => {
+    setSelectedMemberIds(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  const handleSelectAllMembers = (select: boolean) => {
+    if (!currentShift) return;
+    const nextMap: Record<string, boolean> = {};
+    currentShift.members.forEach(m => {
+      nextMap[m.id] = select;
+    });
+    setSelectedMemberIds(nextMap);
+  };
+
+  const selectedMembersCount = useMemo(() => {
+    return Object.values(selectedMemberIds).filter(Boolean).length;
+  }, [selectedMemberIds]);
+
+  // Khi chuyển sang chế độ chấm theo ca, nếu ngày hôm nay không có ca thì tự động chọn ngày gần nhất có ca
+  useEffect(() => {
+    if (targetMode === 'shift' && availableDatesForDept.length > 0) {
+      if (!availableDatesForDept.includes(selectedDate)) {
+        const bestDate = closestDateForDept || availableDatesForDept[availableDatesForDept.length - 1];
+        if (bestDate) setSelectedDate(bestDate);
+      }
+    }
+  }, [targetMode, selectedDept, availableDatesForDept, closestDateForDept, selectedDate]);
+
+  useEffect(() => {
     if (show) {
       if (currentUser?.id) setReporterId(currentUser.id);
-      if (initialTargetId) setTargetId(initialTargetId);
+      if (initialTargetId) {
+        setTargetId(initialTargetId);
+        setTargetMode('individual');
+      } else {
+        setTargetMode('individual');
+      }
+      setSubmittedBatchInfo(null);
+      setSelectedDate(getTodayStr());
 
       if (initialType === 'noi_quy') {
         setFormCategory('policy');
@@ -268,8 +412,14 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
         !q.groupCode.startsWith('Q')
       );
     } else if (criteriaScope === 'Department') {
-      // Must match Target Staff's specific Department Line!
-      return q.lineId === targetStaff?.line || q.groupCode.startsWith('B') || q.groupCode.startsWith('C') || q.groupCode.startsWith('N') || q.groupCode.startsWith('HC') || q.groupCode.startsWith('PC');
+      // Must match Target Staff's or Shift's specific Department Line!
+      const activeLine = (targetMode === 'shift' && currentShift) ? currentShift.department : targetStaff?.line;
+      return (
+        q.lineId === activeLine ||
+        (activeLine && q.scope && q.scope.toLowerCase().includes(activeLine.toLowerCase())) ||
+        q.groupCode.startsWith('B') || q.groupCode.startsWith('C') || q.groupCode.startsWith('N') ||
+        q.groupCode.startsWith('HC') || q.groupCode.startsWith('PC')
+      );
     } else if (criteriaScope === 'Management') {
       return q.groupCode.startsWith('Q') || (q.scope && (q.scope.includes('Trưởng') || q.scope.includes('Quản lý')));
     }
@@ -330,9 +480,27 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (isSubmitting) return;
-    if (!reporterId || !targetId) {
-      alert('Vui lòng chọn người đánh giá và nhân sự được đánh giá!');
+
+    if (!reporterId) {
+      alert('Vui lòng chọn người đánh giá!');
       return;
+    }
+
+    if (targetMode === 'individual' && !targetId) {
+      alert('Vui lòng chọn nhân sự được đánh giá!');
+      return;
+    }
+
+    if (targetMode === 'shift') {
+      if (!currentShift) {
+        alert('Không tìm thấy ca làm việc phù hợp cho ngày đã chọn!');
+        return;
+      }
+      const selectedMembers = currentShift.members.filter(m => selectedMemberIds[m.id]);
+      if (selectedMembers.length === 0) {
+        alert('Vui lòng chọn ít nhất một nhân sự trong ca làm việc!');
+        return;
+      }
     }
 
     const isPolicy = formCategory === 'policy';
@@ -400,43 +568,96 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
       ? (selectedPolicyRule?.severity === 'Rất nghiêm trọng' ? 'Nghiêm trọng' : (selectedPolicyRule?.severity as SeverityLevel) || severity)
       : severity;
 
-    const generated = generateTicketCode(recordType, now, existingIncidents || []);
-
-    const newRecord: IncidentRecord = {
-      id: generated.id,
-      ticketCode: generated.ticketCode,
-      type: recordType,
-      reporterId,
-      reporterName: reporter ? reporter.name : reporterId,
-      targetId,
-      targetName: target ? target.name : targetId,
-      targetRole: target ? target.role : 'Nhân sự',
-      questionId: !isPolicy ? (questionId || undefined) : undefined,
-      policyRuleId: isPolicy ? (policyRuleId || undefined) : undefined,
-      groupCode: isPolicy ? (selectedPolicyRule?.code || 'NQ') : (selectedQ ? selectedQ.groupCode : isBoundaryRecord ? 'RG1' : undefined),
-      title: formattedTitle,
-      description,
-      severity: mappedSeverity,
-      date: realtimeStr,
-      createdAt: now.toISOString(),
-      status: recordType === 'ghi_nhan' ? 'Đang xem xét' : 'Đã ghi nhận',
-      impactPoints,
-      policyPenaltyPoints: isPolicy
-        ? (selectedPolicyRule ? selectedPolicyRule.penaltyPoints : 5)
-        : undefined,
-      imageUrl: imagePreview || undefined,
-    };
-
     setIsSubmitting(true);
     try {
-      const res = await Promise.resolve(onAddIncident(newRecord));
-      if (res === false) {
-        return;
+      if (targetMode === 'shift' && currentShift) {
+        const selectedMembers = currentShift.members.filter(m => selectedMemberIds[m.id]);
+        const allMemberNames = selectedMembers.map(m => m.name);
+        const generatedShift = generateTicketCode('ca', selectedDate, existingIncidents || []);
+
+        const recordsToSubmit: IncidentRecord[] = selectedMembers.map((member, idx) => {
+          const fullStaff = staffList.find(s => s.id === member.id) || {
+            id: member.id,
+            name: member.name,
+            role: member.role || 'Nhân sự',
+            department: currentShift.department,
+            line: currentShift.department,
+          };
+          return {
+            id: `${generatedShift.ticketCode}-${idx + 1}-${member.id}`,
+            ticketCode: generatedShift.ticketCode,
+            type: recordType,
+            reporterId: currentUser?.id || reporterId,
+            reporterName: currentUser?.name || (reporter ? reporter.name : reporterId),
+            targetId: member.id,
+            targetName: member.name,
+            targetRole: (fullStaff as any).role || member.role || 'Nhân sự ca làm',
+            title: `[CA: ${currentShift.shiftName}] ${formattedTitle}`,
+            description: `${description}\n\n[Đánh giá tập thể ca]: ${currentShift.department} - ${currentShift.shiftName} ngày ${selectedDate} (${currentShift.location}).\nCác thành viên cùng ca: ${allMemberNames.join(', ')}.`,
+            severity: mappedSeverity,
+            date: realtimeStr,
+            createdAt: now.toISOString(),
+            status: recordType === 'ghi_nhan' ? 'Đang xem xét' : 'Đã ghi nhận',
+            impactPoints,
+            policyPenaltyPoints: isPolicy ? (selectedPolicyRule ? selectedPolicyRule.penaltyPoints : 5) : undefined,
+            questionId: !isPolicy ? (questionId || undefined) : undefined,
+            policyRuleId: isPolicy ? (policyRuleId || undefined) : undefined,
+            groupCode: isPolicy ? (selectedPolicyRule?.code || 'NQ') : (selectedQ ? selectedQ.groupCode : isBoundaryRecord ? 'RG1' : undefined),
+            imageUrl: imagePreview || undefined,
+          };
+        });
+
+        for (const record of recordsToSubmit) {
+          await Promise.resolve(onAddIncident(record));
+        }
+
+        setSubmittedSuccess(recordsToSubmit[0]);
+        setSubmittedBatchInfo({
+          count: selectedMembers.length,
+          names: allMemberNames,
+          ticketCode: generatedShift.ticketCode,
+        });
+        setTitle('');
+        setDescription('');
+        setImagePreview(null);
+      } else {
+        const generated = generateTicketCode(recordType, now, existingIncidents || []);
+
+        const newRecord: IncidentRecord = {
+          id: generated.id,
+          ticketCode: generated.ticketCode,
+          type: recordType,
+          reporterId,
+          reporterName: reporter ? reporter.name : reporterId,
+          targetId,
+          targetName: target ? target.name : targetId,
+          targetRole: target ? target.role : 'Nhân sự',
+          questionId: !isPolicy ? (questionId || undefined) : undefined,
+          policyRuleId: isPolicy ? (policyRuleId || undefined) : undefined,
+          groupCode: isPolicy ? (selectedPolicyRule?.code || 'NQ') : (selectedQ ? selectedQ.groupCode : isBoundaryRecord ? 'RG1' : undefined),
+          title: formattedTitle,
+          description,
+          severity: mappedSeverity,
+          date: realtimeStr,
+          createdAt: now.toISOString(),
+          status: recordType === 'ghi_nhan' ? 'Đang xem xét' : 'Đã ghi nhận',
+          impactPoints,
+          policyPenaltyPoints: isPolicy
+            ? (selectedPolicyRule ? selectedPolicyRule.penaltyPoints : 5)
+            : undefined,
+          imageUrl: imagePreview || undefined,
+        };
+
+        const res = await Promise.resolve(onAddIncident(newRecord));
+        if (res === false) {
+          return;
+        }
+        setSubmittedSuccess(newRecord);
+        setSubmittedBatchInfo(null);
+        setTitle('');
+        setDescription('');
+        setImagePreview(null);
       }
-      setSubmittedSuccess(newRecord);
-      setTitle('');
-      setDescription('');
-      setImagePreview(null);
     } catch (err) {
       console.error('Lỗi khi lập phiếu:', err);
     } finally {
@@ -477,7 +698,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
             {(() => {
               const isSubPolicy = submittedSuccess.type === 'noi_quy' || Boolean(submittedSuccess.policyRuleId);
               const isSubVio = submittedSuccess.type === 'vi_pham';
-              const displayCode = getIncidentDisplayCode(submittedSuccess);
+              const displayCode = submittedBatchInfo ? submittedBatchInfo.ticketCode : getIncidentDisplayCode(submittedSuccess);
               return (
                 <div className="bg-[#EDEAE3]/60 p-4 rounded-2xl border border-emerald-900/10 text-left space-y-2 text-xs">
                   <div className="flex items-center justify-between border-b border-emerald-900/10 pb-2">
@@ -505,19 +726,33 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                         ? 'bg-rose-100 text-rose-900 border border-rose-300'
                         : 'bg-emerald-100 text-emerald-950 border border-emerald-300'
                       }`}>
-                      {isSubPolicy
-                        ? '📖 BIÊN BẢN NỘI QUY'
-                        : isSubVio
-                          ? '⚠️ VI PHẠM CÔNG VIỆC'
-                          : '🌟 PHIẾU KHEN THƯỞNG'}
+                      {submittedBatchInfo ? `👥 CA LÀM VIỆC (${submittedBatchInfo.count} NHÂN SỰ)` : (
+                        isSubPolicy
+                          ? '📖 BIÊN BẢN NỘI QUY'
+                          : isSubVio
+                            ? '⚠️ VI PHẠM CÔNG VIỆC'
+                            : '🌟 PHIẾU KHEN THƯỞNG'
+                      )}
                     </span>
                   </div>
 
                   <div>
-                    <p className="text-[10px] text-slate-500 font-bold uppercase">Người nhận phản hồi:</p>
-                    <p className="font-extrabold text-[#1B4332] text-sm">
-                      {submittedSuccess.targetName} ({submittedSuccess.targetRole})
+                    <p className="text-[10px] text-slate-500 font-bold uppercase">
+                      {submittedBatchInfo ? `Tập thể nhân sự nhận phản hồi (${submittedBatchInfo.count} người):` : 'Người nhận phản hồi:'}
                     </p>
+                    {submittedBatchInfo ? (
+                      <div className="flex flex-wrap gap-1 mt-1">
+                        {submittedBatchInfo.names.map((name, i) => (
+                          <span key={i} className="px-2 py-0.5 bg-white border border-emerald-200 rounded-lg text-[11px] font-black text-[#1B4332]">
+                            {name}
+                          </span>
+                        ))}
+                      </div>
+                    ) : (
+                      <p className="font-extrabold text-[#1B4332] text-sm">
+                        {submittedSuccess.targetName} ({submittedSuccess.targetRole})
+                      </p>
+                    )}
                   </div>
 
                   <div>
@@ -526,7 +761,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                   </div>
 
                   <div className="pt-1 flex items-center justify-between text-[11px]">
-                    <span className="text-slate-500">Mức tác động:</span>
+                    <span className="text-slate-500">Mức tác động mỗi nhân sự:</span>
                     <span className={`font-black text-sm ${isSubPolicy
                       ? 'text-amber-800'
                       : isSubVio
@@ -550,12 +785,18 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 <span>🔔 Thông báo người nhận:</span>
               </p>
               <p className="text-[11px] leading-relaxed text-emerald-800">
-                Hệ thống đã tự động gửi thông báo đến nhân sự <strong>{submittedSuccess.targetName}</strong>.
-                {submittedSuccess.type === 'noi_quy'
-                  ? ' Bạn ấy đã nhận thông báo vi phạm quy định nội quy và có 48 giờ để xem và gửi ý kiến/kháng nghị.'
-                  : submittedSuccess.type === 'vi_pham'
-                    ? ' Bạn ấy đã nhận thông báo vi phạm tiêu chuẩn công việc và có 48 giờ để xem và gửi ý kiến/kháng nghị.'
-                    : ' Phiếu khen thưởng đã được gửi thành công đến nhân sự.'}
+                {submittedBatchInfo ? (
+                  <>Hệ thống đã tự động gửi thông báo đồng loạt đến <strong>{submittedBatchInfo.count} nhân sự</strong> trong ca làm việc và lưu đầy đủ biên bản vào Trường dữ liệu.</>
+                ) : (
+                  <>
+                    Hệ thống đã tự động gửi thông báo đến nhân sự <strong>{submittedSuccess.targetName}</strong>.
+                    {submittedSuccess.type === 'noi_quy'
+                      ? ' Bạn ấy đã nhận thông báo vi phạm quy định nội quy và có 48 giờ để xem và gửi ý kiến/kháng nghị.'
+                      : submittedSuccess.type === 'vi_pham'
+                        ? ' Bạn ấy đã nhận thông báo vi phạm tiêu chuẩn công việc và có 48 giờ để xem và gửi ý kiến/kháng nghị.'
+                        : ' Phiếu khen thưởng đã được gửi thành công đến nhân sự.'}
+                  </>
+                )}
               </p>
             </div>
 
@@ -746,39 +987,203 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                 )}
               </div>
 
-              {/* 3. Select Target (Any Employee) */}
-              <div>
-                <label className="block text-slate-700 font-extrabold font-heading mb-1">
-                  3. Đối Tượng Được Lập (Bất kỳ ai, kể cả Cấp trên / Quản lý) <span className="text-rose-500">*</span>
-                </label>
-                <select
-                  value={targetId}
-                  onChange={(e) => setTargetId(e.target.value)}
-                  className="w-full p-2.5 bg-[#EDEAE3] border border-emerald-900/10 rounded-xl text-[#1B4332] font-black"
-                >
-                  {staffList.map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} — {s.role} ({s.department})
-                    </option>
-                  ))}
-                </select>
+              {/* 3. Select Target (Any Employee or Whole Shift) */}
+              <div className="space-y-2">
+                <div className="flex items-center justify-between flex-wrap gap-1">
+                  <label className="block text-slate-700 font-extrabold font-heading">
+                    3. Đối Tượng Được Lập <span className="text-rose-500">*</span>
+                  </label>
 
-                {/* Management Role Status Notice */}
-                <div className="mt-1.5 p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-[11px]">
-                  <div className="flex items-center space-x-1.5">
-                    {isTargetManager ? (
-                      <ShieldCheck className="w-4 h-4 text-[#2D6A4F] shrink-0" />
-                    ) : (
-                      <UserCheck className="w-4 h-4 text-slate-500 shrink-0" />
-                    )}
-                    <span className="font-semibold text-slate-700">Chức vụ của {targetStaff?.name}:</span>
+                  {/* Mode Toggle: Chấm Cá Nhân vs Chấm Theo Ca */}
+                  <div className="flex items-center gap-1 bg-slate-100 p-0.5 rounded-xl border border-slate-200">
+                    <button
+                      type="button"
+                      onClick={() => setTargetMode('individual')}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer flex items-center gap-1 ${
+                        targetMode === 'individual'
+                          ? 'bg-[#1B4332] text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <User className="w-3 h-3" />
+                      <span>Cá Nhân</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setTargetMode('shift')}
+                      className={`px-2.5 py-1 rounded-lg text-[11px] font-extrabold transition-all cursor-pointer flex items-center gap-1 ${
+                        targetMode === 'shift'
+                          ? 'bg-[#1B4332] text-white shadow-2xs'
+                          : 'text-slate-600 hover:text-slate-900'
+                      }`}
+                    >
+                      <Users className="w-3 h-3" />
+                      <span>Theo Ca (Sheet)</span>
+                    </button>
                   </div>
-
-                  <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${isTargetManager ? 'bg-[#1B4332] text-[#52B788]' : 'bg-slate-200 text-slate-700'
-                    }`}>
-                    {isTargetManager ? 'Bị tác động Ngạch Quản lý (30%)' : 'KHÔNG tác động Ngạch Quản lý (0%)'}
-                  </span>
                 </div>
+
+                {targetMode === 'individual' ? (
+                  <>
+                    <select
+                      value={targetId}
+                      onChange={(e) => setTargetId(e.target.value)}
+                      className="w-full p-2.5 bg-[#EDEAE3] border border-emerald-900/10 rounded-xl text-[#1B4332] font-black"
+                    >
+                      {staffList.map((s) => (
+                        <option key={s.id} value={s.id}>
+                          {s.name} — {s.role} ({s.department})
+                        </option>
+                      ))}
+                    </select>
+
+                    {/* Management Role Status Notice */}
+                    <div className="mt-1.5 p-2 rounded-xl bg-slate-50 border border-slate-200 flex items-center justify-between text-[11px]">
+                      <div className="flex items-center space-x-1.5">
+                        {isTargetManager ? (
+                          <ShieldCheck className="w-4 h-4 text-[#2D6A4F] shrink-0" />
+                        ) : (
+                          <UserCheck className="w-4 h-4 text-slate-500 shrink-0" />
+                        )}
+                        <span className="font-semibold text-slate-700">Chức vụ của {targetStaff?.name}:</span>
+                      </div>
+
+                      <span className={`px-2 py-0.5 rounded-full font-bold text-[10px] ${
+                        isTargetManager ? 'bg-[#1B4332] text-[#52B788]' : 'bg-slate-200 text-slate-700'
+                      }`}>
+                        {isTargetManager ? 'Bị tác động Ngạch Quản lý (30%)' : 'KHÔNG tác động Ngạch Quản lý (0%)'}
+                      </span>
+                    </div>
+                  </>
+                ) : (
+                  /* SHIFT MODE PICKER & MEMBERS CHECKLIST */
+                  <div className="space-y-2.5 p-3 rounded-2xl bg-gradient-to-br from-[#1B4332]/5 to-[#2D6A4F]/10 border border-emerald-900/15">
+                    {/* Date & Department Selectors */}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
+                          <Calendar className="w-3 h-3 text-emerald-700" />
+                          <span>Ngày làm việc</span>
+                        </label>
+                        <input
+                          type="date"
+                          value={selectedDate}
+                          onChange={(e) => setSelectedDate(e.target.value)}
+                          className="w-full p-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-[#1B4332]"
+                        />
+                      </div>
+
+                      <div>
+                        <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
+                          <Building2 className="w-3 h-3 text-emerald-700" />
+                          <span>Bộ phận / Khối</span>
+                        </label>
+                        <select
+                          value={selectedDept}
+                          onChange={(e) => {
+                            setSelectedDept(e.target.value);
+                            setSelectedShiftKey('');
+                          }}
+                          className="w-full p-2 rounded-xl bg-white border border-slate-200 text-xs font-bold text-[#1B4332]"
+                        >
+                          <option value="all">🌐 Tất cả bộ phận</option>
+                          {departmentOptions.map(dept => (
+                            <option key={dept.id} value={dept.id}>{dept.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                    </div>
+
+                    {/* Shift Selector */}
+                    <div>
+                      <label className="block text-[11px] font-bold text-slate-600 mb-1 flex items-center gap-1">
+                        <Clock className="w-3 h-3 text-emerald-700" />
+                        <span>Ca làm việc trên Sheet ({matchingShifts.length} ca tìm thấy)</span>
+                      </label>
+                      {matchingShifts.length > 0 ? (
+                        <select
+                          value={currentShift ? `${currentShift.department}_${currentShift.shiftName}` : ''}
+                          onChange={(e) => setSelectedShiftKey(e.target.value)}
+                          className="w-full p-2 rounded-xl bg-white border border-emerald-300 text-xs font-black text-[#1B4332]"
+                        >
+                          {matchingShifts.map((s, idx) => (
+                            <option key={`${s.department}_${s.shiftName}_${idx}`} value={`${s.department}_${s.shiftName}`}>
+                              [{s.department}] {s.shiftName} — {s.members.length} nhân sự ({s.location})
+                            </option>
+                          ))}
+                        </select>
+                      ) : (
+                        <div className="p-2.5 rounded-xl bg-amber-50 border border-amber-200 text-[11px] text-amber-900 font-medium">
+                          ⚠️ Không tìm thấy ca làm việc cho ngày <strong>{selectedDate}</strong>.
+                          {availableDatesForDept.length > 0 && (
+                            <button
+                              type="button"
+                              onClick={() => setSelectedDate(closestDateForDept || availableDatesForDept[0])}
+                              className="ml-1 text-emerald-700 font-black underline cursor-pointer"
+                            >
+                              Chuyển về ngày gần nhất ({closestDateForDept || availableDatesForDept[0]})
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Members Checklist */}
+                    {currentShift && currentShift.members.length > 0 && (
+                      <div className="space-y-1.5 pt-1">
+                        <div className="flex items-center justify-between text-[11px]">
+                          <span className="font-extrabold text-[#1B4332] flex items-center gap-1">
+                            <Users className="w-3.5 h-3.5 text-emerald-700" />
+                            <span>Nhân sự trong ca ({selectedMembersCount}/{currentShift.members.length} đã chọn):</span>
+                          </span>
+                          <div className="flex items-center gap-1">
+                            <button
+                              type="button"
+                              onClick={() => handleSelectAllMembers(true)}
+                              className="text-[10px] text-emerald-700 hover:text-emerald-900 font-bold px-1.5 py-0.5 rounded bg-white border border-emerald-200 cursor-pointer"
+                            >
+                              ✓ Chọn hết
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleSelectAllMembers(false)}
+                              className="text-[10px] text-slate-500 hover:text-slate-800 font-bold px-1.5 py-0.5 rounded bg-white border border-slate-200 cursor-pointer"
+                            >
+                              ✕ Bỏ chọn
+                            </button>
+                          </div>
+                        </div>
+
+                        <div className="grid grid-cols-1 sm:grid-cols-2 gap-1.5 max-h-44 overflow-y-auto p-1.5 bg-white/90 rounded-xl border border-emerald-900/10">
+                          {currentShift.members.map((m) => {
+                            const isChecked = Boolean(selectedMemberIds[m.id]);
+                            return (
+                              <label
+                                key={m.id}
+                                className={`flex items-center gap-2 p-2 rounded-lg border text-xs cursor-pointer transition-all ${
+                                  isChecked
+                                    ? 'bg-emerald-50/80 border-emerald-300 text-[#1B4332] font-bold'
+                                    : 'bg-white border-slate-200 text-slate-500 opacity-60'
+                                }`}
+                              >
+                                <input
+                                  type="checkbox"
+                                  checked={isChecked}
+                                  onChange={() => handleToggleMember(m.id)}
+                                  className="w-3.5 h-3.5 text-emerald-600 rounded focus:ring-emerald-500 cursor-pointer"
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <div className="truncate text-[11px] font-black">{m.name}</div>
+                                  <div className="text-[10px] opacity-75 truncate">{m.role || 'Nhân sự ca'}</div>
+                                </div>
+                              </label>
+                            );
+                          })}
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                )}
               </div>
 
               {/* Quick Keyword Group Filter (Nhóm Từ Khóa Gợi Ý Nhanh) */}
@@ -951,7 +1356,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                     >
                       <option value="Chung">1. Khung chung (Văn hóa & Kỷ luật chung)</option>
                       <option value="Department">
-                        2. Ngạch chuyên môn riêng của bộ phận: {targetStaff?.line}
+                        2. Ngạch chuyên môn riêng của bộ phận: {targetMode === 'shift' && currentShift ? currentShift.department : targetStaff?.line}
                       </option>
                       {isTargetManager && (
                         <option value="Management">
@@ -979,7 +1384,7 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
 
                     {criteriaScope !== 'Boundary' && (
                       <p className="text-[10px] text-[#2D6A4F] mt-1 font-medium italic">
-                        💡 Nhân sự thuộc bộ phận <strong>{targetStaff?.line}</strong> sẽ chỉ chịu tác động bởi Ngạch chuyên môn của bộ phận này.
+                        💡 Bộ phận <strong>{targetMode === 'shift' && currentShift ? currentShift.department : targetStaff?.line}</strong> sẽ chỉ chịu tác động bởi Ngạch chuyên môn của bộ phận này.
                       </p>
                     )}
                   </div>
@@ -1159,7 +1564,19 @@ export const IncidentFormModal: React.FC<IncidentFormModalProps> = ({
                       <span>Đang lưu vào Trường dữ liệu...</span>
                     </>
                   ) : (
-                    <span>{type === 'vi_pham' ? '📢 Lập Biên Bản Vi Phạm' : '🌟 Lập Phiếu Ghi Nhận'}</span>
+                    <span>
+                      {targetMode === 'shift'
+                        ? (type === 'vi_pham'
+                            ? `📢 Lập Biên Bản Vi Phạm Cho ${selectedMembersCount} Nhân Sự Ca`
+                            : formCategory === 'policy'
+                              ? `📖 Lập Biên Bản Nội Quy Cho ${selectedMembersCount} Nhân Sự Ca`
+                              : `🌟 Lập Phiếu Ghi Nhận Cho ${selectedMembersCount} Nhân Sự Ca`)
+                        : (type === 'vi_pham'
+                            ? '📢 Lập Biên Bản Vi Phạm'
+                            : formCategory === 'policy'
+                              ? '📖 Lập Biên Bản Nội Quy'
+                              : '🌟 Lập Phiếu Ghi Nhận')}
+                    </span>
                   )}
                 </button>
               </div>
